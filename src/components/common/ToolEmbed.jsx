@@ -11,7 +11,8 @@ export default function ToolEmbed({ title, description, src, icon: Icon, product
 
   const handleRefresh = () => {
     if (iframeRef.current) {
-      iframeRef.current.src = src;
+      const separator = src.includes('?') ? '&' : '?';
+      iframeRef.current.src = `${src}${separator}_t=${Date.now()}`;
     }
   };
 
