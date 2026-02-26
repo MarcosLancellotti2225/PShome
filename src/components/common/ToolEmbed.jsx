@@ -33,7 +33,6 @@ export default function ToolEmbed({ title, description, src, icon: Icon, product
           className="tool-embed-frame"
           src={src}
           title={title}
-          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-downloads"
         />
       </div>
     </div>
