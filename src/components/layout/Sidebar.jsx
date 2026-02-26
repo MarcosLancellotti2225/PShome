@@ -1,20 +1,12 @@
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import {
-  LayoutDashboard,
-  FileText,
-  Users,
-  Settings,
-  FolderGit2,
-  BarChart3,
-  CalendarDays,
+  Home,
   ChevronLeft,
   ChevronRight,
-  Workflow,
-  BookOpen,
-  HelpCircle,
   FileSpreadsheet,
   Send,
   Code,
+  FileText,
 } from 'lucide-react';
 import './Sidebar.css';
 
@@ -22,10 +14,7 @@ const navSections = [
   {
     title: 'General',
     links: [
-      { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-      { to: '/projects', icon: FolderGit2, label: 'Proyectos' },
-      { to: '/clients', icon: Users, label: 'Clientes' },
-      { to: '/calendar', icon: CalendarDays, label: 'Calendario' },
+      { to: '/', icon: Home, label: 'Home' },
     ],
   },
   {
@@ -37,26 +26,14 @@ const navSections = [
     ],
   },
   {
-    title: 'Operaciones',
-    links: [
-      { to: '/integrations', icon: Workflow, label: 'Integraciones' },
-      { to: '/reports', icon: BarChart3, label: 'Reportes' },
-      { to: '/documentation', icon: FileText, label: 'Documentación' },
-    ],
-  },
-  {
     title: 'Recursos',
     links: [
-      { to: '/knowledge-base', icon: BookOpen, label: 'Knowledge Base' },
-      { to: '/help', icon: HelpCircle, label: 'Ayuda' },
-      { to: '/settings', icon: Settings, label: 'Configuración' },
+      { to: '/documentation', icon: FileText, label: 'Documentación' },
     ],
   },
 ];
 
 export default function Sidebar({ collapsed, onToggle }) {
-  const location = useLocation();
-
   return (
     <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
       <div className="sidebar-header">
@@ -86,9 +63,6 @@ export default function Sidebar({ collapsed, onToggle }) {
               >
                 <link.icon />
                 {!collapsed && <span>{link.label}</span>}
-                {!collapsed && link.badge && (
-                  <span className="sidebar-badge">{link.badge}</span>
-                )}
               </NavLink>
             ))}
           </div>

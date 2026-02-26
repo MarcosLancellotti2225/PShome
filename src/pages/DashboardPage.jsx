@@ -1,71 +1,141 @@
-import { FolderGit2, Users, CheckCircle2, AlertTriangle } from 'lucide-react';
-import KpiCard from '../components/dashboard/KpiCard';
-import ProjectsTable from '../components/dashboard/ProjectsTable';
-import ActivityFeed from '../components/dashboard/ActivityFeed';
-import QuickActions from '../components/dashboard/QuickActions';
-import ToolsGrid from '../components/dashboard/ToolsGrid';
+import { Link } from 'react-router-dom';
+import {
+  FileSpreadsheet,
+  Send,
+  Code,
+  ExternalLink,
+  Shield,
+  PenTool,
+  Mail,
+  MessageSquare,
+  KeyRound,
+  FileCheck,
+  Building2,
+} from 'lucide-react';
 import './DashboardPage.css';
 
+const productFamilies = [
+  {
+    name: 'Ivnosys',
+    color: '#3b82f6',
+    icon: Building2,
+    products: [
+      { name: 'IvSign', description: 'Firma electr\u00f3nica avanzada y cualificada', icon: PenTool },
+      { name: 'IvNeos', description: 'Comunicaciones electr\u00f3nicas certificadas', icon: Mail },
+      { name: 'IvCert', description: 'Certificados digitales y gesti\u00f3n de identidad', icon: KeyRound },
+    ],
+  },
+  {
+    name: 'Signaturit',
+    color: '#00b4b6',
+    icon: FileCheck,
+    products: [
+      { name: 'Firma electr\u00f3nica', description: 'Firma electr\u00f3nica simple y avanzada', icon: PenTool },
+      { name: 'Email certificado', description: 'Env\u00edo de emails con evidencia legal', icon: Mail },
+      { name: 'SMS certificado', description: 'Env\u00edo de SMS con evidencia legal', icon: MessageSquare },
+    ],
+  },
+  {
+    name: 'Namirial',
+    color: '#8b5cf6',
+    icon: Shield,
+    products: [
+      { name: 'eIDAS Services', description: 'Servicios de confianza europeos', icon: Shield },
+    ],
+  },
+];
+
+const tools = [
+  {
+    to: '/tools/csv-generator',
+    icon: FileSpreadsheet,
+    name: 'Generador CSV',
+    description: 'Convierte Excel/CSV/JSON/XML al formato correcto para CLI de IvSign e IvNeos',
+    product: 'cross-product',
+  },
+  {
+    to: '/tools/bulksend',
+    icon: Send,
+    name: 'Multi Send',
+    description: 'Env\u00edo masivo de firmas electr\u00f3nicas, emails y SMS certificados',
+    product: 'signaturit',
+  },
+  {
+    to: '/tools/html-generator',
+    icon: Code,
+    name: 'Email Templates',
+    description: 'Crear y gestionar templates de email para brandings de Signaturit',
+    product: 'signaturit',
+  },
+];
+
 export default function DashboardPage() {
-  const today = new Date().toLocaleDateString('es-ES', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
-
   return (
-    <div className="dashboard-page">
-      <div className="dashboard-welcome">
-        <div>
-          <h2>Bienvenido, Marcos</h2>
-          <p>Aquí tienes el resumen de Professional Services</p>
-        </div>
-        <div className="dashboard-date">{today}</div>
+    <div className="home-page">
+      <div className="home-header">
+        <h2>Professional Services</h2>
+        <p>Home page del equipo \u2014 productos, herramientas y recursos internos</p>
       </div>
 
-      <div className="kpi-grid">
-        <KpiCard
-          icon={FolderGit2}
-          label="Proyectos Activos"
-          value="12"
-          change={8.3}
-          color="blue"
-        />
-        <KpiCard
-          icon={Users}
-          label="Clientes"
-          value="28"
-          change={12.5}
-          color="green"
-        />
-        <KpiCard
-          icon={CheckCircle2}
-          label="Entregados este mes"
-          value="5"
-          change={25}
-          color="amber"
-        />
-        <KpiCard
-          icon={AlertTriangle}
-          label="En Riesgo"
-          value="2"
-          change={-50}
-          color="red"
-        />
-      </div>
-
-      <ToolsGrid />
-
-      <div className="dashboard-grid">
-        <div>
-          <ProjectsTable />
+      {/* Productos */}
+      <section className="home-section">
+        <h3 className="home-section-title">Productos</h3>
+        <div className="products-grid">
+          {productFamilies.map((family) => (
+            <div key={family.name} className="product-family-card">
+              <div className="product-family-header" style={{ borderColor: family.color }}>
+                <div className="product-family-icon" style={{ background: family.color + '18', color: family.color }}>
+                  <family.icon size={22} />
+                </div>
+                <span className="product-family-name">{family.name}</span>
+              </div>
+              <ul className="product-list">
+                {family.products.map((prod) => (
+                  <li key={prod.name} className="product-item">
+                    <prod.icon size={16} style={{ color: family.color, flexShrink: 0 }} />
+                    <div>
+                      <div className="product-item-name">{prod.name}</div>
+                      <div className="product-item-desc">{prod.description}</div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
-        <div className="dashboard-sidebar-widgets">
-          <QuickActions />
-          <ActivityFeed />
+      </section>
+
+      {/* Herramientas */}
+      <section className="home-section">
+        <h3 className="home-section-title">Herramientas</h3>
+        <div className="tools-catalog-grid">
+          {tools.map((tool) => (
+            <Link key={tool.to} to={tool.to} className="catalog-card">
+              <div className={`catalog-card-icon ${tool.product}`}>
+                <tool.icon size={24} />
+              </div>
+              <div className="catalog-card-body">
+                <div className="catalog-card-name">{tool.name}</div>
+                <div className="catalog-card-desc">{tool.description}</div>
+              </div>
+              <div className="catalog-card-footer">
+                <span className={`catalog-tag ${tool.product}`}>
+                  {tool.product === 'signaturit' ? 'Signaturit' : 'Cross-product'}
+                </span>
+                <ExternalLink size={14} className="catalog-card-arrow" />
+              </div>
+            </Link>
+          ))}
         </div>
-      </div>
+      </section>
+
+      {/* Documentaci\u00f3n */}
+      <section className="home-section">
+        <h3 className="home-section-title">Documentaci\u00f3n</h3>
+        <div className="docs-placeholder">
+          <p>Pr\u00f3ximamente: instructivos, links de wiki y recursos del equipo.</p>
+        </div>
+      </section>
     </div>
   );
 }
