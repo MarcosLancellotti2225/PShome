@@ -3,6 +3,7 @@ import KpiCard from '../components/dashboard/KpiCard';
 import ProjectsTable from '../components/dashboard/ProjectsTable';
 import ActivityFeed from '../components/dashboard/ActivityFeed';
 import QuickActions from '../components/dashboard/QuickActions';
+import ToolsGrid from '../components/dashboard/ToolsGrid';
 import './DashboardPage.css';
 
 export default function DashboardPage() {
@@ -53,6 +54,8 @@ export default function DashboardPage() {
           color="red"
         />
       </div>
+
+      <ToolsGrid />
 
       <div className="dashboard-grid">
         <div>

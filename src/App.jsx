@@ -2,6 +2,9 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import AppLayout from './components/layout/AppLayout';
 import DashboardPage from './pages/DashboardPage';
 import PlaceholderPage from './pages/PlaceholderPage';
+import CsvGeneratorPage from './pages/CsvGeneratorPage';
+import BulkSendPage from './pages/BulkSendPage';
+import HtmlGeneratorPage from './pages/HtmlGeneratorPage';
 
 const placeholderPages = [
   {
@@ -57,6 +60,13 @@ export default function App() {
       <Routes>
         <Route element={<AppLayout />}>
           <Route index element={<DashboardPage />} />
+
+          {/* Tool pages */}
+          <Route path="/tools/csv-generator" element={<CsvGeneratorPage />} />
+          <Route path="/tools/bulksend" element={<BulkSendPage />} />
+          <Route path="/tools/html-generator" element={<HtmlGeneratorPage />} />
+
+          {/* Placeholder pages */}
           {placeholderPages.map((page) => (
             <Route
               key={page.path}

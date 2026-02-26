@@ -12,6 +12,9 @@ import {
   Workflow,
   BookOpen,
   HelpCircle,
+  FileSpreadsheet,
+  Send,
+  Code,
 } from 'lucide-react';
 import './Sidebar.css';
 
@@ -20,9 +23,17 @@ const navSections = [
     title: 'General',
     links: [
       { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-      { to: '/projects', icon: FolderGit2, label: 'Proyectos', badge: null },
+      { to: '/projects', icon: FolderGit2, label: 'Proyectos' },
       { to: '/clients', icon: Users, label: 'Clientes' },
       { to: '/calendar', icon: CalendarDays, label: 'Calendario' },
+    ],
+  },
+  {
+    title: 'Herramientas',
+    links: [
+      { to: '/tools/csv-generator', icon: FileSpreadsheet, label: 'Generador CSV' },
+      { to: '/tools/bulksend', icon: Send, label: 'Multi Send' },
+      { to: '/tools/html-generator', icon: Code, label: 'Email Templates' },
     ],
   },
   {
