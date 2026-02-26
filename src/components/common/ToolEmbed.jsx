@@ -1,9 +1,18 @@
-import { ExternalLink, Maximize2 } from 'lucide-react';
+import { useRef } from 'react';
+import { ExternalLink, RefreshCw } from 'lucide-react';
 import './ToolEmbed.css';
 
 export default function ToolEmbed({ title, description, src, icon: Icon, product = 'signaturit' }) {
+  const iframeRef = useRef(null);
+
   const handleOpenExternal = () => {
     window.open(src, '_blank');
+  };
+
+  const handleRefresh = () => {
+    if (iframeRef.current) {
+      iframeRef.current.src = src;
+    }
   };
 
   return (
@@ -22,6 +31,10 @@ export default function ToolEmbed({ title, description, src, icon: Icon, product
           </span>
         </div>
         <div className="tool-embed-actions">
+          <button className="tool-embed-btn" onClick={handleRefresh}>
+            <RefreshCw size={14} />
+            Actualizar
+          </button>
           <button className="tool-embed-btn" onClick={handleOpenExternal}>
             <ExternalLink size={14} />
             Abrir en nueva pestaña
@@ -30,6 +43,7 @@ export default function ToolEmbed({ title, description, src, icon: Icon, product
       </div>
       <div className="tool-embed-frame-container">
         <iframe
+          ref={iframeRef}
           className="tool-embed-frame"
           src={src}
           title={title}
