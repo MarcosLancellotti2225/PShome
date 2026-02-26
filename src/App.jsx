@@ -56,7 +56,7 @@ const placeholderPages = [
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/PShome">
       <Routes>
         <Route element={<AppLayout />}>
           <Route index element={<DashboardPage />} />

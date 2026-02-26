@@ -6,7 +6,7 @@ export default function BulkSendPage() {
     <ToolEmbed
       title="Multi Send Signaturit"
       description="Envío masivo de firmas electrónicas, emails certificados y SMS certificados"
-      src="/tools/bulksend/index.html"
+      src={`${import.meta.env.BASE_URL}tools/bulksend/index.html`}
       icon={Send}
       product="signaturit"
     />

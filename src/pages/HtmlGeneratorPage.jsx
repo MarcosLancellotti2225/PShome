@@ -6,7 +6,7 @@ export default function HtmlGeneratorPage() {
     <ToolEmbed
       title="Email Template Generator"
       description="Crear y gestionar templates de email para brandings de Signaturit"
-      src="/tools/html-generator/index.html"
+      src={`${import.meta.env.BASE_URL}tools/html-generator/index.html`}
       icon={Code}
       product="signaturit"
     />
