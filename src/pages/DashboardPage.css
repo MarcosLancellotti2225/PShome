@@ -1,0 +1,52 @@
+.dashboard-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+}
+
+.dashboard-welcome {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dashboard-welcome h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.dashboard-welcome p {
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  margin-top: 2px;
+}
+
+.dashboard-date {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  text-align: right;
+}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: var(--spacing-xl);
+}
+
+.dashboard-sidebar-widgets {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+}
+
+@media (max-width: 1100px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
