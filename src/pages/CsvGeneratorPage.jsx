@@ -6,7 +6,7 @@ export default function CsvGeneratorPage() {
     <ToolEmbed
       title="Generador CSV para CLI"
       description="Convierte Excel/CSV/JSON/XML al formato correcto para comandos IvSign e IvNeos"
-      src={`${import.meta.env.BASE_URL}tools/csv-generator/index.html`}
+      src={`${import.meta.env.BASE_URL}tool-apps/csv-generator/index.html`}
       icon={FileSpreadsheet}
       product="cross-product"
     />
