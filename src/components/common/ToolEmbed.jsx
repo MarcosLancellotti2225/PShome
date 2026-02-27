@@ -1,15 +1,9 @@
-import { useMemo, useRef } from 'react';
+import { useRef } from 'react';
 import { ExternalLink, RefreshCw } from 'lucide-react';
 import './ToolEmbed.css';
 
-function cacheBustUrl(url) {
-  const separator = url.includes('?') ? '&' : '?';
-  return `${url}${separator}_t=${Date.now()}`;
-}
-
 export default function ToolEmbed({ title, description, src, icon: Icon, product = 'signaturit' }) {
   const iframeRef = useRef(null);
-  const initialSrc = useMemo(() => cacheBustUrl(src), [src]);
 
   const handleOpenExternal = () => {
     window.open(src, '_blank');
@@ -17,7 +11,7 @@ export default function ToolEmbed({ title, description, src, icon: Icon, product
 
   const handleRefresh = () => {
     if (iframeRef.current) {
-      iframeRef.current.src = cacheBustUrl(src);
+      iframeRef.current.src = src;
     }
   };
 
@@ -51,7 +45,7 @@ export default function ToolEmbed({ title, description, src, icon: Icon, product
         <iframe
           ref={iframeRef}
           className="tool-embed-frame"
-          src={initialSrc}
+          src={src}
           title={title}
         />
       </div>
