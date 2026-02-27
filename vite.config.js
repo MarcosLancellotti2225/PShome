@@ -9,7 +9,7 @@ function toolsCacheBust() {
   return {
     name: 'tools-cache-bust',
     closeBundle() {
-      const distTools = path.resolve(__dirname, 'dist/tools')
+      const distTools = path.resolve(__dirname, 'dist/tool-apps')
       if (!fs.existsSync(distTools)) return
 
       const timestamp = Date.now()
