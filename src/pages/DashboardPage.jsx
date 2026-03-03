@@ -3,6 +3,7 @@ import {
   FileSpreadsheet,
   Send,
   Code,
+  GanttChart,
   ExternalLink,
   Shield,
   PenTool,
@@ -66,6 +67,13 @@ const tools = [
     name: 'Email Templates',
     description: 'Crear y gestionar templates de email para brandings de Signaturit',
     product: 'signaturit',
+  },
+  {
+    to: '/tools/gantt-generator',
+    icon: GanttChart,
+    name: 'Gantt Generator',
+    description: 'Genera diagramas de Gantt para planificación de proyectos y exporta a PNG',
+    product: 'cross-product',
   },
 ];
 
