@@ -6,6 +6,7 @@ const pageTitles = {
   '/tools/csv-generator': 'Generador CSV',
   '/tools/bulksend': 'Multi Send',
   '/tools/html-generator': 'Email Templates',
+  '/tools/gantt-generator': 'Gantt Generator',
   '/documentation': 'Documentación',
 };
 

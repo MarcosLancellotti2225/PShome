@@ -4,6 +4,7 @@ import DashboardPage from './pages/DashboardPage';
 import CsvGeneratorPage from './pages/CsvGeneratorPage';
 import BulkSendPage from './pages/BulkSendPage';
 import HtmlGeneratorPage from './pages/HtmlGeneratorPage';
+import GanttGeneratorPage from './pages/GanttGeneratorPage';
 
 export default function App() {
   return (
@@ -14,6 +15,7 @@ export default function App() {
           <Route path="/tools/csv-generator" element={<CsvGeneratorPage />} />
           <Route path="/tools/bulksend" element={<BulkSendPage />} />
           <Route path="/tools/html-generator" element={<HtmlGeneratorPage />} />
+          <Route path="/tools/gantt-generator" element={<GanttGeneratorPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

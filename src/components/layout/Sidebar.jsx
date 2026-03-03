@@ -6,6 +6,7 @@ import {
   FileSpreadsheet,
   Send,
   Code,
+  GanttChart,
   FileText,
 } from 'lucide-react';
 import './Sidebar.css';
@@ -23,6 +24,7 @@ const navSections = [
       { to: '/tools/csv-generator', icon: FileSpreadsheet, label: 'Generador CSV' },
       { to: '/tools/bulksend', icon: Send, label: 'Multi Send' },
       { to: '/tools/html-generator', icon: Code, label: 'Email Templates' },
+      { to: '/tools/gantt-generator', icon: GanttChart, label: 'Gantt Generator' },
     ],
   },
   {
