@@ -26,4 +26,12 @@ export default defineConfig([
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
     },
   },
+  {
+    // Código migrado desde FormConverterExcel: se mantiene tal cual, sin reescribirlo por estilo.
+    files: ['apps/**/*.js'],
+    rules: {
+      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]', args: 'none', caughtErrors: 'none' }],
+      'no-prototype-builtins': 'off',
+    },
+  },
 ])

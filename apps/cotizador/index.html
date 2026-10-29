@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cotizador · PS Tools</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo" aria-hidden="true"></div>
+      <div class="titles">
+        <div class="eyebrow">Namirial · PS Tools</div>
+        <h1>Cotizador</h1>
+        <p>Lee un ZIP con los insumos del formulario y calcula la complejidad: Baja, Media o Alta.</p>
+      </div>
+    </div>
+  </header>
+  <main>
+        <div id="quoterFlow">
+            <section class="panel">
+                <h2>1. Cargar ZIP</h2>
+                <p class="hint">El ZIP puede traer PDFs, Excels de reglas de negocio (con todas sus pestañas) y JSONs de definición. Se analiza todo el contenido, sin importar las carpetas.</p>
+                <div class="inputs-grid">
+                    <label class="file-slot required" data-slot="quoter-zip">
+                        <span class="label">ZIP del formulario</span>
+                        <span class="desc">PDFs + Excels + JSONs</span>
+                        <input type="file" accept=".zip" id="quoterZipInput">
+                        <span class="file-status" id="quoterZipStatus"></span>
+                    </label>
+                </div>
+                <div class="actions" style="margin-top:1rem;">
+                    <button id="btnQuote" class="primary" disabled>Analizar y cotizar</button>
+                    <button id="btnQuoteReportView" class="primary" hidden>Ver reporte</button>
+                    <button id="btnQuoteReportPdf" class="primary" hidden>Exportar PDF</button>
+                    <button id="btnQuoteReportDocx" class="primary" hidden>Exportar Word</button>
+                    <button id="btnQuoteReport" class="secondary btn-sm" hidden>Descargar HTML</button>
+                    <button id="btnQuoteJson" class="secondary btn-sm" hidden>Informe técnico (JSON)</button>
+                </div>
+                <div id="quoterStatus" class="status"></div>
+            </section>
+
+            <section class="panel" id="quoterResultPanel" hidden>
+                <div class="quote-verdict">
+                    <div class="quote-level" id="quoteLevel">—</div>
+                    <div class="quote-meta">
+                        <div><span id="quotePoints">0</span> puntos de complejidad</div>
+                        <div class="hint" id="quoteHours"></div>
+                    </div>
+                </div>
+                <div id="quoterStats" class="sf-stats" style="margin-top:1rem;"></div>
+
+                <h3 style="margin:1.25rem 0 0.5rem;font-size:0.95rem;">De dónde salen los puntos</h3>
+                <div class="match-table-wrap" style="max-height:none;">
+                    <table class="match-table">
+                        <thead><tr><th>Concepto</th><th>Cantidad</th><th>Peso</th><th>Puntos</th></tr></thead>
+                        <tbody id="quoteBreakdownBody"></tbody>
+                    </table>
+                </div>
+
+                <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;margin-top:0.75rem;">
+                    <span class="hint">Umbrales:</span>
+                    <label class="hint">Baja ≤ <input type="number" id="quoteThFacil" value="900" min="1" step="50" style="width:80px;"></label>
+                    <label class="hint">Media ≤ <input type="number" id="quoteThMedio" value="1800" min="1" step="50" style="width:80px;"></label>
+                    <input type="hidden" id="quoteHpp" value="0.035">
+                    <label class="hint">Costo de lo repetido <input type="number" id="quoteReuse" value="0.15" min="0" max="1" step="0.05" style="width:70px;"></label>
+                    <button id="btnRequote" class="secondary btn-sm">Recalcular</button>
+                </div>
+                <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;margin-top:0.6rem;padding-top:0.6rem;border-top:1px solid var(--border);">
+                    <span class="hint" style="margin:0;">¿No coincide con tu criterio? La complejidad real es:</span>
+                    <select id="quoteTargetLevel" style="width:110px;">
+                        <option value="Baja">Baja</option>
+                        <option value="Media" selected>Media</option>
+                        <option value="Alta">Alta</option>
+                    </select>
+                    <button id="btnCalibrate" class="secondary btn-sm">Calibrar umbrales</button>
+                    <span class="hint" id="calibrateMsg" style="margin:0;color:var(--accent-green);"></span>
+                </div>
+            </section>
+
+            <section class="panel" id="quoterReusePanel" hidden>
+                <h2>Reutilización — lo que no se paga dos veces</h2>
+                <p class="hint">Campos y reglas que ya están resueltos: repetidos dentro del formulario (bloques <code>[n]</code>) o compartidos con otra variante del ZIP (p. ej. el abreviado contra el completo).</p>
+                <div id="quoteReuseStats" class="sf-stats"></div>
+                <div class="match-table-wrap" style="max-height:280px;margin-top:0.75rem;">
+                    <table class="match-table">
+                        <thead><tr><th>Archivo</th><th>Comparado con</th><th>Compartido</th><th>Propio</th><th>% ya resuelto</th></tr></thead>
+                        <tbody id="quoteReuseBody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="panel" id="quoterDocsPanel" hidden>
+                <h2>Complejidad por formulario</h2>
+                <p class="hint">Cada PDF con las reglas de negocio que le corresponden — el PDF solo no alcanza, las reglas viven en el Excel. Si hay una ficha por formulario se empareja por nombre; si es una sola para todos, se reparte según el tamaño de cada uno.</p>
+                <div class="match-table-wrap" style="max-height:320px;">
+                    <table class="match-table">
+                        <thead><tr>
+                            <th>Formulario</th><th>Espacios</th><th>Págs</th><th>Reglas</th>
+                            <th>Puntos</th><th>Complejidad</th><th>Plazo</th>
+                        </tr></thead>
+                        <tbody id="quoteDocsLevelBody"></tbody>
+                    </table>
+                </div>
+                <p class="hint" id="quoteDocsNote" hidden style="margin-top:0.75rem;color:var(--accent-amber);"></p>
+            </section>
+
+            <section class="panel" id="quoterByFilePanel" hidden>
+                <h2>Clasificación por archivo</h2>
+                <p class="hint">Cuánto aporta cada archivo al total y qué complejidad tiene por sí solo. Sirve para ver de dónde viene el peso del proyecto.</p>
+                <div class="match-table-wrap" style="max-height:360px;">
+                    <table class="match-table">
+                        <thead><tr>
+                            <th>Archivo</th><th>Rol</th><th>Contenido</th>
+                            <th>Aporte</th><th>% del total</th><th>Complejidad</th>
+                        </tr></thead>
+                        <tbody id="quoteByFileBody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="panel" id="quoterPdfPanel" hidden>
+                <h2>Espacios por PDF</h2>
+                <p class="hint">Cada PDF del ZIP con la cantidad de espacios a llenar (campos AcroForm), abiertos por tipo.</p>
+                <div class="match-table-wrap" style="max-height:340px;">
+                    <table class="match-table">
+                        <thead><tr>
+                            <th>PDF</th><th>Págs</th><th>Espacios</th>
+                            <th>Texto</th><th>Casillas</th><th>Otros</th><th>Grupos [n]</th>
+                        </tr></thead>
+                        <tbody id="quotePdfBody"></tbody>
+                        <tfoot id="quotePdfFoot"></tfoot>
+                    </table>
+                </div>
+            </section>
+
+            <section class="panel" id="quoterExcelPanel" hidden>
+                <h2>Reglas de negocio por matriz</h2>
+                <p class="hint">Cada Excel con sus pestañas. Las hojas de catálogo y las de output/índice se listan pero no cuentan como reglas.</p>
+                <div class="match-table-wrap" style="max-height:420px;">
+                    <table class="match-table">
+                        <thead><tr>
+                            <th>Excel / Pestaña</th><th>Filas</th><th>Campos</th>
+                            <th>Reglas</th><th>Condicionales</th><th>Catálogos</th><th>Tipo</th>
+                        </tr></thead>
+                        <tbody id="quoteSheetsBody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="panel" id="quoterDetailPanel" hidden>
+                <h2>Contenido del ZIP</h2>
+                <div class="match-table-wrap" style="max-height:300px;">
+                    <table class="match-table">
+                        <thead><tr><th>Archivo</th><th>Tipo</th><th>Tamaño</th><th>Detalle</th></tr></thead>
+                        <tbody id="quoteInventoryBody"></tbody>
+                    </table>
+                </div>
+
+                <h3 style="margin:1.25rem 0 0.5rem;font-size:0.95rem;">JSONs</h3>
+                <div class="match-table-wrap" style="max-height:240px;">
+                    <table class="match-table">
+                        <thead><tr><th>Archivo</th><th>Tipo</th><th>Detalle</th></tr></thead>
+                        <tbody id="quoteDocsBody"></tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+
+  </main>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

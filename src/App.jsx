@@ -1,21 +1,16 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AppLayout from './components/layout/AppLayout';
 import DashboardPage from './pages/DashboardPage';
-import CsvGeneratorPage from './pages/CsvGeneratorPage';
-import BulkSendPage from './pages/BulkSendPage';
-import HtmlGeneratorPage from './pages/HtmlGeneratorPage';
-import GanttGeneratorPage from './pages/GanttGeneratorPage';
+import ToolPage from './pages/ToolPage';
 
 export default function App() {
   return (
-    <BrowserRouter basename="/PShome">
+    <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, '')}>
       <Routes>
         <Route element={<AppLayout />}>
           <Route index element={<DashboardPage />} />
-          <Route path="/tools/csv-generator" element={<CsvGeneratorPage />} />
-          <Route path="/tools/bulksend" element={<BulkSendPage />} />
-          <Route path="/tools/html-generator" element={<HtmlGeneratorPage />} />
-          <Route path="/tools/gantt-generator" element={<GanttGeneratorPage />} />
+          <Route path="/tools/:id" element={<ToolPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
     </BrowserRouter>

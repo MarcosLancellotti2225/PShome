@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Comparador JSON · PS Tools</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo" aria-hidden="true"></div>
+      <div class="titles">
+        <div class="eyebrow">Namirial · PS Tools</div>
+        <h1>Comparador JSON</h1>
+        <p>Mapa del JSON de entrada y salida de un form-definition, y comparación con el JSON real del cliente.</p>
+      </div>
+    </div>
+  </header>
+  <main>
+        <div id="jsonMapFlow">
+            <section class="panel">
+                <h2>1. Cargar form-definition</h2>
+                <p class="hint">El JSON de definición del formulario. Se recorren todas las secciones, subsecciones y repeaters para reconstruir las rutas de entrada y salida.</p>
+                <div class="inputs-grid">
+                    <label class="file-slot required" data-slot="jm-json">
+                        <span class="label">form-definition JSON</span>
+                        <span class="desc">salidaJSON · prefillKey · repeaterConfig</span>
+                        <input type="file" accept=".json" id="jmJsonInput">
+                        <span class="file-status" id="jmJsonStatus"></span>
+                    </label>
+                    <label class="file-slot" data-slot="jm-sample">
+                        <span class="label">Ejemplo del cliente (opcional)</span>
+                        <span class="desc">El JSON real, para comparar y ver los errores</span>
+                        <input type="file" accept=".json" id="jmSampleInput">
+                        <span class="file-status" id="jmSampleStatus"></span>
+                    </label>
+                </div>
+                <div id="jmCompareOpts" hidden style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;margin-top:0.75rem;">
+                    <span class="hint" style="margin:0;">Comparar el ejemplo contra:</span>
+                    <select id="jmCompareDir" style="width:190px;">
+                        <option value="output">JSON de salida</option>
+                        <option value="input">JSON de entrada (prefill)</option>
+                    </select>
+                </div>
+                <div id="jmStatus" class="status"></div>
+            </section>
+
+            <section class="panel" id="jmComparePanel" hidden>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
+                    <h2 style="margin:0;">Comparación con el ejemplo del cliente</h2>
+                    <div class="actions" style="margin:0;">
+                        <select id="jmCompareFilter" style="width:210px;">
+                            <option value="problem">Solo los problemas</option>
+                            <option value="falta">Faltan (el cliente los espera)</option>
+                            <option value="forma">Forma distinta</option>
+                            <option value="sobra">Sobran (no están en el ejemplo)</option>
+                            <option value="ok">Coinciden</option>
+                            <option value="all">Todo</option>
+                        </select>
+                        <button id="btnJmCompareDownload" class="secondary btn-sm">Descargar comparación</button>
+                    </div>
+                </div>
+                <div id="jmCompareStats" class="sf-stats" style="margin-top:0.75rem;"></div>
+                <div class="match-table-wrap" style="max-height:460px;margin-top:0.75rem;">
+                    <table class="match-table">
+                        <thead><tr><th>Estado</th><th>Ruta del cliente</th><th>Qué pasa</th></tr></thead>
+                        <tbody id="jmCompareBody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="panel" id="jmResultPanel" hidden>
+                <div id="jmStats" class="sf-stats"></div>
+            </section>
+
+            <section class="panel" id="jmTreePanel" hidden>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
+                    <div class="jm-tabs">
+                        <button class="jm-tab active" data-tab="output">JSON de salida</button>
+                        <button class="jm-tab" data-tab="input">JSON de entrada (prefill)</button>
+                    </div>
+                    <div class="actions" style="margin:0;">
+                        <button id="btnJmDownload" class="secondary btn-sm">Descargar el que estoy viendo</button>
+                        <button id="btnJmDownloadAll" class="secondary btn-sm">Descargar informe completo</button>
+                    </div>
+                </div>
+                <p class="hint" id="jmTreeHint" style="margin-top:0.6rem;"></p>
+                <pre class="jm-code" id="jmTree"></pre>
+            </section>
+
+            <section class="panel" id="jmIssuesPanel" hidden>
+                <h2>Problemas del contrato</h2>
+                <p class="hint">Rutas que se pisan entre sí o campos que no llegan al JSON.</p>
+                <div class="match-table-wrap" style="max-height:320px;">
+                    <table class="match-table">
+                        <thead><tr><th>Severidad</th><th>Ruta</th><th>Detalle</th><th>Campos</th></tr></thead>
+                        <tbody id="jmIssuesBody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="panel" id="jmPathsPanel" hidden>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:0.6rem;">
+                    <h2 style="margin:0;">Todas las rutas</h2>
+                    <input type="text" id="jmFilter" placeholder="Filtrar por ruta o campo…" style="width:280px;">
+                </div>
+                <div class="match-table-wrap" style="max-height:420px;">
+                    <table class="match-table">
+                        <thead><tr><th>Dirección</th><th>Ruta</th><th>Campos que la escriben</th></tr></thead>
+                        <tbody id="jmPathsBody"></tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+
+  </main>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
