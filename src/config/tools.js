@@ -11,7 +11,7 @@
  *   description → una línea: qué hace
  *   icon        → nombre de un ícono de la lista en src/components/common/ToolIcon.jsx
  *   src         → de dónde se carga la herramienta:
- *                   - migrada al repo:  local('<id>')  → public/apps/<id>/index.html
+ *                   - migrada al repo:  local('<id>')  → apps/<id>/ (con build) o public/apps/<id>/ (estática)
  *                   - todavía afuera:   'https://…'    → repo viejo (pendiente de migrar)
  */
 
@@ -60,6 +60,14 @@ export const TOOLS = [
     src: `${local('ficha-formulario')}interno.html`,
   },
   {
+    id: 'comparador-json',
+    section: 'signaframe',
+    name: 'Comparador JSON',
+    description: 'Dibuja el JSON de entrada y salida de un form-definition y lo compara con el JSON real del cliente.',
+    icon: 'FileJson',
+    src: local('comparador-json'),
+  },
+  {
     id: 'html-generator',
     section: 'comunicacion',
     name: 'Email Templates',
@@ -74,6 +82,14 @@ export const TOOLS = [
     description: 'Genera diagramas de Gantt para planes de proyecto y los exporta a PNG.',
     icon: 'GanttChart',
     src: 'https://marcoslancellotti2225.github.io/GranttGenerator/', // pendiente de migrar
+  },
+  {
+    id: 'cotizador',
+    section: 'planificacion',
+    name: 'Cotizador',
+    description: 'Lee un ZIP con los insumos de un formulario y calcula su complejidad: Baja, Media o Alta.',
+    icon: 'ClipboardList',
+    src: local('cotizador'),
   },
 ];
 
