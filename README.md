@@ -10,12 +10,12 @@ src/config/tools.js      ← secciones y herramientas (único lugar a editar)
 src/pages/               ← Inicio (lanzador) y página genérica de herramienta
 src/components/          ← layout (menú, barra superior) y embed
 src/styles/variables.css ← tokens de marca Namirial (Open Sans, paleta teal)
-public/tools/<id>/       ← código de cada herramienta migrada (index.html + assets)
+public/apps/<id>/       ← código de cada herramienta migrada (index.html + assets)
 ```
 
 ## Sumar o reordenar una herramienta
 
-1. Copiá la herramienta a `public/tools/<id>/` (con su `index.html`).
+1. Copiá la herramienta a `public/apps/<id>/` (con su `index.html`).
 2. Agregá una entrada en `TOOLS` dentro de `src/config/tools.js`:
 
 ```js
@@ -25,7 +25,7 @@ public/tools/<id>/       ← código de cada herramienta migrada (index.html + a
   name: 'Mi herramienta',
   description: 'Qué hace, en una línea.',
   icon: 'FileJson',                 // ver lista en src/components/common/ToolIcon.jsx
-  src: local('mi-herramienta'),     // → public/tools/mi-herramienta/
+  src: local('mi-herramienta'),     // → public/apps/mi-herramienta/
 },
 ```
 

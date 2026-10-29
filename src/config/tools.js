@@ -11,11 +11,11 @@
  *   description → una línea: qué hace
  *   icon        → nombre de un ícono de la lista en src/components/common/ToolIcon.jsx
  *   src         → de dónde se carga la herramienta:
- *                   - migrada al repo:  local('<id>')  → public/tools/<id>/index.html
+ *                   - migrada al repo:  local('<id>')  → public/apps/<id>/index.html
  *                   - todavía afuera:   'https://…'    → repo viejo (pendiente de migrar)
  */
 
-const local = (id) => `${import.meta.env.BASE_URL}tools/${id}/`;
+const local = (id) => `${import.meta.env.BASE_URL}apps/${id}/`;
 
 export const SECTIONS = [
   { id: 'firma', name: 'Firma y envíos', description: 'Mandar a firmar, envíos masivos y créditos.' },
@@ -42,6 +42,22 @@ export const TOOLS = [
     description: 'Convierte Excel, CSV, JSON o XML al formato de la CLI de IvSign e IvNeos.',
     icon: 'FileSpreadsheet',
     src: 'https://marcoslancellotti2225.github.io/toolsImport/', // pendiente de migrar
+  },
+  {
+    id: 'ficha-formulario',
+    section: 'signaframe',
+    name: 'Ficha de formulario',
+    description: 'Arma el formulario desde el PDF y el JSON del cliente, cruza la matriz del INS y baja la ficha.',
+    icon: 'FileCog',
+    src: local('ficha-formulario'),
+  },
+  {
+    id: 'matriz-interna',
+    section: 'signaframe',
+    name: 'Matriz interna',
+    description: 'Junta la ficha cerrada con los campos de Signaframe y baja la matriz para el form-def.',
+    icon: 'Table2',
+    src: `${local('ficha-formulario')}interno.html`,
   },
   {
     id: 'html-generator',

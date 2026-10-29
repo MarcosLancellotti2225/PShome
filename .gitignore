@@ -22,3 +22,16 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Archivos de clientes: nunca se commitean (PDF, Excel, JSON)
+*.pdf
+*.xlsx
+*.xls
+*.json
+!package.json
+!package-lock.json
+!.vscode/extensions.json
+# Excepciones: referencias sin datos de clientes de cada herramienta
+!public/apps/*/docs/plantilla_referencia_*.xlsx
+!public/apps/*/docs/diccionario_*.xlsx
+!public/apps/*/docs/catalogo_*.json
