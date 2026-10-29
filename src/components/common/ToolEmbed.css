@@ -7,6 +7,8 @@
 
 .tool-embed-header {
   display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
   align-items: center;
   justify-content: space-between;
   margin-bottom: var(--spacing-md);
@@ -28,12 +30,7 @@
   flex-shrink: 0;
 }
 
-.tool-embed-icon.signaturit {
-  background: #e0f7f7;
-  color: #00b4b6;
-}
-
-.tool-embed-icon.cross-product {
+.tool-embed-icon {
   background: var(--color-primary-light);
   color: var(--color-primary);
 }
@@ -97,12 +94,8 @@
   font-weight: 500;
 }
 
-.tool-embed-badge.signaturit {
-  background: #e0f7f7;
-  color: #008b8d;
-}
-
-.tool-embed-badge.cross-product {
+.tool-embed-badge {
   background: var(--color-primary-light);
   color: var(--color-primary-dark);
+  font-weight: 600;
 }

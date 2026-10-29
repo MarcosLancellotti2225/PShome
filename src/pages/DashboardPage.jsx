@@ -1,149 +1,88 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  FileSpreadsheet,
-  Send,
-  Code,
-  GanttChart,
-  ExternalLink,
-  Shield,
-  PenTool,
-  Mail,
-  MessageSquare,
-  KeyRound,
-  FileCheck,
-  Building2,
-} from 'lucide-react';
+import { Search, ArrowRight } from 'lucide-react';
+import { SECTIONS, TOOLS, toolsInSection } from '../config/tools';
+import ToolIcon from '../components/common/ToolIcon';
 import './DashboardPage.css';
 
-const productFamilies = [
-  {
-    name: 'Ivnosys',
-    color: '#3b82f6',
-    icon: Building2,
-    products: [
-      { name: 'IvSign', description: 'Firma electr\u00f3nica avanzada y cualificada', icon: PenTool },
-      { name: 'IvNeos', description: 'Comunicaciones electr\u00f3nicas certificadas', icon: Mail },
-      { name: 'IvCert', description: 'Certificados digitales y gesti\u00f3n de identidad', icon: KeyRound },
-    ],
-  },
-  {
-    name: 'Signaturit',
-    color: '#00b4b6',
-    icon: FileCheck,
-    products: [
-      { name: 'Firma electr\u00f3nica', description: 'Firma electr\u00f3nica simple y avanzada', icon: PenTool },
-      { name: 'Email certificado', description: 'Env\u00edo de emails con evidencia legal', icon: Mail },
-      { name: 'SMS certificado', description: 'Env\u00edo de SMS con evidencia legal', icon: MessageSquare },
-    ],
-  },
-  {
-    name: 'Namirial',
-    color: '#8b5cf6',
-    icon: Shield,
-    products: [
-      { name: 'eIDAS Services', description: 'Servicios de confianza europeos', icon: Shield },
-    ],
-  },
-];
-
-const tools = [
-  {
-    to: '/tools/csv-generator',
-    icon: FileSpreadsheet,
-    name: 'Generador CSV',
-    description: 'Convierte Excel/CSV/JSON/XML al formato correcto para CLI de IvSign e IvNeos',
-    product: 'cross-product',
-  },
-  {
-    to: '/tools/bulksend',
-    icon: Send,
-    name: 'Multi Send',
-    description: 'Env\u00edo masivo de firmas electr\u00f3nicas, emails y SMS certificados',
-    product: 'signaturit',
-  },
-  {
-    to: '/tools/html-generator',
-    icon: Code,
-    name: 'Email Templates',
-    description: 'Crear y gestionar templates de email para brandings de Signaturit',
-    product: 'signaturit',
-  },
-  {
-    to: '/tools/gantt-generator',
-    icon: GanttChart,
-    name: 'Gantt Generator',
-    description: 'Genera diagramas de Gantt para planificación de proyectos y exporta a PNG',
-    product: 'cross-product',
-  },
-];
-
 export default function DashboardPage() {
+  const [query, setQuery] = useState('');
+  const term = query.trim().toLowerCase();
+  const matches = (t) => !term || `${t.name} ${t.description}`.toLowerCase().includes(term);
+
+  const sections = SECTIONS.map((s) => ({ ...s, all: toolsInSection(s.id), tools: toolsInSection(s.id).filter(matches) }))
+    .filter((s) => !term || s.tools.length);
+
   return (
     <div className="home-page">
-      <div className="home-header">
-        <h2>Professional Services</h2>
-        <p>Home page del equipo \u2014 productos, herramientas y recursos internos</p>
-      </div>
+      <section className="home-hero">
+        <h2>PS Tools</h2>
+        <p>Todas las herramientas del equipo en un solo lugar. Buscá por lo que necesitás hacer o entrá por sección.</p>
+        <label className="home-search">
+          <Search size={18} aria-hidden="true" />
+          <span className="visually-hidden">Buscar herramienta</span>
+          <input
+            id="home-search"
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="¿Qué necesitás hacer? Ej: enviar a firmar, importar usuarios…"
+            autoComplete="off"
+          />
+        </label>
+      </section>
 
-      {/* Productos */}
-      <section className="home-section">
-        <h3 className="home-section-title">Productos</h3>
-        <div className="products-grid">
-          {productFamilies.map((family) => (
-            <div key={family.name} className="product-family-card">
-              <div className="product-family-header" style={{ borderColor: family.color }}>
-                <div className="product-family-icon" style={{ background: family.color + '18', color: family.color }}>
-                  <family.icon size={22} />
-                </div>
-                <span className="product-family-name">{family.name}</span>
-              </div>
-              <ul className="product-list">
-                {family.products.map((prod) => (
-                  <li key={prod.name} className="product-item">
-                    <prod.icon size={16} style={{ color: family.color, flexShrink: 0 }} />
-                    <div>
-                      <div className="product-item-name">{prod.name}</div>
-                      <div className="product-item-desc">{prod.description}</div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+      {!term && (
+        <nav className="home-jump" aria-label="Secciones">
+          {SECTIONS.map((s) => (
+            <a key={s.id} href={`#${s.id}`}>
+              {s.name}
+              <span>{toolsInSection(s.id).length}</span>
+            </a>
+          ))}
+        </nav>
+      )}
+
+      {sections.length === 0 && (
+        <p className="home-noresults">Ninguna herramienta coincide con “{query}”.</p>
+      )}
+
+      {sections.map((section) => (
+        <section key={section.id} id={section.id} className="home-section">
+          <div className="home-section-head">
+            <div>
+              <h3>{section.name}</h3>
+              <p>{section.description}</p>
             </div>
-          ))}
-        </div>
-      </section>
+            <span className="home-section-count">
+              {section.all.length} {section.all.length === 1 ? 'herramienta' : 'herramientas'}
+            </span>
+          </div>
 
-      {/* Herramientas */}
-      <section className="home-section">
-        <h3 className="home-section-title">Herramientas</h3>
-        <div className="tools-catalog-grid">
-          {tools.map((tool) => (
-            <Link key={tool.to} to={tool.to} className="catalog-card">
-              <div className={`catalog-card-icon ${tool.product}`}>
-                <tool.icon size={24} />
-              </div>
-              <div className="catalog-card-body">
-                <div className="catalog-card-name">{tool.name}</div>
-                <div className="catalog-card-desc">{tool.description}</div>
-              </div>
-              <div className="catalog-card-footer">
-                <span className={`catalog-tag ${tool.product}`}>
-                  {tool.product === 'signaturit' ? 'Signaturit' : 'Cross-product'}
-                </span>
-                <ExternalLink size={14} className="catalog-card-arrow" />
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
+          {section.tools.length ? (
+            <div className="home-grid">
+              {section.tools.map((tool) => (
+                <Link key={tool.id} to={`/tools/${tool.id}`} className="home-card">
+                  <div className="home-card-icon">
+                    <ToolIcon name={tool.icon} size={22} />
+                  </div>
+                  <div className="home-card-name">{tool.name}</div>
+                  <div className="home-card-desc">{tool.description}</div>
+                  <div className="home-card-open">
+                    Abrir <ArrowRight size={14} />
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="home-empty">Todavía no hay herramientas en esta sección.</div>
+          )}
+        </section>
+      ))}
 
-      {/* Documentaci\u00f3n */}
-      <section className="home-section">
-        <h3 className="home-section-title">Documentaci\u00f3n</h3>
-        <div className="docs-placeholder">
-          <p>Pr\u00f3ximamente: instructivos, links de wiki y recursos del equipo.</p>
-        </div>
-      </section>
+      <p className="home-footnote">
+        {TOOLS.length} herramientas · Para sumar o reordenar, editá <code>src/config/tools.js</code>.
+      </p>
     </div>
   );
 }

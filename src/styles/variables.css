@@ -1,27 +1,43 @@
+/*
+ * Tokens alineados con el Namirial Design System (namirial-theme.css).
+ * Paletas: accent (teal), neutral (gris verdoso), surface.
+ * Los nombres --color-* se mantienen para no romper los estilos existentes.
+ */
 :root {
-  /* Signaturit brand colors */
-  --color-primary: #1a73e8;
-  --color-primary-dark: #1557b0;
-  --color-primary-light: #e8f0fe;
-  --color-secondary: #34a853;
-  --color-accent: #f9ab00;
-  --color-danger: #ea4335;
+  /* Namirial accent (teal) */
+  --color-primary: #047c76;        /* accent-600 */
+  --color-primary-dark: #006660;   /* accent-700 */
+  --color-primary-strong: #00a69d; /* accent-400 */
+  --color-primary-light: #defffb;  /* accent-50 */
+  --color-primary-deep: #012825;   /* accent-950 */
 
-  /* Neutrals */
-  --color-bg: #f4f6f9;
-  --color-surface: #ffffff;
-  --color-border: #e0e4e8;
-  --color-text: #1f2937;
-  --color-text-secondary: #6b7280;
-  --color-text-muted: #9ca3af;
+  /* Semánticos */
+  --color-secondary: #198446;      /* positive-600 */
+  --color-accent: #8c6410;         /* warning-600 */
+  --color-danger: #ad4546;         /* negative-600 */
+
+  /* Neutrals / surfaces */
+  --color-bg: #f0f3f8;             /* surface-100 */
+  --color-band: #e9ebf0;           /* surface-200 */
+  --color-surface: #ffffff;        /* surface-50 */
+  --color-border: #cddbdb;         /* neutral-100 */
+  --color-text: #0a1111;           /* surface-950 */
+  --color-text-secondary: #4f5b5b; /* neutral-700 */
+  --color-text-muted: #778383;     /* neutral-500 */
 
   /* Sidebar */
   --sidebar-width: 260px;
   --sidebar-collapsed-width: 72px;
-  --sidebar-bg: #0f172a;
-  --sidebar-text: #cbd5e1;
-  --sidebar-active: var(--color-primary);
-  --sidebar-hover: #1e293b;
+  --sidebar-bg: #012825;           /* accent-950 */
+  --sidebar-text: #cddbdb;         /* neutral-100 */
+  --sidebar-text-strong: #e4f2f2;  /* neutral-50 */
+  --sidebar-muted: #8b9898;        /* neutral-400 */
+  --sidebar-active: #59d8ce;       /* accent-200 */
+  --sidebar-active-bg: rgba(0, 166, 157, 0.18);
+  --sidebar-hover: rgba(228, 242, 242, 0.08);
+
+  /* Typography */
+  --font-family: 'Open Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 
   /* Spacing */
   --spacing-xs: 4px;
@@ -37,9 +53,9 @@
   --radius-lg: 12px;
 
   /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 2px rgba(10, 17, 17, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(10, 17, 17, 0.07), 0 2px 4px -1px rgba(10, 17, 17, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(10, 17, 17, 0.08), 0 4px 6px -2px rgba(10, 17, 17, 0.04);
 
   /* Transitions */
   --transition-fast: 150ms ease;

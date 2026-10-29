@@ -1,16 +1,45 @@
-# React + Vite
+# PS Tools · Namirial Professional Services
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Hub único con todas las herramientas del equipo de Professional Services.
+Todo el código vive en este repo: el hub (React + Vite) y cada herramienta en su propia carpeta.
 
-Currently, two official plugins are available:
+## Estructura
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+```
+src/config/tools.js      ← secciones y herramientas (único lugar a editar)
+src/pages/               ← Inicio (lanzador) y página genérica de herramienta
+src/components/          ← layout (menú, barra superior) y embed
+src/styles/variables.css ← tokens de marca Namirial (Open Sans, paleta teal)
+public/tools/<id>/       ← código de cada herramienta migrada (index.html + assets)
+```
 
-## React Compiler
+## Sumar o reordenar una herramienta
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+1. Copiá la herramienta a `public/tools/<id>/` (con su `index.html`).
+2. Agregá una entrada en `TOOLS` dentro de `src/config/tools.js`:
 
-## Expanding the ESLint configuration
+```js
+{
+  id: 'mi-herramienta',
+  section: 'signaframe',            // id de una sección de SECTIONS
+  name: 'Mi herramienta',
+  description: 'Qué hace, en una línea.',
+  icon: 'FileJson',                 // ver lista en src/components/common/ToolIcon.jsx
+  src: local('mi-herramienta'),     // → public/tools/mi-herramienta/
+},
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+El menú, el inicio y la ruta `/tools/mi-herramienta` se generan solos.
+Para reordenar, mové la entrada dentro del array. Para cambiar el orden de las secciones, reordená `SECTIONS`.
+
+Las herramientas que todavía tienen una URL `https://…` en `src` están pendientes de migrar desde su repo anterior.
+
+## Desarrollo
+
+```bash
+npm ci
+npm run dev      # http://localhost:5173/PShome/
+npm run build    # genera dist/
+```
+
+El deploy a GitHub Pages corre solo con cada push a `main` (`.github/workflows/deploy.yml`).
