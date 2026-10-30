@@ -2,7 +2,7 @@
 // La lógica vive en src/lib/pdf-editor (mismo motor que Convertir PDF); acá, la interfaz.
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import {
-  Copy, Download, FileSpreadsheet, FileText, Image as ImageIcon, ListChecks, MousePointer2, Redo2,
+  Copy, Download, FileSpreadsheet, FileText, FlaskConical, Image as ImageIcon, ListChecks, MousePointer2, Redo2,
   SquarePlus, Tag, Undo2, Upload, Wand2, X, ZoomIn, ZoomOut,
 } from 'lucide-react';
 import { Alert, Badge, Button, ConfirmButton, Field, FileDrop, Panel } from '../../components/ui';
@@ -174,11 +174,15 @@ export default function EditorPdf() {
     if (!found.size) { setStatus({ tone: 'warning', text: 'Ningún nombre del Excel coincide con los campos del PDF.' }); return; }
     change((fs) => fs.map((f) => (found.has(f.key) && !f.deleted ? { ...f, name: found.get(f.key).newName } : f)));
     setMatches(found);
-    const count = (t) => [...found.values()].filter((m) => m.matchType === t).length;
+    // Solo cuentan los que cambian de nombre: el Excel puede traer filas con el mismo nombre en las dos columnas.
+    const changed = fields.filter((f) => !f.deleted && found.has(f.key) && found.get(f.key).newName !== f.name).map((f) => found.get(f.key));
+    const count = (t) => changed.filter((m) => m.matchType === t).length;
     const fuzzy = count('parecido');
     setStatus({
       tone: fuzzy ? 'warning' : 'success',
-      text: `Se renombraron ${found.size} campos: ${count('exacto')} exactos, ${count('normalizado')} por nombre parecido sin espacios ni tildes${fuzzy ? `, ${fuzzy} por parecido (revisalos: filtrá «Renombrados»)` : ''}.`,
+      text: changed.length
+        ? `Se renombraron ${changed.length} campos: ${count('exacto')} por nombre exacto, ${count('normalizado')} sin espacios ni tildes${fuzzy ? `, ${fuzzy} por parecido (revisalos: filtrá «Renombrados»)` : ''}. ${found.size - changed.length ? `${found.size - changed.length} filas del Excel ya tenían el mismo nombre.` : ''}`
+        : `El Excel coincide con ${found.size} campos, pero ninguno cambia de nombre.`,
     });
     setPanel(null);
     setImportCols(null);
@@ -207,7 +211,7 @@ export default function EditorPdf() {
       n += 1;
       return { ...f, name };
     }));
-    setTimeout(() => setStatus({ tone: 'success', text: `Edición en bloque aplicada: ${n} nombres cambiados.` }), 0);
+    setTimeout(() => setStatus({ tone: 'success', text: `Renombrado en bloque: ${n} nombres cambiados.` }), 0);
     setPanel(null);
   }
 
@@ -275,7 +279,7 @@ export default function EditorPdf() {
 
   const copyNames = async () => {
     const text = fields.filter((f) => !f.deleted).map((f) => f.name).join('\n');
-    try { await navigator.clipboard.writeText(text); setStatus({ tone: 'success', text: 'Lista de nombres copiada.' }); } catch { setStatus({ tone: 'error', text: 'El navegador no dejó copiar. Usá «Excel de campos».' }); }
+    try { await navigator.clipboard.writeText(text); setStatus({ tone: 'success', text: 'Lista de nombres copiada.' }); } catch { setStatus({ tone: 'error', text: 'El navegador no dejó copiar. Usá «Descargar Excel».' }); }
   };
 
   // ── Sin PDF abierto ───────────────────────────────────────────────────────
@@ -326,9 +330,13 @@ export default function EditorPdf() {
             <Button size="sm" icon={Redo2} disabled={!state.future.length} onClick={() => dispatch({ type: 'redo' })} title="Rehacer (Ctrl+Y)">Rehacer</Button>
           </div>
           <div className="ep-group" role="group" aria-label="Nombres">
-            <Button size="sm" icon={Upload} variant={panel === 'import' ? 'primary' : 'secondary'} onClick={() => setPanel(panel === 'import' ? null : 'import')}>Importar nombres</Button>
-            <Button size="sm" icon={ListChecks} variant={panel === 'bulk' ? 'primary' : 'secondary'} onClick={() => (panel === 'bulk' ? setPanel(null) : openBulk())}>Edición en bloque</Button>
+            <Button size="sm" icon={ListChecks} variant={panel === 'bulk' ? 'primary' : 'secondary'} onClick={() => (panel === 'bulk' ? setPanel(null) : openBulk())} title="Ver todos los nombres como texto (actual → nuevo) para copiarlos, editarlos y pegarlos de vuelta">Renombrar en bloque</Button>
             <Button size="sm" icon={Wand2} onClick={() => { const keys = fields.filter((f) => !f.deleted && isTextField(f) && (!pageFilter || f.page === pageFilter)).map((f) => f.key); updateKeys(keys, { fontSize: 0 }); setStatus({ tone: 'success', text: `${keys.length} campos de texto quedaron con fuente Auto.` }); }} title="Pone en Auto la fuente de los campos de texto (de la página filtrada, o de todas)">Todo en Auto</Button>
+          </div>
+          <div className="ep-group" role="group" aria-label="Excel y prueba">
+            <Button size="sm" icon={Upload} variant={panel === 'import' ? 'primary' : 'secondary'} onClick={() => setPanel(panel === 'import' ? null : 'import')} title="Renombrar los campos con un Excel («AcroForm Actual» / «AcroForm Propuesto»)">Importar Excel</Button>
+            <Button size="sm" icon={FileSpreadsheet} onClick={downloadExcel} title="Lista de campos en Excel. La podés editar y volver a importar">Descargar Excel</Button>
+            <Button size="sm" icon={FlaskConical} onClick={downloadDummy} title="Descarga el PDF lleno con datos de ejemplo y te avisa qué textos no entran">Probar relleno</Button>
           </div>
           <div className="ep-group" role="group" aria-label="Vista">
             <Button size="sm" icon={ZoomOut} onClick={() => setZoom((z) => Math.max(0.4, +(z - 0.2).toFixed(2)))} aria-label="Alejar" />
@@ -344,7 +352,7 @@ export default function EditorPdf() {
       </div>
 
       {panel === 'import' && (
-        <Panel title="Importar nombres desde Excel" hint="Si el Excel tiene las columnas «AcroForm Actual» y «AcroForm Propuesto» (la matriz de 22 columnas o el Excel de campos de este editor), se aplica solo. Si no, elegís las columnas. Cada campo del PDF se busca por nombre exacto, sin espacios ni tildes, o parecido.">
+        <Panel title="Importar Excel" hint="Si el Excel tiene las columnas «AcroForm Actual» y «AcroForm Propuesto» (la matriz de 22 columnas o el que baja «Descargar Excel»), se aplica solo. Si no, elegís las columnas. Cada campo del PDF se busca por nombre exacto, sin espacios ni tildes, o parecido.">
           {!importCols && <FileDrop label="Excel con los nombres" accept=".xlsx,.xls" file={null} onFile={onPickExcel} />}
           {importCols && (
             <>
@@ -370,8 +378,8 @@ export default function EditorPdf() {
 
       {panel === 'bulk' && (
         <Panel
-          title="Edición en bloque"
-          hint="Una línea por campo: nombre actual, TAB, nombre nuevo. Copialo a Excel, editalo y pegalo de vuelta."
+          title="Renombrar en bloque"
+          hint="Una línea por campo: nombre actual, TAB, nombre nuevo. Tocá «Copiar todo», pegalo en Excel, cambiá la segunda columna y pegalo acá de vuelta. Después, «Aplicar»."
           actions={(
             <>
               <Button size="sm" icon={Copy} onClick={async () => { try { await navigator.clipboard.writeText(bulkText); } catch { /* el usuario puede copiar a mano */ } }}>Copiar todo</Button>
@@ -396,12 +404,12 @@ export default function EditorPdf() {
               </label>
             </div>
             <div className="ep-export-item">
-              <Button icon={FileText} onClick={downloadDummy}>Con datos de prueba</Button>
+              <Button icon={FlaskConical} onClick={downloadDummy}>Probar relleno</Button>
               <label className="ep-check"><input id="ep-long" type="checkbox" checked={longText} onChange={(e) => setLongText(e.target.checked)} /> texto largo</label>
             </div>
             <div className="ep-export-item"><Button icon={Tag} onClick={downloadLabels}>Con los nombres visibles</Button></div>
             <div className="ep-export-item"><Button icon={ImageIcon} onClick={downloadImage}>Imagen de la página</Button></div>
-            <div className="ep-export-item"><Button icon={FileSpreadsheet} onClick={downloadExcel}>Excel de campos</Button></div>
+            <div className="ep-export-item"><Button icon={FileSpreadsheet} onClick={downloadExcel}>Descargar Excel</Button></div>
             <div className="ep-export-item"><Button icon={Copy} onClick={copyNames}>Copiar nombres</Button></div>
           </div>
         </Panel>
