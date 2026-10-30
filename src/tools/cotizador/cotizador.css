@@ -1,0 +1,17 @@
+.cz-verdict { display: flex; align-items: center; gap: var(--spacing-md); background: var(--color-bg); border-radius: var(--radius-md); padding: var(--spacing-md); }
+.cz-level { font-size: 1.6rem; font-weight: 800; padding: 6px 18px; border-radius: var(--radius-md); border: 2px solid; }
+.cz-level-baja { color: #006d36; border-color: #66c684; background: #dfffe6; }
+.cz-level-media { color: #745102; border-color: #e5b970; background: #ffecce; }
+.cz-level-alta { color: #952f33; border-color: #f58683; background: #ffe8e7; }
+.cz-points { font-size: 1.05rem; }
+.cz-h3 { font-size: 0.95rem; font-weight: 700; margin-top: var(--spacing-sm); }
+.cz-config { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.cz-config input[type='number'] { width: 90px; }
+.cz-calibrate { border-top: 1px solid var(--color-border); padding-top: var(--spacing-md); }
+.cz-dim { color: var(--color-text-muted); font-weight: 400; }
+.cz-small { font-size: 0.78rem; }
+.cz-good { color: var(--color-secondary); }
+.cz-accent { color: var(--color-primary); }
+.cz-indent { padding-left: 1.25rem; color: var(--color-text-secondary); }
+.cz-bar { height: 4px; border-radius: 2px; background: var(--color-primary); opacity: 0.7; margin-top: 3px; margin-left: auto; }
+.ui-table tr.is-total td { font-weight: 700; border-top: 2px solid var(--color-border); }

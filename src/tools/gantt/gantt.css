@@ -1,0 +1,67 @@
+.gantt-tool { display: flex; flex-direction: column; gap: var(--spacing-md); min-width: 0; }
+.gantt-toolbar { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+.gantt-spacer { flex: 1; }
+
+.gantt-workspace { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: var(--spacing-md); align-items: start; }
+@media (max-width: 1100px) { .gantt-workspace { grid-template-columns: 1fr; } }
+.gantt-editor { display: flex; flex-direction: column; gap: var(--spacing-md); min-width: 0; }
+
+.gantt-color-row { display: flex; align-items: center; gap: 10px; }
+.gantt-color-label { font-size: 0.85rem; color: var(--color-text-secondary); width: 64px; }
+.gantt-subtitle-label { font-size: 0.78rem; font-weight: 600; color: var(--color-text-secondary); margin-top: 4px; }
+.gantt-bg-tabs { align-self: flex-start; }
+.gantt-tool input[type='color'] { width: 30px; height: 30px; border: 1px solid var(--color-border); border-radius: 6px; padding: 2px; background: var(--color-surface); cursor: pointer; }
+.gantt-tool input[type='color']:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.gantt-switch { position: relative; width: 34px; height: 20px; flex-shrink: 0; cursor: pointer; }
+.gantt-switch input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+.gantt-switch span[aria-hidden] { position: absolute; inset: 0; background: var(--color-border); border-radius: 10px; transition: background var(--transition-fast); pointer-events: none; }
+.gantt-switch span[aria-hidden]::before { content: ''; position: absolute; width: 16px; height: 16px; left: 2px; top: 2px; background: #fff; border-radius: 50%; transition: transform var(--transition-fast); }
+.gantt-switch input:checked + span { background: var(--color-primary); }
+.gantt-switch input:checked + span::before { transform: translateX(14px); }
+.gantt-switch input:focus-visible + span { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+
+.gantt-phase { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.gantt-phase:hover { border-color: var(--color-primary); }
+.gantt-phase-head { display: flex; align-items: center; gap: 6px; }
+.gantt-phase-name { flex: 1; min-width: 0; font: inherit; font-weight: 600; font-size: 0.9rem; padding: 4px 6px; border: 1px solid transparent; border-radius: var(--radius-sm); background: transparent; color: var(--color-text); }
+.gantt-phase-name:hover { border-color: var(--color-border); }
+.gantt-phase-name:focus-visible { outline: none; border-color: var(--color-primary); background: var(--color-surface); }
+.gantt-phase-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.gantt-phase-row select { font: inherit; font-size: 0.8rem; padding: 4px 6px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-surface); color: var(--color-text); }
+.gantt-tasks { display: flex; flex-direction: column; gap: 2px; }
+.gantt-task { display: flex; align-items: center; gap: 4px; }
+.gantt-task input { flex: 1; min-width: 0; font: inherit; font-size: 0.82rem; padding: 3px 6px; border: 1px solid transparent; border-radius: var(--radius-sm); background: transparent; color: var(--color-text-secondary); }
+.gantt-task input:hover { border-color: var(--color-border); }
+.gantt-task input:focus-visible { outline: none; border-color: var(--color-primary); color: var(--color-text); background: var(--color-surface); }
+.gantt-icon-btn { color: var(--color-text-muted); padding: 4px; border-radius: var(--radius-sm); display: flex; }
+.gantt-icon-btn:hover { color: var(--color-danger); background: var(--color-band); }
+.gantt-icon-btn:focus-visible { outline: 2px solid var(--color-primary); }
+.gantt-add-task { align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; font-weight: 600; color: var(--color-text-muted); border: 1px dashed var(--color-border); border-radius: var(--radius-sm); padding: 3px 8px; margin-top: 4px; }
+.gantt-add-task:hover { color: var(--color-primary); border-color: var(--color-primary); }
+
+/* Vista previa: se exporta tal cual (html2canvas) */
+.gantt-preview { overflow: auto; padding: var(--spacing-md); background: var(--color-band); border-radius: var(--radius-lg); min-width: 0; }
+.gantt-preview.is-transparent {
+  background-color: #fff;
+  background-image: linear-gradient(45deg, #e9ebf0 25%, transparent 25%), linear-gradient(-45deg, #e9ebf0 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #e9ebf0 75%), linear-gradient(-45deg, transparent 75%, #e9ebf0 75%);
+  background-size: 16px 16px; background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+}
+.gantt-chart { padding: 28px 32px; min-width: 880px; border-radius: 10px; font-family: var(--font-family); }
+.gantt-chart-title { font-size: 20px; font-weight: 800; margin-bottom: 3px; }
+.gantt-chart-subtitle { font-size: 11px; margin-bottom: 20px; opacity: 0.6; }
+.gantt-chart-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding-top: 10px; }
+.gantt-chart-footer-logo { font-size: 12px; font-weight: 800; }
+.gantt-chart-footer-text { font-size: 9px; opacity: 0.5; }
+.g-header { display: grid; padding-bottom: 7px; }
+.g-header-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: end; }
+.g-header-unit { font-size: 9.5px; font-weight: 600; text-align: center; display: flex; align-items: end; justify-content: center; }
+.g-row { display: grid; min-height: 36px; }
+.g-row-label { padding: 6px 10px 6px 0; }
+.g-phase-name { font-size: 10.5px; font-weight: 700; margin-bottom: 2px; }
+.g-tasks { list-style: none; }
+.g-tasks li { font-size: 9px; opacity: 0.65; line-height: 1.35; padding-left: 9px; position: relative; }
+.g-tasks li::before { content: '–'; position: absolute; left: 0; }
+.g-bar-wrap { display: flex; align-items: flex-start; padding: 6px 4px; }
+.g-bar { width: 100%; border-radius: 4px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 8.5px; font-weight: 700; color: #fff; letter-spacing: 0.3px; white-space: nowrap; }

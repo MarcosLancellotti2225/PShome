@@ -1,0 +1,1670 @@
+/* eslint-disable */
+// GENERADO por scripts/legacy/convert.mjs desde legacy-src/ficha-formulario (ex repo SingaframeFormBuilder) (interno.html) (JS). La lógica es la original.
+// Ruta base de la app (para archivos de public/, como docs/ o mapear.html).
+const __PSTOOLS_BASE__ = import.meta.env.BASE_URL;
+export const EXPOSED = [];
+
+export function mount() {
+
+const MI_VERSION="v3.0.0";
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+;
+
+/*DIC:start*/
+/* Generado con tools/build_dic.mjs desde diccionario_v10.xlsx (182 campos, 730 nombres de PDF). No editar a mano. */
+/* [nombre web, sinónimos y nombre en el PDF, paso, sección, ruta JSON, visible (1) u oculto (0), nombre AcroForm (regla)] */
+const DIC=[
+["Número de Póliza Madre",["Número de póliza"],"Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.numeroPoliza",1,"numero_poliza"],
+["Vigencia desde",["Inicio de vigencia","Fecha de inicio"],"Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.vigenciaDesde",1,"vigencia_desde_poliza_dia / _mes / _ano"],
+["Vigencia hasta",["Fin de vigencia","Fecha de vencimiento"],"Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.vigenciaHasta",1,"vigencia_hasta_poliza_dia / _mes / _ano"],
+["Seleccione la moneda de la póliza",["Moneda","Moneda de la póliza","Moneda: Colones"],"Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.codigoMoneda",1,"cv_moneda_poliza_<valor>"],
+["Tipo de identificación",["Tipo de identificación del tomador","Tipo de identificación: Jurídica Nacional"],"Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.codigoTipoIdentificacionTomador",1,"cv_tipo_identificacion_poliza_<valor>"],
+["Cédula jurídica",["Identificación del tomador","No Identificación"],"Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.identificacionTomador",1,"identificacion_tomador_poliza"],
+["Nombre o razón social",["Tomador","Nombre del tomador","Razón social"],"Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.nombreTomador",1,"nombre_tomador_poliza"],
+["Seleccione la forma de pago",["Forma de Pago: Mensual"],"Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.codigoFormaPago",1,"cv_forma_pago_poliza_<valor>"],
+["Código Intermediario",["Código del asesor","Código"],"Datos Generales","Datos del Asesor","datosFormulario.datosGenerales.intermediario.codigoIntermediario",1,"codigo_intermediario"],
+["Identificación",["Identificación del intermediario","Identificación del asesor"],"Datos Generales","Datos del Asesor","datosFormulario.datosGenerales.intermediario.identificacion",1,"identificacion_intermediario"],
+["Código tipo de identificación",["Tipo de identificación del intermediario"],"Datos Generales","Datos del Asesor","datosFormulario.datosGenerales.intermediario.codigoTipoIdentificacion",1,"cv_tipo_identificacion_intermediario_<valor>"],
+["Nombre",["Nombre del intermediario","Nombre del asesor","Nombre completo intermediario"],"Datos Generales","Datos del Asesor","datosFormulario.datosGenerales.intermediario.nombre",1,"nombre_intermediario"],
+["Correo electrónico",["Correo del intermediario","Correo del asesor"],"Datos Generales","Datos del Asesor","datosFormulario.datosGenerales.intermediario.correoElectronico",1,"correo_electronico_intermediario"],
+["Lugar",["Ciudad de emisión","Lugar de creación"],"Datos Generales","Información de la Solicitud","datosFormulario.datosGenerales.lugar",1,"lugar_solicitud"],
+["Fecha",["Fecha de creación","Fecha: día/mes/año"],"Datos Generales","Información de la Solicitud","datosFormulario.datosGenerales.fechaCreacion",1,"fecha_solicitud_dia / _mes / _ano"],
+["¿Tiene otro seguro médico?",["¿Tiene otro seguro médico?","¿Esta solicitud va a sustituir otro seguro?"],"Datos Generales","Información adicional","datosFormulario.datosGenerales.datosAdicionales.indicadorSubstituyeSeguro",1,"cv_substituye_seguro_si / _no"],
+["¿Qué tipo de seguro tiene actualmente?",["Seguro del INS","Tipo de seguro actual"],"Datos Generales","Información adicional","datosFormulario.datosGenerales.datosAdicionales.indicadorSubstituyeSeguroINS",1,"cv_substituye_seguro_i_n_s_si / _no"],
+["Nombre de la aseguradora actual",["Nombre de la compañía","Nombre de la aseguradora actual"],"Datos Generales","Información adicional","datosFormulario.datosGenerales.datosAdicionales.nombreAseguradoraSubstituye",1,"nombre_aseguradora_substituye"],
+["Número de póliza actual",["N.º de póliza","Número de póliza actual"],"Datos Generales","Información adicional","datosFormulario.datosGenerales.datosAdicionales.numeroPolizaSubstituye",1,"numero_poliza_substituye"],
+["Observaciones",["Observaciones","Comentarios"],"Datos Generales","Información adicional","datosFormulario.datosGenerales.datosAdicionales.observaciones",1,"observaciones"],
+["Tipo de Formulario",["Código de formulario"],"Datos Generales","Datos del Sistema (oculto)","encabezado.codigoTipoFormulario",0,""],
+["Descripción Tipo Formulario",["Descripción del tipo de formulario","Nombre del formulario"],"Datos Generales","Datos del Sistema (oculto)","encabezado.descripcionTipoFormulario",0,""],
+["Tipo Trámite",["Tipo de trámite","Código de trámite"],"Datos Generales","Datos del Sistema (oculto)","encabezado.codigoTipoTramite",0,""],
+["Descripción Tipo Trámite",["Descripción del trámite","Nombre del trámite"],"Datos Generales","Datos del Sistema (oculto)","encabezado.descripcionTipoTramite",0,""],
+["Identificador Transacción Interno",["Identificador de transacción","Referencia INS"],"Datos Generales","Datos del Sistema (oculto)","encabezado.identificadorTransaccionInterno",0,""],
+["Correo electrónico",["Correo de envío","Email de envío"],"Datos Generales","Datos del Sistema (oculto)","encabezado.correoElectronico",0,""],
+["Código de Producto",["Producto","Código del producto"],"Datos Generales","Datos del Sistema (oculto)","encabezado.codigoProducto",0,""],
+["Descripción Producto",["Nombre del producto","Descripción del producto"],"Datos Generales","Datos del Sistema (oculto)","encabezado.descripcionProducto",0,""],
+["Nombre Completo Cliente",["Nombre del cliente","Cliente"],"Datos Generales","Datos del Sistema (oculto)","encabezado.nombreCompletoCliente",0,""],
+["Identificador Archivo",["ID Namirial","Identificador Namirial"],"Datos Generales","Datos del Sistema (oculto)","encabezado.identificadorArchivo",0,""],
+["Conozca a su cliente actualizado",["KYC actualizado","Conozca a su cliente"],"Datos Generales","Datos del Sistema (oculto)","encabezado.conozcaClienteActualizado",0,""],
+["Sede Administradora",["Código de sede","Sede"],"Datos Generales","Datos del Sistema (oculto)","encabezado.sedeAdministradora",0,""],
+["Descripción Sede Administradora",["Nombre de sede","Descripción de sede"],"Datos Generales","Datos del Sistema (oculto)","encabezado.descripcionSedeAdministradora",0,""],
+["Método de envío del formulario",["Medio de envío","Canal de envío"],"Datos Generales","Datos del Sistema (oculto)","encabezado.metodoEnvioFormulario",0,""],
+["Seleccione la forma de pago",["Forma de pago","Método de pago","Forma de Pago: Mensual"],"Datos Generales","Datos del Sistema (oculto)","datosFormulario.datosGenerales.polizaMadre.descripcionFormaPago",0,""],
+["Tipo de identificación",["Descripción del tipo de identificación del tomador","Tipo de identificación: Jurídica Nacional"],"Datos Generales","Datos del Sistema (oculto)","datosFormulario.datosGenerales.polizaMadre.descripcionTipoIdentificacionTomador",0,""],
+["Tipo de Persona",["Código de tipo de persona","Asegurado","Tomador","Beneficiario","Dependiente"],"Datos Generales","Datos del Sistema (oculto)","datosFormulario.personas[].codigoTipo",0,""],
+["Descripción Tipo de Persona",["Descripción de tipo de persona","Rol de persona"],"Datos Generales","Datos del Sistema (oculto)","datosFormulario.personas[].descripcionTipo",0,""],
+["Descripción Tipo de Identificación de Persona",["Descripción del tipo de identificación"],"Datos Generales","Datos del Sistema (oculto)","datosFormulario.personas[].descripcionTipoIdentificacion",0,""],
+["Descripción de estado civil",[],"Datos Generales","Datos del Sistema (oculto)","datosFormulario.personas[].descripcionEstadoCivil",0,""],
+["Descripción del género",["Descripción de género"],"Datos Generales","Datos del Sistema (oculto)","datosFormulario.personas[].descripcionGenero",0,""],
+["Método asistido",["Descripción del método asistido"],"Datos Generales","Datos del Sistema (oculto)","datosFormulario.personas[].riesgo[].embarazo[].descripcionMetodoAsistido",0,""],
+["Tipo de atención",["Descripción de atención"],"Datos Generales","Datos del Sistema (oculto)","datosFormulario.personas[].riesgo[].covid.descripcionTipoAtencion",0,""],
+["Descripción parentesco",[],"Datos Generales","Datos del Sistema (oculto)","datosFormulario.personas[].descripcionParentesco",0,""],
+["Tipo de Identificación Persona",["Tipo de indentificación","Tipo de Identificación"],"Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoTipoIdentificacion",1,"cv_tipo_identificacion_<persona>_<valor>"],
+["Identificación de Persona",["No. de identificación","Número de Identificación"],"Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].numeroIdentificacion",1,"numero_identificacion_<persona>"],
+["Correo electrónico",["Email","Correo electrónico de la persona"],"Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].correoElectronico",1,"correo_electronico_<persona>"],
+["Nombre Completo",["Nombre completo del asegurado","Nombre completo de la persona","Nombre completo"],"Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].nombreCompleto",1,"nombre_completo_<persona>"],
+["Primer Apellido",["Apellido 1"],"Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].primerApellido",1,"primer_apellido_<persona>"],
+["Segundo Apellido",["Apellido 2"],"Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].segundoApellido",1,"segundo_apellido_<persona>"],
+["Primer Nombre",["Nombre 1"],"Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].primerNombre",1,"primer_nombre_<persona>"],
+["Segundo Nombre",["Nombre 2"],"Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].segundoNombre",1,"segundo_nombre_<persona>"],
+["Fecha de Nacimiento",["Nacimiento","Fecha nacimiento"],"Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].fechaNacimiento",1,"fecha_nacimiento_<persona>_dia / _mes / _ano"],
+["Edad",["Edad calculada"],"Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].edad",1,"edad_<persona>"],
+["Estado civil",[],"Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoEstadoCivil",1,"cv_estado_civil_<persona>_<valor>"],
+["Sexo",["Sexo","Género masculino/femenino","Género"],"Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoGenero",1,"cv_sexo_<persona>_<valor>"],
+["Teléfono",["Teléfono móvil","Celular"],"Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].telefonoMovil",1,"telefono_movil_<persona>"],
+["Teléfono movil",["Teléfono móvil","Celular","Teléfono Celular"],"Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].telefonoCelular",1,"telefono_celular_<persona>"],
+["Teléfono de la Oficina",["Teléfono Oficina","Oficina","Teléfono oficina Asegurado"],"Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].telefonoOficina",1,"telefono_oficina_<persona>"],
+["Teléfono del trabajo",["Teléfono Trabajo","Trabajo","Teléfono domicilio Asegurado"],"Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].telefonoTrabajo",1,"telefono_trabajo_<persona>"],
+["País",["País de residencia"],"Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].codigoPais",1,"pais_<persona>"],
+["Provincia",["Provincia de residencia"],"Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].codigoProvincia",1,"provincia_<persona>"],
+["Descripción Provincia",["Descripción de provincia","Nombre de provincia"],"Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].descripcionProvincia",0,""],
+["Cantón",["Cantón de residencia"],"Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].codigoCanton",1,"canton_<persona>"],
+["Descripción Cantón",["Descripción de cantón","Nombre de cantón"],"Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].descripcionCanton",0,""],
+["Distrito",["Distrito de residencia"],"Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].codigoDistrito",1,"distrito_<persona>"],
+["Descripción Distrito",["Descripción de distrito","Nombre de distrito"],"Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].descripcionDistrito",0,""],
+["Dirección exacta",["Dirección del domicilio","Dirección exacta del domicilio actual"],"Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].direccionExacta",1,"direccion_exacta_<persona>"],
+["Medio de notificación",["Canal de notificación","Medio por el cual desea ser notificado"],"Datos del Asegurado / Datos del Tomador","Preferencias de Notificación","datosFormulario.personas[].mediosNotificacion[].codigoMedioNotificacion",1,"cv_medio_notificacion_<persona>_<valor>"],
+["Medio de notificación",["Nombre del medio","Descripción del medio"],"Datos del Asegurado / Datos del Tomador","Preferencias de Notificación","datosFormulario.personas[].mediosNotificacion[].medioNotificacion",1,"medio_notificacion_<persona>"],
+["Datos de notificación",["Destino de notificación","Dato de notificación","Campos de texto para notificación"],"Datos del Asegurado / Datos del Tomador","Preferencias de Notificación","datosFormulario.personas[].mediosNotificacion[].datosNotificacion",1,"datos_notificacion_<persona>"],
+["Nombre Completo Asegurado Directo",["Nombre completo del asegurado directo"],"Datos del Asegurado","Datos del Asegurado","datosFormulario.personas[].nombreCompletoAseguradoDirecto",1,"nombre_completo_asegurado_directo_asegurado"],
+["¿Cuál es su ingreso mensual bruto?",["Ingreso bruto mensual","Ingreso mensual","Ingreso Mensual Bruto"],"Datos del Asegurado","Datos del Asegurado","datosFormulario.personas[].ingresoMensualBruto",1,"ingreso_mensual_bruto_asegurado"],
+["¿Su residencia habitual y permanente será en Costa Rica?",["Residencia permanente en Costa Rica"],"Datos del Asegurado","Datos del Asegurado","datosFormulario.personas[].residiraEnCostaRica",1,"residira_en_costa_rica_asegurado"],
+["¿Cuál es su profesión u ocupación?",["Profesión","Ocupación","Profesión u Ocupación:"],"Datos del Asegurado","Datos del Asegurado","datosFormulario.personas[].profesionOcupacion",1,"profesion_ocupacion_asegurado"],
+["¿Practica algún deporte o realiza alguna ocupación adicional?",["Actividad deportiva","Ocupación adicional","¿Practica algún deporte u ocupación adicional?"],"Datos del Asegurado","Datos del Asegurado","datosFormulario.personas[].indicadorPracticaDeporteORealizaOcupacionAdicional",1,"cv_practica_deporte_o_realiza_ocupacion_adicional_asegurado_si / _no"],
+["Tipo y frecuencia de práctica",["Detalle del deporte","Frecuencia de práctica","Tipo y frencuencia de práctica:","Indique el tipo de deporte u ocupación adicional y la frecuencia con que lo practica"],"Datos del Asegurado","Datos del Asegurado","datosFormulario.personas[].detalleDeporteOcupacionAdicional",1,"detalle_deporte_ocupacion_adicional_asegurado"],
+["¿Cómo ha variado su peso en los últimos 6 meses?",["En los últimos 6 meses su peso ha"],"Datos del Asegurado","Datos del Asegurado","datosFormulario.personas[].codigoVariacionPesoUltimosSeisMeses",1,"variacion_peso_ultimos_seis_meses_asegurado"],
+["¿Cuántos kilogramos aumentó o disminuyó su peso?",["¿Cuántos kilos?"],"Datos del Asegurado","Datos del Asegurado","datosFormulario.personas[].cantidadKilogramosVariacionPeso",1,"cantidad_kilogramos_variacion_peso_asegurado"],
+["¿Cuál fue el motivo de la variación de peso?",["Motivo"],"Datos del Asegurado","Datos del Asegurado","datosFormulario.personas[].motivoVariacionPeso",1,"motivo_variacion_peso_asegurado"],
+["¿Desea agregar un dependiente menor de edad?",["Agregar dependiente menor"],"Dependientes","Dependientes","datosFormulario.personas[].indicadorAgregarDependienteMenor",1,"cv_agregar_dependiente_menor_dependiente_N_si / _no"],
+["Peso",["Peso corporal","Kgs"],"Información del Riesgo","Antecedentes personales","datosFormulario.personas[].peso",1,"peso_<persona>"],
+["Estatura",["Altura","Mts"],"Información del Riesgo","Antecedentes personales","datosFormulario.personas[].estatura",1,"estatura_<persona>"],
+["Cambio de peso",["Variación de peso","Cantidad de kilos","Variación en kilos","¿Cuántos kilos?","Motivo del cambio de peso","Motivo","Detalle de cambio","Detalle del cambio de salud","Detalle","En los últimos 6 meses su peso ha"],"Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].detalle",1,"detalle_cambios_importantes_salud_<persona>_N"],
+["Cambio importante de salud",["Cambios importantes de salud","Variación de peso"],"Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].indicador",1,"cv_cambios_importantes_salud_<persona>_N_si / _no"],
+["Nombre de quien padece",["Persona afectada","Quién padece"],"Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].quienPadece",1,"quien_padece_<persona>_N"],
+["¿Es o ha sido alcohólico?",["Antecedente de alcoholismo","¿Es usted o ha sido alcohólico?"],"Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.indicadorAlcoholismo",1,"cv_alcoholismo_bebidas_alcoholicas_<persona>_si / _no"],
+["Detalles sobre el consumo o antecedentes de alcoholismo",["Detalle de alcoholismo","Patrón de consumo","Detalles:"],"Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.detalleAlcoholismo",1,"detalle_alcoholismo_<persona>"],
+["Usa bebidas alcohólicas",["Consumo de alcohol","Bebidas alcohólicas","¿Consume bebidas alcohólicas?","¿Usa bebidas alcohólicas?"],"Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.indicador",1,"cv_bebidas_alcoholicas_<persona>_si / _no"],
+["Clase",["Tipo de bebida","Clase de bebida","a) Clase:","Tipo de bebida alcohólica"],"Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.detalleTipo",1,"detalle_tipo_<persona>"],
+["Cantidad",["Cantidad consumida","Unidades","c) Cantidad","Cantidad de bebidas alcohólicas consumidas"],"Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.detalleCantidad",1,"detalle_cantidad_bebidas_alcoholicas_<persona>"],
+["Frecuencia",["Frecuencia de consumo","b) Frecuencia:","Frecuencia de consumo de bebidas alcohólicas"],"Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.detalleFrecuencia",1,"detalle_frecuencia_<persona>"],
+["Tiempo que lleva consumiendo bebidas alcohólicas",["¿Indique desde hace cuanto?"],"Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.tiempoConsumoBebidasAlcoholicas",1,"tiempo_consumo_bebidas_alcoholicas_<persona>"],
+["¿Tiene alguna intervención quirúrgica pendiente?",["Cirugías pendientes","¿Intervenciones quirúrgicas pendientes?"],"Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicadorIntervencionQuirurgicaPendiente",1,"cv_intervencion_quirurgica_pendiente_<persona>_N_si / _no"],
+["Intervenciones quirúrgicas realizadas",["Cirugías realizadas","Indicador de intervención","¿Intervenciones quirúrgicas realizadas?"],"Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].indicadorIntervencionQuirurgica",1,"cv_intervencion_quirurgica_<persona>_si / _no"],
+["Nombre de quien fue intervenido",["Persona intervenida","Paciente"],"Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].nombreQuienFueIntervenido",1,"nombre_quien_fue_intervenido_<persona>_N"],
+["Causa de la intervención",["Causa de cirugía","Motivo de intervención","En caso afirmativo detalle cuáles, motivo, fecha y estado actual"],"Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].declaracionCausas",1,"declaracion_causas_<persona>_N"],
+["Fecha del procedimiento",["Fecha de cirugía","Fecha de intervención"],"Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].fechaProcedimiento",1,"fecha_procedimiento_<persona>_N_dia / _mes / _ano"],
+["Hospital del procedimiento",["Centro hospitalario","Hospital o clínica"],"Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].hospitalProcedimiento",1,"hospital_procedimiento_<persona>_N"],
+["Nombre del cirujano",["Cirujano","Médico tratante"],"Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].nombreCirujano",1,"nombre_cirujano_<persona>_N"],
+["¿Se ha sometido a alguna intervención quirúrgica?",["¿Intervenciones quirúrgicas realizadas?"],"Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicador",1,"cv_intervencion_quirurgica_<persona>_N_si / _no"],
+["Detalles de las intervenciones quirúrgicas realizadas",["En caso afirmativo detalle cuáles, motivo, fecha y estado actual"],"Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].detalleIntervencionesQuirurgicasRealizadas",1,"detalle_intervenciones_quirurgicas_realizadas_<persona>_N"],
+["Detalles de las intervenciones quirúrgicas pendientes",["En caso afirmativo detalle cuáles, motivo y su fecha de realización:"],"Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].detalleIntervencionesQuirurgicasPendientes",1,"detalle_intervenciones_quirurgicas_pendientes_<persona>_N"],
+["Incapacidad por invalidez",["¿Está usted tramitando o tiene pensado tramitar en el corto plazo una incapacidad por invalidez?","¿Está tramitando o planea tramitar próximamente una incapacidad por invalidez?","¿Está tramitando una incapacidad por invalidez?"],"Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].indicadorTramitaIncapacidadInvalidez",1,"cv_tramita_incapacidad_invalidez_<persona>_si / _no"],
+["Complicaciones durante el embarazo",["Complicaciones del embarazo","¿Ha tenido alguna complicación?"],"Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].complicacionesEmbarazo",1,"complicaciones_embarazo_<persona>_N"],
+["Se encuentra embarazada",["Embarazo actual","Indicador de embarazo","¿Está embarazada actualmente?","¿Se encuentra actualmente embarazada?"],"Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].indicador",1,"cv_embarazo_<persona>_N_si / _no"],
+["Nombre de quien está embarazada",["Persona embarazada"],"Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].nombreQuienEstaEmbarazada",1,"nombre_quien_esta_embarazada_<persona>_N"],
+["Semanas de gestación",["Tiempo de embarazo","¿Cuánto tiempo tiene de embarazo?"],"Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].numeroSemanasGestacion",1,"numero_semanas_gestacion_<persona>_N"],
+["Tipo de reproducción",["Método de reproducción","Reproducción natural o asistida"],"Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].codigoTipoReproduccion",1,"tipo_reproduccion_<persona>_N"],
+["Condición de salud",["Condición de salud","Enfermedad","Padecimiento","¿Padece o ha padecido alguna condición?"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].condicionSalud.indicador",1,"cv_condicion_salud_<persona>_si / _no"],
+["Detalle de condición",["Detalle de condición","Detalle de salud","Nombre de la condición, enfermedad o traumatismo"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].condicionSalud.detalle",1,"detalle_condicion_salud_<persona>"],
+["Enfermedad de alto impacto",["Condición de alto impacto","Enfermedad grave"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedadAltoImpacto[].indicador",1,"cv_enfermedad_alto_impacto_<persona>_N_si / _no"],
+["Detalle",["Descripción","Detalle de condición","Detalle de enfermedad de alto impacto"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedadAltoImpacto[].detalle",1,"detalle_enfermedad_alto_impacto_<persona>_N"],
+["Nombre de quien padece",["Persona enferma","Paciente"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].nombreQuienPadece",1,"nombre_quien_padece_<persona>_N"],
+["Categoría",["Tipo de padecimiento","Categoría","Categoría de la enfermedad"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].detalleCategoria",1,"detalle_categoria_<persona>_N"],
+["Detalle de enfermedad",["Detalle de enfermedad","Padecimiento","Nombre de la condición, enfermedad o traumatismo"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].detalle",1,"detalle_enfermedades_<persona>_N"],
+["Médico, clínica u hospital",["Médico","Clínica","Hospital","Nombre y dirección de médicos que le atendieron, clínica u hospital"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].nombreMedicoClinicaHospital",1,"nombre_medico_clinica_hospital_enfermedades_<persona>_N"],
+["Fecha de inicio",["Fecha de inicio","Inicio del padecimiento","Fecha de diagnóstico"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].fechaInicio",1,"fecha_inicio_<persona>_N_dia / _mes / _ano"],
+["Duración",["Tiempo de evolución","Antigüedad"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].duracion",1,"duracion_<persona>_N"],
+["Resultado / estado actual",["Resultado","Evolución","Activa","Controlada","Resuelta","En estudio","Estado actual"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultado",1,"resultado_enfermedades_<persona>_N"],
+["Tratamiento",["Indicador de tratamiento","Recibe tratamiento","Tratamiento recibido"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorTratamiento",1,"cv_tratamiento_enfermedades_<persona>_N_si / _no"],
+["Nombre del medicamento",["Medicamento","Tratamiento farmacológico"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].nombreMedicamento",1,"nombre_medicamento_<persona>_N"],
+["Complicaciones",["Detalle de complicaciones"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].detalleComplicaciones",1,"detalle_complicaciones_<persona>_N"],
+["Pruebas de azúcar",["Control de glucosa","Indicador de pruebas"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPruebasAzucar",1,"cv_pruebas_azucar_enfermedades_<persona>_N_si / _no"],
+["Tipo de control",["Clase de prueba","Hemoglobina glicosilada"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].tipoControl",1,"tipo_control_<persona>_N"],
+["Resultados de pruebas",["Resultados de azúcar","Valores de laboratorio"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultadosPruebas",1,"resultados_pruebas_<persona>_N"],
+["Presión arterial",["Control de presión","Indicador de presión arterial"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPresionArterial",1,"cv_presion_arterial_enfermedades_<persona>_N_si / _no"],
+["Resultados de presión arterial",["Lecturas de presión","Valores de presión"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultadosPresionArterial",1,"resultados_presion_arterial_<persona>_N"],
+["Antígeno prostático",["PSA","Indicador de antígeno prostático"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorAntigenoProstatico",1,"cv_antigeno_prostatico_enfermedades_<persona>_N_si / _no"],
+["Resultados de antígeno prostático",["Resultados PSA","Valores de antígeno"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultadosAntigenoProstatico",1,"resultados_antigeno_prostatico_<persona>_N"],
+["¿Padece o ha padecido alguna condición, enfermedad o traumatismo que haya requerido atención, tratamiento, estudios o seguimiento médico?",["¿Padece o ha padecido alguna condición, estado, enfermedad o traumatismo agudo o crónico por la cual ha recibido consulta, tratamiento médico, servicios, chequeos, hospitalizaciones, controles y/o medicamentos o se encuentran en estudio?"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].indicadorCondicionEnfermedadOTraumatismo",1,"cv_condicion_enfermedad_o_traumatismo_<persona>_si / _no"],
+["Nombre de la condición, enfermedad o traumatismo",[],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].nombreCondicionEnfermedadOTraumatismo",1,"nombre_condicion_enfermedad_o_traumatismo_<persona>_N"],
+["Fecha de diagnóstico",[],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaDiagnostico",1,"fecha_diagnostico_<persona>_N_dia / _mes / _ano"],
+["Tratamientos recibidos",["Tratamiento(s) recibido(s)"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].tratamientosRecibidos",1,"tratamientos_recibidos_<persona>_N"],
+["Estado actual de la condición, enfermedad o traumatismo",["Estado actual"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].codigoEstadoActualCondicion",1,"estado_actual_condicion_<persona>_N"],
+["Fecha de alta médica",["Si fue dado de alta ¿En qué fecha?"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaAltaMedica",1,"fecha_alta_medica_<persona>_N_dia / _mes / _ano"],
+["Nombre y dirección de los médicos, clínicas u hospitales que le atendieron",["Nombre y dirección de médicos que le atendieron, clínica u hospital"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].nombreMedicoClinicaHospital",1,"nombre_medico_clinica_hospital_padecimientos_<persona>_N"],
+["¿Consume o ha consumido drogas o sustancias psicoactivas?",["¿Consume o ha consumido alguna droga o sustancia psicoactiva?, Drogas","Sustancias psicoactivas","Medicamentos","¿Consume o ha consumido alguna droga o sustancia psicoactiva con fines recreativos o por indicación médica?"],"Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.indicadorUso",1,"cv_uso_droga_medicamento_<persona>_si / _no"],
+["Nombre de quien usa",["Persona que usa","Quién consume"],"Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.nombreQuienUsa",1,"nombre_quien_usa_<persona>"],
+["Frecuencia",["Frecuencia de uso o consumo"],"Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.frecuencia",1,"frecuencia_<persona>"],
+["Cantidad",["Cantidad de uso o consumo","Dosis"],"Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.cantidad",1,"cantidad_<persona>"],
+["Motivo",["Motivo de uso","Razón del tratamiento"],"Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.motivo",1,"motivo_<persona>"],
+["Nombre",["Sustancia","Medicamento","Tratamiento","Nombre de la sustancia, medicamento o tratamiento"],"Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.nombre",1,"nombre_<persona>"],
+["Detalles sobre el uso de drogas o sustancias psicoactivas",["En caso afirmativo, detalle: nombre de la sustancia, motivo de uso, frecuencia, cantidad y fecha del último consumo."],"Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.detalleUso",1,"detalle_uso_droga_medicamento_<persona>"],
+["¿Utiliza medicamentos o tratamientos médicos actualmente, o ha recibido medicina nuclear, isótopos radioactivos o quimioterapia?",["Uso actual de medicamentos","Tratamiento médico actual","¿Utiliza actualmente algún medicamento o tratamiento médico, o ha recibido medicina nuclear, isótopos radioactivos o quimioterapia?"],"Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.indicadorUsoMedicamentos",1,"cv_uso_medicamentos_droga_medicamento_<persona>_si / _no"],
+["Detalles de medicamentos o tratamientos médicos",["En caso afirmativo, indique: nombre del medicamento o tratamiento, motivo de uso, frecuencia, fecha de inicio y dosis."],"Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.detalleUsoMedicamentos",1,"detalle_uso_medicamentos_<persona>"],
+["Alguna vez ha fumado",["Fumador","Tabaquismo","¿Ha fumado alguna vez?","¿Alguna vez ha fumado?"],"Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorFumador",1,"cv_fumador_tabaquismo_<persona>_si / _no"],
+["Cantidad fumada diaria",["Consumo diario","Cantididad diaria de cigarrillo, puro o ml:","Cantidad diaria de cigarrillos, puros o líquido de vapeo","Cantidad diaria de cigarrillo, puro o ml"],"Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.cantidadFumadoDiario",1,"cantidad_fumado_diario_<persona>"],
+["Hace cuánto tiempo fuma",["Tiempo fumando","Antigüedad de fumado","¿Hace cuánto tiempo?","Tiempo que lleva fumando o vapeando","¿Hace cuánto tiempo fuma?"],"Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.haceCuantoTiempoFuma",1,"hace_cuanto_tiempo_fuma_<persona>"],
+["Vapea actualmente",["Vapeo actual","Usa vaporizador","¿Vapea actualmente?"],"Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorVapea",1,"cv_vapea_tabaquismo_<persona>_si / _no"],
+["Cantidad de vapeo diario",["Cantidad de vapeo diario","ml diarios","Cantidad diaria de vapeo"],"Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.cantidadVapeoDiario",1,"cantidad_vapeo_diario_<persona>"],
+["Hace cuánto tiempo vapea",["Tiempo vapeando","Antigüedad de vapeo","¿Hace cuánto tiempo vapea?"],"Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.haceCuantoTiempoVapea",1,"hace_cuanto_tiempo_vapea_<persona>"],
+["Dejó de fumar",["Exfumador","¿Dejó de consumir?"],"Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorDejoDeFumar",1,"cv_dejo_de_fumar_tabaquismo_<persona>_si / _no"],
+["Hace cuánto dejó de fumar",["Tiempo desde que dejó de fumar","¿Hace cuánto?","Tiempo transcurrido desde que dejó de fumar o vapear","¿Hace cuánto dejó de fumar?"],"Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.haceCuantoTiempoDejoDeFumar",1,"hace_cuanto_tiempo_dejo_de_fumar_<persona>"],
+["¿Fuma actualmente?",["Fumador actual"],"Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorFumaActualmente",1,"cv_fuma_actualmente_tabaquismo_<persona>_si / _no"],
+["¿Dejó de vapear?",["Exvapeador"],"Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorDejoVapear",1,"cv_dejo_vapear_tabaquismo_<persona>_si / _no"],
+["Consulta médica",["Indicador de consulta médica","Recibió consulta"],"Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].indicadorConsultaMedica",1,"cv_consulta_medica_<persona>_si / _no"],
+["Quién consulta",["Persona que consulta","Paciente"],"Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].quienConsulta",1,"quien_consulta_consulta_medica_<persona>_N"],
+["Motivo de consulta",["Detalle del motivo","Razón de consulta"],"Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].detalleMotivo",1,"detalle_motivo_<persona>_N"],
+["Diagnóstico médico",["Diagnóstico de consulta"],"Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].diagnosticoMedico",1,"diagnostico_medico_<persona>_N"],
+["Nombre del médico tratante",["Médico","Profesional tratante"],"Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].nombreMedicoTratante",1,"nombre_medico_tratante_consulta_medica_<persona>_N"],
+["Diagnóstico especial",["Indicador de diagnóstico especial","Examen especial"],"Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].indicadorDiagnosticoEspecial",1,"cv_diagnostico_especial_<persona>_si / _no"],
+["Quién consulta",["Persona evaluada","Paciente"],"Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].quienConsulta",1,"quien_consulta_diagnostico_especial_<persona>_N"],
+["Motivo",["Motivo del diagnóstico o examen"],"Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].motivo",1,"motivo_<persona>_N"],
+["Resultado",["Resultado del examen","Hallazgos"],"Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].resultado",1,"resultado_diagnostico_especial_<persona>_N"],
+["Nombre del médico tratante",["Médico","Profesional tratante"],"Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].nombreMedicoTratante",1,"nombre_medico_tratante_diagnostico_especial_<persona>_N"],
+["Diagnóstico COVID-19",["COVID","SARS-CoV-2","Resultado positivo","¿Ha sido diagnosticado con COVID-19?"],"Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.indicadorPositivo",1,"cv_positivo_covid_<persona>_si / _no"],
+["Fecha de diagnóstico",["Fecha de diagnóstico COVID"],"Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.fechaDiagnostico",1,"fecha_diagnostico_<persona>_dia / _mes / _ano"],
+["Fecha de alta",["Alta COVID","Fecha de recuperación"],"Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.fechaAlta",1,"fecha_alta_<persona>_dia / _mes / _ano"],
+["Requirió hospitalización",["Hospitalización por COVID","¿Requirió hospitalización?"],"Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.indicadorHospitalizacion",1,"cv_hospitalizacion_covid_<persona>_si / _no"],
+["Centro hospitalario",["Hospital","Clínica de atención"],"Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.centroHospitalario",1,"centro_hospitalario_<persona>"],
+["Síntomas o secuelas",["Detalle de síntomas","Secuelas COVID"],"Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.detalleSintomasSecuelas",1,"detalle_sintomas_secuelas_<persona>"],
+["Vacunación completa SARS-CoV-2",["Vacunación completa COVID","¿Tiene vacunación completa contra SARS-CoV-2?"],"Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.indicadorVacunacionCompletaSarsCov2",1,"cv_vacunacion_completa_sars_cov2_covid_<persona>_si / _no"],
+["Fecha de última dosis SARS-CoV-2",["Última dosis COVID","Fecha de vacunación","Fecha de última dosis"],"Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.fechaUltimaDosisSarsCov2",1,"fecha_ultima_dosis_sars_cov2_<persona>_dia / _mes / _ano"],
+["Detalle otro beneficiario",["Otro parentesco"],"Beneficiarios","Beneficiarios","datosFormulario.personas[].detalleOtroBeneficiario",1,"detalle_otro_beneficiario_beneficiario_N"],
+["Interés asegurable",["Relación con el beneficiario","Interés asegurable o la relación existente con el otro beneficiario"],"Beneficiarios","Beneficiarios","datosFormulario.personas[].interesAsegurableOtroBeneficiario",1,"interes_asegurable_otro_beneficiario_beneficiario_N"],
+["¿Desea agregar beneficiarios?",["Agregar beneficiario"],"Beneficiarios","Beneficiarios","datosFormulario.personas[].indicadorAgregarBeneficiario",1,"cv_agregar_beneficiario_beneficiario_N_si / _no"],
+["Parentesco",[],"Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco",1,"cv_parentesco_beneficiario_N_<valor>"],
+["Porcentaje",[],"Beneficiarios","Beneficiarios","datosFormulario.personas[].porcentaje",1,"porcentaje_beneficiario_N"],
+["Autorización",["Consentimiento del cliente","Autorización para revisar expedientes","Adicionalmente, autorizo la revisión de los expedientes de los solicitantes o los asegurados suscrito en este formulario cuando tenga la condición de menor de edad.","Adicionalmente, autorizo la revisión de los expedientes..."],"Declaraciones y Autorización","Autorizaciones","datosFormulario.datosGenerales.indicadorClienteDaConsentimiento",1,"cv_cliente_da_consentimiento_solicitud_si / _no"],
+["Consentimiento",["Consentimiento de la persona"],"Declaraciones y Autorización","Autorizaciones","datosFormulario.personas[].indicadorClienteDaConsentimiento",1,"cv_cliente_da_consentimiento_<persona>_si / _no"],
+["Acepta términos",["Aceptación de términos","He leído y comprendo el texto anterior, y declaro que la información es verídica y acepto las condiciones y autorizaciones descritas. ¿Acepta usted estos términos?","He leído y comprendo el texto anterior... ¿Acepta usted estos términos?"],"Declaraciones y Autorización","Declaraciones Legales","datosFormulario.datosGenerales.indicadorAceptaTerminos",1,"cv_acepta_terminos_solicitud_si / _no"]
+];
+/* [nombre AcroForm, qué es, tipo, paso, sección, ruta JSON] */
+const DIC_PDF=[
+["numero_poliza","Número de Póliza Madre","Texto","Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.numeroPoliza"],
+["vigencia_desde_poliza_dia","Vigencia desde (día)","Fecha (parte)","Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.vigenciaDesde"],
+["vigencia_desde_poliza_mes","Vigencia desde (mes)","Fecha (parte)","Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.vigenciaDesde"],
+["vigencia_desde_poliza_ano","Vigencia desde (año)","Fecha (parte)","Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.vigenciaDesde"],
+["vigencia_hasta_poliza_dia","Vigencia hasta (día)","Fecha (parte)","Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.vigenciaHasta"],
+["vigencia_hasta_poliza_mes","Vigencia hasta (mes)","Fecha (parte)","Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.vigenciaHasta"],
+["vigencia_hasta_poliza_ano","Vigencia hasta (año)","Fecha (parte)","Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.vigenciaHasta"],
+["cv_moneda_poliza_colones","Seleccione la moneda de la póliza: colones","Casilla","Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.codigoMoneda"],
+["cv_moneda_poliza_dolares","Seleccione la moneda de la póliza: dolares","Casilla","Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.codigoMoneda"],
+["cv_tipo_identificacion_poliza_juridica_nacional","Tipo de identificación: juridica nacional","Casilla","Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.codigoTipoIdentificacionTomador"],
+["cv_tipo_identificacion_poliza_gobierno","Tipo de identificación: gobierno","Casilla","Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.codigoTipoIdentificacionTomador"],
+["cv_tipo_identificacion_poliza_institucion_autonoma","Tipo de identificación: institucion autonoma","Casilla","Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.codigoTipoIdentificacionTomador"],
+["cv_tipo_identificacion_poliza_juridica_extranjera","Tipo de identificación: juridica extranjera","Casilla","Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.codigoTipoIdentificacionTomador"],
+["identificacion_tomador_poliza","Cédula jurídica","Texto","Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.identificacionTomador"],
+["nombre_tomador_poliza","Nombre o razón social","Texto","Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.nombreTomador"],
+["cv_forma_pago_poliza_mensual","Seleccione la forma de pago: mensual","Casilla","Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.codigoFormaPago"],
+["cv_forma_pago_poliza_trimestral","Seleccione la forma de pago: trimestral","Casilla","Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.codigoFormaPago"],
+["cv_forma_pago_poliza_semestral","Seleccione la forma de pago: semestral","Casilla","Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.codigoFormaPago"],
+["cv_forma_pago_poliza_anual","Seleccione la forma de pago: anual","Casilla","Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.codigoFormaPago"],
+["codigo_intermediario","Código Intermediario","Texto","Datos Generales","Datos del Asesor","datosFormulario.datosGenerales.intermediario.codigoIntermediario"],
+["identificacion_intermediario","Identificación","Texto","Datos Generales","Datos del Asesor","datosFormulario.datosGenerales.intermediario.identificacion"],
+["cv_tipo_identificacion_intermediario_cedula","Código tipo de identificación: cedula","Casilla","Datos Generales","Datos del Asesor","datosFormulario.datosGenerales.intermediario.codigoTipoIdentificacion"],
+["cv_tipo_identificacion_intermediario_dimex","Código tipo de identificación: dimex","Casilla","Datos Generales","Datos del Asesor","datosFormulario.datosGenerales.intermediario.codigoTipoIdentificacion"],
+["cv_tipo_identificacion_intermediario_didi","Código tipo de identificación: didi","Casilla","Datos Generales","Datos del Asesor","datosFormulario.datosGenerales.intermediario.codigoTipoIdentificacion"],
+["cv_tipo_identificacion_intermediario_pasaporte","Código tipo de identificación: pasaporte","Casilla","Datos Generales","Datos del Asesor","datosFormulario.datosGenerales.intermediario.codigoTipoIdentificacion"],
+["cv_tipo_identificacion_intermediario_otro","Código tipo de identificación: otro","Casilla","Datos Generales","Datos del Asesor","datosFormulario.datosGenerales.intermediario.codigoTipoIdentificacion"],
+["nombre_intermediario","Nombre","Texto","Datos Generales","Datos del Asesor","datosFormulario.datosGenerales.intermediario.nombre"],
+["correo_electronico_intermediario","Correo electrónico","Texto","Datos Generales","Datos del Asesor","datosFormulario.datosGenerales.intermediario.correoElectronico"],
+["lugar_solicitud","Lugar","Texto","Datos Generales","Información de la Solicitud","datosFormulario.datosGenerales.lugar"],
+["fecha_solicitud_dia","Fecha (día)","Fecha (parte)","Datos Generales","Información de la Solicitud","datosFormulario.datosGenerales.fechaCreacion"],
+["fecha_solicitud_mes","Fecha (mes)","Fecha (parte)","Datos Generales","Información de la Solicitud","datosFormulario.datosGenerales.fechaCreacion"],
+["fecha_solicitud_ano","Fecha (año)","Fecha (parte)","Datos Generales","Información de la Solicitud","datosFormulario.datosGenerales.fechaCreacion"],
+["cv_substituye_seguro_si","¿Tiene otro seguro médico?: Sí","Casilla","Datos Generales","Información adicional","datosFormulario.datosGenerales.datosAdicionales.indicadorSubstituyeSeguro"],
+["cv_substituye_seguro_no","¿Tiene otro seguro médico?: No","Casilla","Datos Generales","Información adicional","datosFormulario.datosGenerales.datosAdicionales.indicadorSubstituyeSeguro"],
+["cv_substituye_seguro_i_n_s_si","¿Qué tipo de seguro tiene actualmente?: Sí","Casilla","Datos Generales","Información adicional","datosFormulario.datosGenerales.datosAdicionales.indicadorSubstituyeSeguroINS"],
+["cv_substituye_seguro_i_n_s_no","¿Qué tipo de seguro tiene actualmente?: No","Casilla","Datos Generales","Información adicional","datosFormulario.datosGenerales.datosAdicionales.indicadorSubstituyeSeguroINS"],
+["nombre_aseguradora_substituye","Nombre de la aseguradora actual","Texto","Datos Generales","Información adicional","datosFormulario.datosGenerales.datosAdicionales.nombreAseguradoraSubstituye"],
+["numero_poliza_substituye","Número de póliza actual","Texto","Datos Generales","Información adicional","datosFormulario.datosGenerales.datosAdicionales.numeroPolizaSubstituye"],
+["observaciones","Observaciones","Texto","Datos Generales","Información adicional","datosFormulario.datosGenerales.datosAdicionales.observaciones"],
+["cv_tipo_identificacion_asegurado_cedula","Tipo de Identificación Persona: cedula","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoTipoIdentificacion"],
+["cv_tipo_identificacion_asegurado_dimex","Tipo de Identificación Persona: dimex","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoTipoIdentificacion"],
+["cv_tipo_identificacion_asegurado_didi","Tipo de Identificación Persona: didi","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoTipoIdentificacion"],
+["cv_tipo_identificacion_asegurado_pasaporte","Tipo de Identificación Persona: pasaporte","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoTipoIdentificacion"],
+["cv_tipo_identificacion_asegurado_otro","Tipo de Identificación Persona: otro","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoTipoIdentificacion"],
+["cv_tipo_identificacion_tomador_cedula","Tipo de Identificación Persona: cedula","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoTipoIdentificacion"],
+["cv_tipo_identificacion_tomador_dimex","Tipo de Identificación Persona: dimex","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoTipoIdentificacion"],
+["cv_tipo_identificacion_tomador_didi","Tipo de Identificación Persona: didi","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoTipoIdentificacion"],
+["cv_tipo_identificacion_tomador_pasaporte","Tipo de Identificación Persona: pasaporte","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoTipoIdentificacion"],
+["cv_tipo_identificacion_tomador_otro","Tipo de Identificación Persona: otro","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoTipoIdentificacion"],
+["numero_identificacion_asegurado","Identificación de Persona","Texto","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].numeroIdentificacion"],
+["numero_identificacion_tomador","Identificación de Persona","Texto","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].numeroIdentificacion"],
+["correo_electronico_asegurado","Correo electrónico","Texto","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].correoElectronico"],
+["correo_electronico_tomador","Correo electrónico","Texto","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].correoElectronico"],
+["nombre_completo_asegurado","Nombre Completo","Texto","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].nombreCompleto"],
+["nombre_completo_tomador","Nombre Completo","Texto","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].nombreCompleto"],
+["primer_apellido_asegurado","Primer Apellido","Texto","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].primerApellido"],
+["primer_apellido_tomador","Primer Apellido","Texto","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].primerApellido"],
+["segundo_apellido_asegurado","Segundo Apellido","Texto","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].segundoApellido"],
+["segundo_apellido_tomador","Segundo Apellido","Texto","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].segundoApellido"],
+["primer_nombre_asegurado","Primer Nombre","Texto","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].primerNombre"],
+["primer_nombre_tomador","Primer Nombre","Texto","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].primerNombre"],
+["segundo_nombre_asegurado","Segundo Nombre","Texto","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].segundoNombre"],
+["segundo_nombre_tomador","Segundo Nombre","Texto","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].segundoNombre"],
+["fecha_nacimiento_asegurado_dia","Fecha de Nacimiento (día)","Fecha (parte)","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].fechaNacimiento"],
+["fecha_nacimiento_asegurado_mes","Fecha de Nacimiento (mes)","Fecha (parte)","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].fechaNacimiento"],
+["fecha_nacimiento_asegurado_ano","Fecha de Nacimiento (año)","Fecha (parte)","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].fechaNacimiento"],
+["fecha_nacimiento_tomador_dia","Fecha de Nacimiento (día)","Fecha (parte)","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].fechaNacimiento"],
+["fecha_nacimiento_tomador_mes","Fecha de Nacimiento (mes)","Fecha (parte)","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].fechaNacimiento"],
+["fecha_nacimiento_tomador_ano","Fecha de Nacimiento (año)","Fecha (parte)","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].fechaNacimiento"],
+["edad_asegurado","Edad","Texto","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].edad"],
+["edad_tomador","Edad","Texto","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].edad"],
+["cv_estado_civil_asegurado_soltero","Estado civil: soltero","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoEstadoCivil"],
+["cv_estado_civil_asegurado_casado","Estado civil: casado","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoEstadoCivil"],
+["cv_estado_civil_asegurado_divorciado","Estado civil: divorciado","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoEstadoCivil"],
+["cv_estado_civil_asegurado_viudo","Estado civil: viudo","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoEstadoCivil"],
+["cv_estado_civil_asegurado_union_libre","Estado civil: union libre","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoEstadoCivil"],
+["cv_estado_civil_asegurado_separado","Estado civil: separado","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoEstadoCivil"],
+["cv_estado_civil_tomador_soltero","Estado civil: soltero","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoEstadoCivil"],
+["cv_estado_civil_tomador_casado","Estado civil: casado","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoEstadoCivil"],
+["cv_estado_civil_tomador_divorciado","Estado civil: divorciado","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoEstadoCivil"],
+["cv_estado_civil_tomador_viudo","Estado civil: viudo","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoEstadoCivil"],
+["cv_estado_civil_tomador_union_libre","Estado civil: union libre","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoEstadoCivil"],
+["cv_estado_civil_tomador_separado","Estado civil: separado","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoEstadoCivil"],
+["cv_sexo_asegurado_masculino","Sexo: masculino","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoGenero"],
+["cv_sexo_asegurado_femenino","Sexo: femenino","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoGenero"],
+["cv_sexo_tomador_masculino","Sexo: masculino","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoGenero"],
+["cv_sexo_tomador_femenino","Sexo: femenino","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoGenero"],
+["telefono_movil_asegurado","Teléfono","Texto","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].telefonoMovil"],
+["telefono_movil_tomador","Teléfono","Texto","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].telefonoMovil"],
+["telefono_celular_asegurado","Teléfono movil","Texto","Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].telefonoCelular"],
+["telefono_celular_tomador","Teléfono movil","Texto","Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].telefonoCelular"],
+["telefono_oficina_asegurado","Teléfono de la Oficina","Texto","Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].telefonoOficina"],
+["telefono_oficina_tomador","Teléfono de la Oficina","Texto","Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].telefonoOficina"],
+["telefono_trabajo_asegurado","Teléfono del trabajo","Texto","Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].telefonoTrabajo"],
+["telefono_trabajo_tomador","Teléfono del trabajo","Texto","Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].telefonoTrabajo"],
+["pais_asegurado","País","Texto","Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].codigoPais"],
+["pais_tomador","País","Texto","Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].codigoPais"],
+["provincia_asegurado","Provincia","Texto","Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].codigoProvincia"],
+["provincia_tomador","Provincia","Texto","Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].codigoProvincia"],
+["canton_asegurado","Cantón","Texto","Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].codigoCanton"],
+["canton_tomador","Cantón","Texto","Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].codigoCanton"],
+["distrito_asegurado","Distrito","Texto","Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].codigoDistrito"],
+["distrito_tomador","Distrito","Texto","Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].codigoDistrito"],
+["direccion_exacta_asegurado","Dirección exacta","Texto","Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].direccionExacta"],
+["direccion_exacta_tomador","Dirección exacta","Texto","Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].direccionExacta"],
+["cv_medio_notificacion_asegurado_correo_electronico","Medio de notificación: correo electronico","Casilla","Datos del Asegurado / Datos del Tomador","Preferencias de Notificación","datosFormulario.personas[].mediosNotificacion[].codigoMedioNotificacion"],
+["cv_medio_notificacion_asegurado_domicilio_fisico","Medio de notificación: domicilio fisico","Casilla","Datos del Asegurado / Datos del Tomador","Preferencias de Notificación","datosFormulario.personas[].mediosNotificacion[].codigoMedioNotificacion"],
+["cv_medio_notificacion_asegurado_otro","Medio de notificación: otro","Casilla","Datos del Asegurado / Datos del Tomador","Preferencias de Notificación","datosFormulario.personas[].mediosNotificacion[].codigoMedioNotificacion"],
+["cv_medio_notificacion_tomador_correo_electronico","Medio de notificación: correo electronico","Casilla","Datos del Asegurado / Datos del Tomador","Preferencias de Notificación","datosFormulario.personas[].mediosNotificacion[].codigoMedioNotificacion"],
+["cv_medio_notificacion_tomador_domicilio_fisico","Medio de notificación: domicilio fisico","Casilla","Datos del Asegurado / Datos del Tomador","Preferencias de Notificación","datosFormulario.personas[].mediosNotificacion[].codigoMedioNotificacion"],
+["cv_medio_notificacion_tomador_otro","Medio de notificación: otro","Casilla","Datos del Asegurado / Datos del Tomador","Preferencias de Notificación","datosFormulario.personas[].mediosNotificacion[].codigoMedioNotificacion"],
+["medio_notificacion_asegurado","Medio de notificación","Texto","Datos del Asegurado / Datos del Tomador","Preferencias de Notificación","datosFormulario.personas[].mediosNotificacion[].medioNotificacion"],
+["medio_notificacion_tomador","Medio de notificación","Texto","Datos del Asegurado / Datos del Tomador","Preferencias de Notificación","datosFormulario.personas[].mediosNotificacion[].medioNotificacion"],
+["datos_notificacion_asegurado","Datos de notificación","Texto","Datos del Asegurado / Datos del Tomador","Preferencias de Notificación","datosFormulario.personas[].mediosNotificacion[].datosNotificacion"],
+["datos_notificacion_tomador","Datos de notificación","Texto","Datos del Asegurado / Datos del Tomador","Preferencias de Notificación","datosFormulario.personas[].mediosNotificacion[].datosNotificacion"],
+["nombre_completo_asegurado_directo_asegurado","Nombre Completo Asegurado Directo","Texto","Datos del Asegurado","Datos del Asegurado","datosFormulario.personas[].nombreCompletoAseguradoDirecto"],
+["ingreso_mensual_bruto_asegurado","¿Cuál es su ingreso mensual bruto?","Texto","Datos del Asegurado","Datos del Asegurado","datosFormulario.personas[].ingresoMensualBruto"],
+["residira_en_costa_rica_asegurado","¿Su residencia habitual y permanente será en Costa Rica?","Texto","Datos del Asegurado","Datos del Asegurado","datosFormulario.personas[].residiraEnCostaRica"],
+["profesion_ocupacion_asegurado","¿Cuál es su profesión u ocupación?","Texto","Datos del Asegurado","Datos del Asegurado","datosFormulario.personas[].profesionOcupacion"],
+["cv_practica_deporte_o_realiza_ocupacion_adicional_asegurado_si","¿Practica algún deporte o realiza alguna ocupación adicional?: Sí","Casilla","Datos del Asegurado","Datos del Asegurado","datosFormulario.personas[].indicadorPracticaDeporteORealizaOcupacionAdicional"],
+["cv_practica_deporte_o_realiza_ocupacion_adicional_asegurado_no","¿Practica algún deporte o realiza alguna ocupación adicional?: No","Casilla","Datos del Asegurado","Datos del Asegurado","datosFormulario.personas[].indicadorPracticaDeporteORealizaOcupacionAdicional"],
+["detalle_deporte_ocupacion_adicional_asegurado","Tipo y frecuencia de práctica","Texto","Datos del Asegurado","Datos del Asegurado","datosFormulario.personas[].detalleDeporteOcupacionAdicional"],
+["variacion_peso_ultimos_seis_meses_asegurado","¿Cómo ha variado su peso en los últimos 6 meses?","Texto","Datos del Asegurado","Datos del Asegurado","datosFormulario.personas[].codigoVariacionPesoUltimosSeisMeses"],
+["cantidad_kilogramos_variacion_peso_asegurado","¿Cuántos kilogramos aumentó o disminuyó su peso?","Texto","Datos del Asegurado","Datos del Asegurado","datosFormulario.personas[].cantidadKilogramosVariacionPeso"],
+["motivo_variacion_peso_asegurado","¿Cuál fue el motivo de la variación de peso?","Texto","Datos del Asegurado","Datos del Asegurado","datosFormulario.personas[].motivoVariacionPeso"],
+["cv_agregar_dependiente_menor_dependiente_1_si","¿Desea agregar un dependiente menor de edad?: Sí","Casilla","Dependientes","Dependientes","datosFormulario.personas[].indicadorAgregarDependienteMenor"],
+["cv_agregar_dependiente_menor_dependiente_1_no","¿Desea agregar un dependiente menor de edad?: No","Casilla","Dependientes","Dependientes","datosFormulario.personas[].indicadorAgregarDependienteMenor"],
+["cv_agregar_dependiente_menor_dependiente_2_si","¿Desea agregar un dependiente menor de edad?: Sí","Casilla","Dependientes","Dependientes","datosFormulario.personas[].indicadorAgregarDependienteMenor"],
+["cv_agregar_dependiente_menor_dependiente_2_no","¿Desea agregar un dependiente menor de edad?: No","Casilla","Dependientes","Dependientes","datosFormulario.personas[].indicadorAgregarDependienteMenor"],
+["cv_agregar_dependiente_menor_dependiente_3_si","¿Desea agregar un dependiente menor de edad?: Sí","Casilla","Dependientes","Dependientes","datosFormulario.personas[].indicadorAgregarDependienteMenor"],
+["cv_agregar_dependiente_menor_dependiente_3_no","¿Desea agregar un dependiente menor de edad?: No","Casilla","Dependientes","Dependientes","datosFormulario.personas[].indicadorAgregarDependienteMenor"],
+["peso_asegurado","Peso","Texto","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].peso"],
+["peso_tomador","Peso","Texto","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].peso"],
+["estatura_asegurado","Estatura","Texto","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].estatura"],
+["estatura_tomador","Estatura","Texto","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].estatura"],
+["detalle_cambios_importantes_salud_asegurado_1","Cambio de peso","Texto","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].detalle"],
+["detalle_cambios_importantes_salud_asegurado_2","Cambio de peso","Texto","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].detalle"],
+["detalle_cambios_importantes_salud_asegurado_3","Cambio de peso","Texto","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].detalle"],
+["detalle_cambios_importantes_salud_tomador_1","Cambio de peso","Texto","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].detalle"],
+["detalle_cambios_importantes_salud_tomador_2","Cambio de peso","Texto","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].detalle"],
+["detalle_cambios_importantes_salud_tomador_3","Cambio de peso","Texto","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].detalle"],
+["cv_cambios_importantes_salud_asegurado_1_si","Cambio importante de salud: Sí","Casilla","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].indicador"],
+["cv_cambios_importantes_salud_asegurado_1_no","Cambio importante de salud: No","Casilla","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].indicador"],
+["cv_cambios_importantes_salud_asegurado_2_si","Cambio importante de salud: Sí","Casilla","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].indicador"],
+["cv_cambios_importantes_salud_asegurado_2_no","Cambio importante de salud: No","Casilla","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].indicador"],
+["cv_cambios_importantes_salud_asegurado_3_si","Cambio importante de salud: Sí","Casilla","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].indicador"],
+["cv_cambios_importantes_salud_asegurado_3_no","Cambio importante de salud: No","Casilla","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].indicador"],
+["cv_cambios_importantes_salud_tomador_1_si","Cambio importante de salud: Sí","Casilla","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].indicador"],
+["cv_cambios_importantes_salud_tomador_1_no","Cambio importante de salud: No","Casilla","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].indicador"],
+["cv_cambios_importantes_salud_tomador_2_si","Cambio importante de salud: Sí","Casilla","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].indicador"],
+["cv_cambios_importantes_salud_tomador_2_no","Cambio importante de salud: No","Casilla","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].indicador"],
+["cv_cambios_importantes_salud_tomador_3_si","Cambio importante de salud: Sí","Casilla","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].indicador"],
+["cv_cambios_importantes_salud_tomador_3_no","Cambio importante de salud: No","Casilla","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].indicador"],
+["quien_padece_asegurado_1","Nombre de quien padece","Texto","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].quienPadece"],
+["quien_padece_asegurado_2","Nombre de quien padece","Texto","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].quienPadece"],
+["quien_padece_asegurado_3","Nombre de quien padece","Texto","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].quienPadece"],
+["quien_padece_tomador_1","Nombre de quien padece","Texto","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].quienPadece"],
+["quien_padece_tomador_2","Nombre de quien padece","Texto","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].quienPadece"],
+["quien_padece_tomador_3","Nombre de quien padece","Texto","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].quienPadece"],
+["cv_alcoholismo_bebidas_alcoholicas_asegurado_si","¿Es o ha sido alcohólico?: Sí","Casilla","Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.indicadorAlcoholismo"],
+["cv_alcoholismo_bebidas_alcoholicas_asegurado_no","¿Es o ha sido alcohólico?: No","Casilla","Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.indicadorAlcoholismo"],
+["cv_alcoholismo_bebidas_alcoholicas_tomador_si","¿Es o ha sido alcohólico?: Sí","Casilla","Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.indicadorAlcoholismo"],
+["cv_alcoholismo_bebidas_alcoholicas_tomador_no","¿Es o ha sido alcohólico?: No","Casilla","Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.indicadorAlcoholismo"],
+["detalle_alcoholismo_asegurado","Detalles sobre el consumo o antecedentes de alcoholismo","Texto","Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.detalleAlcoholismo"],
+["detalle_alcoholismo_tomador","Detalles sobre el consumo o antecedentes de alcoholismo","Texto","Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.detalleAlcoholismo"],
+["cv_bebidas_alcoholicas_asegurado_si","Usa bebidas alcohólicas: Sí","Casilla","Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.indicador"],
+["cv_bebidas_alcoholicas_asegurado_no","Usa bebidas alcohólicas: No","Casilla","Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.indicador"],
+["cv_bebidas_alcoholicas_tomador_si","Usa bebidas alcohólicas: Sí","Casilla","Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.indicador"],
+["cv_bebidas_alcoholicas_tomador_no","Usa bebidas alcohólicas: No","Casilla","Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.indicador"],
+["detalle_tipo_asegurado","Clase","Texto","Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.detalleTipo"],
+["detalle_tipo_tomador","Clase","Texto","Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.detalleTipo"],
+["detalle_cantidad_bebidas_alcoholicas_asegurado","Cantidad","Texto","Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.detalleCantidad"],
+["detalle_cantidad_bebidas_alcoholicas_tomador","Cantidad","Texto","Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.detalleCantidad"],
+["detalle_frecuencia_asegurado","Frecuencia","Texto","Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.detalleFrecuencia"],
+["detalle_frecuencia_tomador","Frecuencia","Texto","Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.detalleFrecuencia"],
+["tiempo_consumo_bebidas_alcoholicas_asegurado","Tiempo que lleva consumiendo bebidas alcohólicas","Texto","Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.tiempoConsumoBebidasAlcoholicas"],
+["tiempo_consumo_bebidas_alcoholicas_tomador","Tiempo que lleva consumiendo bebidas alcohólicas","Texto","Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.tiempoConsumoBebidasAlcoholicas"],
+["cv_intervencion_quirurgica_pendiente_asegurado_1_si","¿Tiene alguna intervención quirúrgica pendiente?: Sí","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicadorIntervencionQuirurgicaPendiente"],
+["cv_intervencion_quirurgica_pendiente_asegurado_1_no","¿Tiene alguna intervención quirúrgica pendiente?: No","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicadorIntervencionQuirurgicaPendiente"],
+["cv_intervencion_quirurgica_pendiente_asegurado_2_si","¿Tiene alguna intervención quirúrgica pendiente?: Sí","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicadorIntervencionQuirurgicaPendiente"],
+["cv_intervencion_quirurgica_pendiente_asegurado_2_no","¿Tiene alguna intervención quirúrgica pendiente?: No","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicadorIntervencionQuirurgicaPendiente"],
+["cv_intervencion_quirurgica_pendiente_asegurado_3_si","¿Tiene alguna intervención quirúrgica pendiente?: Sí","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicadorIntervencionQuirurgicaPendiente"],
+["cv_intervencion_quirurgica_pendiente_asegurado_3_no","¿Tiene alguna intervención quirúrgica pendiente?: No","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicadorIntervencionQuirurgicaPendiente"],
+["cv_intervencion_quirurgica_pendiente_tomador_1_si","¿Tiene alguna intervención quirúrgica pendiente?: Sí","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicadorIntervencionQuirurgicaPendiente"],
+["cv_intervencion_quirurgica_pendiente_tomador_1_no","¿Tiene alguna intervención quirúrgica pendiente?: No","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicadorIntervencionQuirurgicaPendiente"],
+["cv_intervencion_quirurgica_pendiente_tomador_2_si","¿Tiene alguna intervención quirúrgica pendiente?: Sí","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicadorIntervencionQuirurgicaPendiente"],
+["cv_intervencion_quirurgica_pendiente_tomador_2_no","¿Tiene alguna intervención quirúrgica pendiente?: No","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicadorIntervencionQuirurgicaPendiente"],
+["cv_intervencion_quirurgica_pendiente_tomador_3_si","¿Tiene alguna intervención quirúrgica pendiente?: Sí","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicadorIntervencionQuirurgicaPendiente"],
+["cv_intervencion_quirurgica_pendiente_tomador_3_no","¿Tiene alguna intervención quirúrgica pendiente?: No","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicadorIntervencionQuirurgicaPendiente"],
+["cv_intervencion_quirurgica_asegurado_si","Intervenciones quirúrgicas realizadas: Sí","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].indicadorIntervencionQuirurgica"],
+["cv_intervencion_quirurgica_asegurado_no","Intervenciones quirúrgicas realizadas: No","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].indicadorIntervencionQuirurgica"],
+["cv_intervencion_quirurgica_tomador_si","Intervenciones quirúrgicas realizadas: Sí","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].indicadorIntervencionQuirurgica"],
+["cv_intervencion_quirurgica_tomador_no","Intervenciones quirúrgicas realizadas: No","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].indicadorIntervencionQuirurgica"],
+["nombre_quien_fue_intervenido_asegurado_1","Nombre de quien fue intervenido","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].nombreQuienFueIntervenido"],
+["nombre_quien_fue_intervenido_asegurado_2","Nombre de quien fue intervenido","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].nombreQuienFueIntervenido"],
+["nombre_quien_fue_intervenido_asegurado_3","Nombre de quien fue intervenido","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].nombreQuienFueIntervenido"],
+["nombre_quien_fue_intervenido_tomador_1","Nombre de quien fue intervenido","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].nombreQuienFueIntervenido"],
+["nombre_quien_fue_intervenido_tomador_2","Nombre de quien fue intervenido","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].nombreQuienFueIntervenido"],
+["nombre_quien_fue_intervenido_tomador_3","Nombre de quien fue intervenido","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].nombreQuienFueIntervenido"],
+["declaracion_causas_asegurado_1","Causa de la intervención","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].declaracionCausas"],
+["declaracion_causas_asegurado_2","Causa de la intervención","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].declaracionCausas"],
+["declaracion_causas_asegurado_3","Causa de la intervención","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].declaracionCausas"],
+["declaracion_causas_tomador_1","Causa de la intervención","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].declaracionCausas"],
+["declaracion_causas_tomador_2","Causa de la intervención","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].declaracionCausas"],
+["declaracion_causas_tomador_3","Causa de la intervención","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].declaracionCausas"],
+["fecha_procedimiento_asegurado_1_dia","Fecha del procedimiento (día)","Fecha (parte)","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].fechaProcedimiento"],
+["fecha_procedimiento_asegurado_1_mes","Fecha del procedimiento (mes)","Fecha (parte)","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].fechaProcedimiento"],
+["fecha_procedimiento_asegurado_1_ano","Fecha del procedimiento (año)","Fecha (parte)","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].fechaProcedimiento"],
+["fecha_procedimiento_asegurado_2_dia","Fecha del procedimiento (día)","Fecha (parte)","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].fechaProcedimiento"],
+["fecha_procedimiento_asegurado_2_mes","Fecha del procedimiento (mes)","Fecha (parte)","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].fechaProcedimiento"],
+["fecha_procedimiento_asegurado_2_ano","Fecha del procedimiento (año)","Fecha (parte)","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].fechaProcedimiento"],
+["fecha_procedimiento_asegurado_3_dia","Fecha del procedimiento (día)","Fecha (parte)","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].fechaProcedimiento"],
+["fecha_procedimiento_asegurado_3_mes","Fecha del procedimiento (mes)","Fecha (parte)","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].fechaProcedimiento"],
+["fecha_procedimiento_asegurado_3_ano","Fecha del procedimiento (año)","Fecha (parte)","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].fechaProcedimiento"],
+["fecha_procedimiento_tomador_1_dia","Fecha del procedimiento (día)","Fecha (parte)","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].fechaProcedimiento"],
+["fecha_procedimiento_tomador_1_mes","Fecha del procedimiento (mes)","Fecha (parte)","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].fechaProcedimiento"],
+["fecha_procedimiento_tomador_1_ano","Fecha del procedimiento (año)","Fecha (parte)","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].fechaProcedimiento"],
+["fecha_procedimiento_tomador_2_dia","Fecha del procedimiento (día)","Fecha (parte)","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].fechaProcedimiento"],
+["fecha_procedimiento_tomador_2_mes","Fecha del procedimiento (mes)","Fecha (parte)","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].fechaProcedimiento"],
+["fecha_procedimiento_tomador_2_ano","Fecha del procedimiento (año)","Fecha (parte)","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].fechaProcedimiento"],
+["fecha_procedimiento_tomador_3_dia","Fecha del procedimiento (día)","Fecha (parte)","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].fechaProcedimiento"],
+["fecha_procedimiento_tomador_3_mes","Fecha del procedimiento (mes)","Fecha (parte)","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].fechaProcedimiento"],
+["fecha_procedimiento_tomador_3_ano","Fecha del procedimiento (año)","Fecha (parte)","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].fechaProcedimiento"],
+["hospital_procedimiento_asegurado_1","Hospital del procedimiento","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].hospitalProcedimiento"],
+["hospital_procedimiento_asegurado_2","Hospital del procedimiento","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].hospitalProcedimiento"],
+["hospital_procedimiento_asegurado_3","Hospital del procedimiento","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].hospitalProcedimiento"],
+["hospital_procedimiento_tomador_1","Hospital del procedimiento","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].hospitalProcedimiento"],
+["hospital_procedimiento_tomador_2","Hospital del procedimiento","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].hospitalProcedimiento"],
+["hospital_procedimiento_tomador_3","Hospital del procedimiento","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].hospitalProcedimiento"],
+["nombre_cirujano_asegurado_1","Nombre del cirujano","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].nombreCirujano"],
+["nombre_cirujano_asegurado_2","Nombre del cirujano","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].nombreCirujano"],
+["nombre_cirujano_asegurado_3","Nombre del cirujano","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].nombreCirujano"],
+["nombre_cirujano_tomador_1","Nombre del cirujano","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].nombreCirujano"],
+["nombre_cirujano_tomador_2","Nombre del cirujano","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].nombreCirujano"],
+["nombre_cirujano_tomador_3","Nombre del cirujano","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].nombreCirujano"],
+["cv_intervencion_quirurgica_asegurado_1_si","¿Se ha sometido a alguna intervención quirúrgica?: Sí","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicador"],
+["cv_intervencion_quirurgica_asegurado_1_no","¿Se ha sometido a alguna intervención quirúrgica?: No","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicador"],
+["cv_intervencion_quirurgica_asegurado_2_si","¿Se ha sometido a alguna intervención quirúrgica?: Sí","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicador"],
+["cv_intervencion_quirurgica_asegurado_2_no","¿Se ha sometido a alguna intervención quirúrgica?: No","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicador"],
+["cv_intervencion_quirurgica_asegurado_3_si","¿Se ha sometido a alguna intervención quirúrgica?: Sí","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicador"],
+["cv_intervencion_quirurgica_asegurado_3_no","¿Se ha sometido a alguna intervención quirúrgica?: No","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicador"],
+["cv_intervencion_quirurgica_tomador_1_si","¿Se ha sometido a alguna intervención quirúrgica?: Sí","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicador"],
+["cv_intervencion_quirurgica_tomador_1_no","¿Se ha sometido a alguna intervención quirúrgica?: No","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicador"],
+["cv_intervencion_quirurgica_tomador_2_si","¿Se ha sometido a alguna intervención quirúrgica?: Sí","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicador"],
+["cv_intervencion_quirurgica_tomador_2_no","¿Se ha sometido a alguna intervención quirúrgica?: No","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicador"],
+["cv_intervencion_quirurgica_tomador_3_si","¿Se ha sometido a alguna intervención quirúrgica?: Sí","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicador"],
+["cv_intervencion_quirurgica_tomador_3_no","¿Se ha sometido a alguna intervención quirúrgica?: No","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicador"],
+["detalle_intervenciones_quirurgicas_realizadas_asegurado_1","Detalles de las intervenciones quirúrgicas realizadas","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].detalleIntervencionesQuirurgicasRealizadas"],
+["detalle_intervenciones_quirurgicas_realizadas_asegurado_2","Detalles de las intervenciones quirúrgicas realizadas","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].detalleIntervencionesQuirurgicasRealizadas"],
+["detalle_intervenciones_quirurgicas_realizadas_asegurado_3","Detalles de las intervenciones quirúrgicas realizadas","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].detalleIntervencionesQuirurgicasRealizadas"],
+["detalle_intervenciones_quirurgicas_realizadas_tomador_1","Detalles de las intervenciones quirúrgicas realizadas","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].detalleIntervencionesQuirurgicasRealizadas"],
+["detalle_intervenciones_quirurgicas_realizadas_tomador_2","Detalles de las intervenciones quirúrgicas realizadas","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].detalleIntervencionesQuirurgicasRealizadas"],
+["detalle_intervenciones_quirurgicas_realizadas_tomador_3","Detalles de las intervenciones quirúrgicas realizadas","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].detalleIntervencionesQuirurgicasRealizadas"],
+["detalle_intervenciones_quirurgicas_pendientes_asegurado_1","Detalles de las intervenciones quirúrgicas pendientes","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].detalleIntervencionesQuirurgicasPendientes"],
+["detalle_intervenciones_quirurgicas_pendientes_asegurado_2","Detalles de las intervenciones quirúrgicas pendientes","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].detalleIntervencionesQuirurgicasPendientes"],
+["detalle_intervenciones_quirurgicas_pendientes_asegurado_3","Detalles de las intervenciones quirúrgicas pendientes","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].detalleIntervencionesQuirurgicasPendientes"],
+["detalle_intervenciones_quirurgicas_pendientes_tomador_1","Detalles de las intervenciones quirúrgicas pendientes","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].detalleIntervencionesQuirurgicasPendientes"],
+["detalle_intervenciones_quirurgicas_pendientes_tomador_2","Detalles de las intervenciones quirúrgicas pendientes","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].detalleIntervencionesQuirurgicasPendientes"],
+["detalle_intervenciones_quirurgicas_pendientes_tomador_3","Detalles de las intervenciones quirúrgicas pendientes","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].detalleIntervencionesQuirurgicasPendientes"],
+["cv_tramita_incapacidad_invalidez_asegurado_si","Incapacidad por invalidez: Sí","Casilla","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].indicadorTramitaIncapacidadInvalidez"],
+["cv_tramita_incapacidad_invalidez_asegurado_no","Incapacidad por invalidez: No","Casilla","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].indicadorTramitaIncapacidadInvalidez"],
+["cv_tramita_incapacidad_invalidez_tomador_si","Incapacidad por invalidez: Sí","Casilla","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].indicadorTramitaIncapacidadInvalidez"],
+["cv_tramita_incapacidad_invalidez_tomador_no","Incapacidad por invalidez: No","Casilla","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].indicadorTramitaIncapacidadInvalidez"],
+["complicaciones_embarazo_asegurado_1","Complicaciones durante el embarazo","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].complicacionesEmbarazo"],
+["complicaciones_embarazo_asegurado_2","Complicaciones durante el embarazo","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].complicacionesEmbarazo"],
+["complicaciones_embarazo_asegurado_3","Complicaciones durante el embarazo","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].complicacionesEmbarazo"],
+["complicaciones_embarazo_tomador_1","Complicaciones durante el embarazo","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].complicacionesEmbarazo"],
+["complicaciones_embarazo_tomador_2","Complicaciones durante el embarazo","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].complicacionesEmbarazo"],
+["complicaciones_embarazo_tomador_3","Complicaciones durante el embarazo","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].complicacionesEmbarazo"],
+["cv_embarazo_asegurado_1_si","Se encuentra embarazada: Sí","Casilla","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].indicador"],
+["cv_embarazo_asegurado_1_no","Se encuentra embarazada: No","Casilla","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].indicador"],
+["cv_embarazo_asegurado_2_si","Se encuentra embarazada: Sí","Casilla","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].indicador"],
+["cv_embarazo_asegurado_2_no","Se encuentra embarazada: No","Casilla","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].indicador"],
+["cv_embarazo_asegurado_3_si","Se encuentra embarazada: Sí","Casilla","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].indicador"],
+["cv_embarazo_asegurado_3_no","Se encuentra embarazada: No","Casilla","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].indicador"],
+["cv_embarazo_tomador_1_si","Se encuentra embarazada: Sí","Casilla","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].indicador"],
+["cv_embarazo_tomador_1_no","Se encuentra embarazada: No","Casilla","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].indicador"],
+["cv_embarazo_tomador_2_si","Se encuentra embarazada: Sí","Casilla","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].indicador"],
+["cv_embarazo_tomador_2_no","Se encuentra embarazada: No","Casilla","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].indicador"],
+["cv_embarazo_tomador_3_si","Se encuentra embarazada: Sí","Casilla","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].indicador"],
+["cv_embarazo_tomador_3_no","Se encuentra embarazada: No","Casilla","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].indicador"],
+["nombre_quien_esta_embarazada_asegurado_1","Nombre de quien está embarazada","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].nombreQuienEstaEmbarazada"],
+["nombre_quien_esta_embarazada_asegurado_2","Nombre de quien está embarazada","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].nombreQuienEstaEmbarazada"],
+["nombre_quien_esta_embarazada_asegurado_3","Nombre de quien está embarazada","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].nombreQuienEstaEmbarazada"],
+["nombre_quien_esta_embarazada_tomador_1","Nombre de quien está embarazada","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].nombreQuienEstaEmbarazada"],
+["nombre_quien_esta_embarazada_tomador_2","Nombre de quien está embarazada","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].nombreQuienEstaEmbarazada"],
+["nombre_quien_esta_embarazada_tomador_3","Nombre de quien está embarazada","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].nombreQuienEstaEmbarazada"],
+["numero_semanas_gestacion_asegurado_1","Semanas de gestación","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].numeroSemanasGestacion"],
+["numero_semanas_gestacion_asegurado_2","Semanas de gestación","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].numeroSemanasGestacion"],
+["numero_semanas_gestacion_asegurado_3","Semanas de gestación","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].numeroSemanasGestacion"],
+["numero_semanas_gestacion_tomador_1","Semanas de gestación","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].numeroSemanasGestacion"],
+["numero_semanas_gestacion_tomador_2","Semanas de gestación","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].numeroSemanasGestacion"],
+["numero_semanas_gestacion_tomador_3","Semanas de gestación","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].numeroSemanasGestacion"],
+["tipo_reproduccion_asegurado_1","Tipo de reproducción","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].codigoTipoReproduccion"],
+["tipo_reproduccion_asegurado_2","Tipo de reproducción","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].codigoTipoReproduccion"],
+["tipo_reproduccion_asegurado_3","Tipo de reproducción","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].codigoTipoReproduccion"],
+["tipo_reproduccion_tomador_1","Tipo de reproducción","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].codigoTipoReproduccion"],
+["tipo_reproduccion_tomador_2","Tipo de reproducción","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].codigoTipoReproduccion"],
+["tipo_reproduccion_tomador_3","Tipo de reproducción","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].codigoTipoReproduccion"],
+["cv_condicion_salud_asegurado_si","Condición de salud: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].condicionSalud.indicador"],
+["cv_condicion_salud_asegurado_no","Condición de salud: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].condicionSalud.indicador"],
+["cv_condicion_salud_tomador_si","Condición de salud: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].condicionSalud.indicador"],
+["cv_condicion_salud_tomador_no","Condición de salud: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].condicionSalud.indicador"],
+["detalle_condicion_salud_asegurado","Detalle de condición","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].condicionSalud.detalle"],
+["detalle_condicion_salud_tomador","Detalle de condición","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].condicionSalud.detalle"],
+["cv_enfermedad_alto_impacto_asegurado_1_si","Enfermedad de alto impacto: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedadAltoImpacto[].indicador"],
+["cv_enfermedad_alto_impacto_asegurado_1_no","Enfermedad de alto impacto: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedadAltoImpacto[].indicador"],
+["cv_enfermedad_alto_impacto_asegurado_2_si","Enfermedad de alto impacto: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedadAltoImpacto[].indicador"],
+["cv_enfermedad_alto_impacto_asegurado_2_no","Enfermedad de alto impacto: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedadAltoImpacto[].indicador"],
+["cv_enfermedad_alto_impacto_asegurado_3_si","Enfermedad de alto impacto: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedadAltoImpacto[].indicador"],
+["cv_enfermedad_alto_impacto_asegurado_3_no","Enfermedad de alto impacto: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedadAltoImpacto[].indicador"],
+["cv_enfermedad_alto_impacto_tomador_1_si","Enfermedad de alto impacto: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedadAltoImpacto[].indicador"],
+["cv_enfermedad_alto_impacto_tomador_1_no","Enfermedad de alto impacto: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedadAltoImpacto[].indicador"],
+["cv_enfermedad_alto_impacto_tomador_2_si","Enfermedad de alto impacto: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedadAltoImpacto[].indicador"],
+["cv_enfermedad_alto_impacto_tomador_2_no","Enfermedad de alto impacto: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedadAltoImpacto[].indicador"],
+["cv_enfermedad_alto_impacto_tomador_3_si","Enfermedad de alto impacto: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedadAltoImpacto[].indicador"],
+["cv_enfermedad_alto_impacto_tomador_3_no","Enfermedad de alto impacto: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedadAltoImpacto[].indicador"],
+["detalle_enfermedad_alto_impacto_asegurado_1","Detalle","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedadAltoImpacto[].detalle"],
+["detalle_enfermedad_alto_impacto_asegurado_2","Detalle","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedadAltoImpacto[].detalle"],
+["detalle_enfermedad_alto_impacto_asegurado_3","Detalle","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedadAltoImpacto[].detalle"],
+["detalle_enfermedad_alto_impacto_tomador_1","Detalle","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedadAltoImpacto[].detalle"],
+["detalle_enfermedad_alto_impacto_tomador_2","Detalle","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedadAltoImpacto[].detalle"],
+["detalle_enfermedad_alto_impacto_tomador_3","Detalle","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedadAltoImpacto[].detalle"],
+["nombre_quien_padece_asegurado_1","Nombre de quien padece","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].nombreQuienPadece"],
+["nombre_quien_padece_asegurado_2","Nombre de quien padece","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].nombreQuienPadece"],
+["nombre_quien_padece_asegurado_3","Nombre de quien padece","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].nombreQuienPadece"],
+["nombre_quien_padece_tomador_1","Nombre de quien padece","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].nombreQuienPadece"],
+["nombre_quien_padece_tomador_2","Nombre de quien padece","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].nombreQuienPadece"],
+["nombre_quien_padece_tomador_3","Nombre de quien padece","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].nombreQuienPadece"],
+["detalle_categoria_asegurado_1","Categoría","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].detalleCategoria"],
+["detalle_categoria_asegurado_2","Categoría","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].detalleCategoria"],
+["detalle_categoria_asegurado_3","Categoría","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].detalleCategoria"],
+["detalle_categoria_tomador_1","Categoría","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].detalleCategoria"],
+["detalle_categoria_tomador_2","Categoría","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].detalleCategoria"],
+["detalle_categoria_tomador_3","Categoría","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].detalleCategoria"],
+["detalle_enfermedades_asegurado_1","Detalle de enfermedad","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].detalle"],
+["detalle_enfermedades_asegurado_2","Detalle de enfermedad","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].detalle"],
+["detalle_enfermedades_asegurado_3","Detalle de enfermedad","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].detalle"],
+["detalle_enfermedades_tomador_1","Detalle de enfermedad","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].detalle"],
+["detalle_enfermedades_tomador_2","Detalle de enfermedad","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].detalle"],
+["detalle_enfermedades_tomador_3","Detalle de enfermedad","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].detalle"],
+["nombre_medico_clinica_hospital_enfermedades_asegurado_1","Médico, clínica u hospital","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].nombreMedicoClinicaHospital"],
+["nombre_medico_clinica_hospital_enfermedades_asegurado_2","Médico, clínica u hospital","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].nombreMedicoClinicaHospital"],
+["nombre_medico_clinica_hospital_enfermedades_asegurado_3","Médico, clínica u hospital","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].nombreMedicoClinicaHospital"],
+["nombre_medico_clinica_hospital_enfermedades_tomador_1","Médico, clínica u hospital","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].nombreMedicoClinicaHospital"],
+["nombre_medico_clinica_hospital_enfermedades_tomador_2","Médico, clínica u hospital","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].nombreMedicoClinicaHospital"],
+["nombre_medico_clinica_hospital_enfermedades_tomador_3","Médico, clínica u hospital","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].nombreMedicoClinicaHospital"],
+["fecha_inicio_asegurado_1_dia","Fecha de inicio (día)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].fechaInicio"],
+["fecha_inicio_asegurado_1_mes","Fecha de inicio (mes)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].fechaInicio"],
+["fecha_inicio_asegurado_1_ano","Fecha de inicio (año)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].fechaInicio"],
+["fecha_inicio_asegurado_2_dia","Fecha de inicio (día)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].fechaInicio"],
+["fecha_inicio_asegurado_2_mes","Fecha de inicio (mes)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].fechaInicio"],
+["fecha_inicio_asegurado_2_ano","Fecha de inicio (año)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].fechaInicio"],
+["fecha_inicio_asegurado_3_dia","Fecha de inicio (día)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].fechaInicio"],
+["fecha_inicio_asegurado_3_mes","Fecha de inicio (mes)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].fechaInicio"],
+["fecha_inicio_asegurado_3_ano","Fecha de inicio (año)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].fechaInicio"],
+["fecha_inicio_tomador_1_dia","Fecha de inicio (día)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].fechaInicio"],
+["fecha_inicio_tomador_1_mes","Fecha de inicio (mes)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].fechaInicio"],
+["fecha_inicio_tomador_1_ano","Fecha de inicio (año)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].fechaInicio"],
+["fecha_inicio_tomador_2_dia","Fecha de inicio (día)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].fechaInicio"],
+["fecha_inicio_tomador_2_mes","Fecha de inicio (mes)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].fechaInicio"],
+["fecha_inicio_tomador_2_ano","Fecha de inicio (año)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].fechaInicio"],
+["fecha_inicio_tomador_3_dia","Fecha de inicio (día)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].fechaInicio"],
+["fecha_inicio_tomador_3_mes","Fecha de inicio (mes)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].fechaInicio"],
+["fecha_inicio_tomador_3_ano","Fecha de inicio (año)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].fechaInicio"],
+["duracion_asegurado_1","Duración","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].duracion"],
+["duracion_asegurado_2","Duración","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].duracion"],
+["duracion_asegurado_3","Duración","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].duracion"],
+["duracion_tomador_1","Duración","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].duracion"],
+["duracion_tomador_2","Duración","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].duracion"],
+["duracion_tomador_3","Duración","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].duracion"],
+["resultado_enfermedades_asegurado_1","Resultado / estado actual","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultado"],
+["resultado_enfermedades_asegurado_2","Resultado / estado actual","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultado"],
+["resultado_enfermedades_asegurado_3","Resultado / estado actual","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultado"],
+["resultado_enfermedades_tomador_1","Resultado / estado actual","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultado"],
+["resultado_enfermedades_tomador_2","Resultado / estado actual","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultado"],
+["resultado_enfermedades_tomador_3","Resultado / estado actual","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultado"],
+["cv_tratamiento_enfermedades_asegurado_1_si","Tratamiento: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorTratamiento"],
+["cv_tratamiento_enfermedades_asegurado_1_no","Tratamiento: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorTratamiento"],
+["cv_tratamiento_enfermedades_asegurado_2_si","Tratamiento: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorTratamiento"],
+["cv_tratamiento_enfermedades_asegurado_2_no","Tratamiento: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorTratamiento"],
+["cv_tratamiento_enfermedades_asegurado_3_si","Tratamiento: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorTratamiento"],
+["cv_tratamiento_enfermedades_asegurado_3_no","Tratamiento: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorTratamiento"],
+["cv_tratamiento_enfermedades_tomador_1_si","Tratamiento: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorTratamiento"],
+["cv_tratamiento_enfermedades_tomador_1_no","Tratamiento: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorTratamiento"],
+["cv_tratamiento_enfermedades_tomador_2_si","Tratamiento: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorTratamiento"],
+["cv_tratamiento_enfermedades_tomador_2_no","Tratamiento: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorTratamiento"],
+["cv_tratamiento_enfermedades_tomador_3_si","Tratamiento: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorTratamiento"],
+["cv_tratamiento_enfermedades_tomador_3_no","Tratamiento: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorTratamiento"],
+["nombre_medicamento_asegurado_1","Nombre del medicamento","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].nombreMedicamento"],
+["nombre_medicamento_asegurado_2","Nombre del medicamento","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].nombreMedicamento"],
+["nombre_medicamento_asegurado_3","Nombre del medicamento","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].nombreMedicamento"],
+["nombre_medicamento_tomador_1","Nombre del medicamento","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].nombreMedicamento"],
+["nombre_medicamento_tomador_2","Nombre del medicamento","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].nombreMedicamento"],
+["nombre_medicamento_tomador_3","Nombre del medicamento","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].nombreMedicamento"],
+["detalle_complicaciones_asegurado_1","Complicaciones","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].detalleComplicaciones"],
+["detalle_complicaciones_asegurado_2","Complicaciones","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].detalleComplicaciones"],
+["detalle_complicaciones_asegurado_3","Complicaciones","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].detalleComplicaciones"],
+["detalle_complicaciones_tomador_1","Complicaciones","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].detalleComplicaciones"],
+["detalle_complicaciones_tomador_2","Complicaciones","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].detalleComplicaciones"],
+["detalle_complicaciones_tomador_3","Complicaciones","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].detalleComplicaciones"],
+["cv_pruebas_azucar_enfermedades_asegurado_1_si","Pruebas de azúcar: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPruebasAzucar"],
+["cv_pruebas_azucar_enfermedades_asegurado_1_no","Pruebas de azúcar: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPruebasAzucar"],
+["cv_pruebas_azucar_enfermedades_asegurado_2_si","Pruebas de azúcar: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPruebasAzucar"],
+["cv_pruebas_azucar_enfermedades_asegurado_2_no","Pruebas de azúcar: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPruebasAzucar"],
+["cv_pruebas_azucar_enfermedades_asegurado_3_si","Pruebas de azúcar: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPruebasAzucar"],
+["cv_pruebas_azucar_enfermedades_asegurado_3_no","Pruebas de azúcar: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPruebasAzucar"],
+["cv_pruebas_azucar_enfermedades_tomador_1_si","Pruebas de azúcar: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPruebasAzucar"],
+["cv_pruebas_azucar_enfermedades_tomador_1_no","Pruebas de azúcar: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPruebasAzucar"],
+["cv_pruebas_azucar_enfermedades_tomador_2_si","Pruebas de azúcar: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPruebasAzucar"],
+["cv_pruebas_azucar_enfermedades_tomador_2_no","Pruebas de azúcar: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPruebasAzucar"],
+["cv_pruebas_azucar_enfermedades_tomador_3_si","Pruebas de azúcar: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPruebasAzucar"],
+["cv_pruebas_azucar_enfermedades_tomador_3_no","Pruebas de azúcar: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPruebasAzucar"],
+["tipo_control_asegurado_1","Tipo de control","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].tipoControl"],
+["tipo_control_asegurado_2","Tipo de control","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].tipoControl"],
+["tipo_control_asegurado_3","Tipo de control","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].tipoControl"],
+["tipo_control_tomador_1","Tipo de control","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].tipoControl"],
+["tipo_control_tomador_2","Tipo de control","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].tipoControl"],
+["tipo_control_tomador_3","Tipo de control","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].tipoControl"],
+["resultados_pruebas_asegurado_1","Resultados de pruebas","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultadosPruebas"],
+["resultados_pruebas_asegurado_2","Resultados de pruebas","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultadosPruebas"],
+["resultados_pruebas_asegurado_3","Resultados de pruebas","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultadosPruebas"],
+["resultados_pruebas_tomador_1","Resultados de pruebas","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultadosPruebas"],
+["resultados_pruebas_tomador_2","Resultados de pruebas","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultadosPruebas"],
+["resultados_pruebas_tomador_3","Resultados de pruebas","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultadosPruebas"],
+["cv_presion_arterial_enfermedades_asegurado_1_si","Presión arterial: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPresionArterial"],
+["cv_presion_arterial_enfermedades_asegurado_1_no","Presión arterial: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPresionArterial"],
+["cv_presion_arterial_enfermedades_asegurado_2_si","Presión arterial: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPresionArterial"],
+["cv_presion_arterial_enfermedades_asegurado_2_no","Presión arterial: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPresionArterial"],
+["cv_presion_arterial_enfermedades_asegurado_3_si","Presión arterial: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPresionArterial"],
+["cv_presion_arterial_enfermedades_asegurado_3_no","Presión arterial: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPresionArterial"],
+["cv_presion_arterial_enfermedades_tomador_1_si","Presión arterial: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPresionArterial"],
+["cv_presion_arterial_enfermedades_tomador_1_no","Presión arterial: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPresionArterial"],
+["cv_presion_arterial_enfermedades_tomador_2_si","Presión arterial: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPresionArterial"],
+["cv_presion_arterial_enfermedades_tomador_2_no","Presión arterial: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPresionArterial"],
+["cv_presion_arterial_enfermedades_tomador_3_si","Presión arterial: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPresionArterial"],
+["cv_presion_arterial_enfermedades_tomador_3_no","Presión arterial: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPresionArterial"],
+["resultados_presion_arterial_asegurado_1","Resultados de presión arterial","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultadosPresionArterial"],
+["resultados_presion_arterial_asegurado_2","Resultados de presión arterial","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultadosPresionArterial"],
+["resultados_presion_arterial_asegurado_3","Resultados de presión arterial","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultadosPresionArterial"],
+["resultados_presion_arterial_tomador_1","Resultados de presión arterial","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultadosPresionArterial"],
+["resultados_presion_arterial_tomador_2","Resultados de presión arterial","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultadosPresionArterial"],
+["resultados_presion_arterial_tomador_3","Resultados de presión arterial","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultadosPresionArterial"],
+["cv_antigeno_prostatico_enfermedades_asegurado_1_si","Antígeno prostático: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorAntigenoProstatico"],
+["cv_antigeno_prostatico_enfermedades_asegurado_1_no","Antígeno prostático: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorAntigenoProstatico"],
+["cv_antigeno_prostatico_enfermedades_asegurado_2_si","Antígeno prostático: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorAntigenoProstatico"],
+["cv_antigeno_prostatico_enfermedades_asegurado_2_no","Antígeno prostático: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorAntigenoProstatico"],
+["cv_antigeno_prostatico_enfermedades_asegurado_3_si","Antígeno prostático: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorAntigenoProstatico"],
+["cv_antigeno_prostatico_enfermedades_asegurado_3_no","Antígeno prostático: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorAntigenoProstatico"],
+["cv_antigeno_prostatico_enfermedades_tomador_1_si","Antígeno prostático: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorAntigenoProstatico"],
+["cv_antigeno_prostatico_enfermedades_tomador_1_no","Antígeno prostático: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorAntigenoProstatico"],
+["cv_antigeno_prostatico_enfermedades_tomador_2_si","Antígeno prostático: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorAntigenoProstatico"],
+["cv_antigeno_prostatico_enfermedades_tomador_2_no","Antígeno prostático: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorAntigenoProstatico"],
+["cv_antigeno_prostatico_enfermedades_tomador_3_si","Antígeno prostático: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorAntigenoProstatico"],
+["cv_antigeno_prostatico_enfermedades_tomador_3_no","Antígeno prostático: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorAntigenoProstatico"],
+["resultados_antigeno_prostatico_asegurado_1","Resultados de antígeno prostático","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultadosAntigenoProstatico"],
+["resultados_antigeno_prostatico_asegurado_2","Resultados de antígeno prostático","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultadosAntigenoProstatico"],
+["resultados_antigeno_prostatico_asegurado_3","Resultados de antígeno prostático","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultadosAntigenoProstatico"],
+["resultados_antigeno_prostatico_tomador_1","Resultados de antígeno prostático","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultadosAntigenoProstatico"],
+["resultados_antigeno_prostatico_tomador_2","Resultados de antígeno prostático","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultadosAntigenoProstatico"],
+["resultados_antigeno_prostatico_tomador_3","Resultados de antígeno prostático","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultadosAntigenoProstatico"],
+["cv_condicion_enfermedad_o_traumatismo_asegurado_si","¿Padece o ha padecido alguna condición, enfermedad o traumatismo que haya requerido atención, tratamiento, estudios o seguimiento médico?: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].indicadorCondicionEnfermedadOTraumatismo"],
+["cv_condicion_enfermedad_o_traumatismo_asegurado_no","¿Padece o ha padecido alguna condición, enfermedad o traumatismo que haya requerido atención, tratamiento, estudios o seguimiento médico?: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].indicadorCondicionEnfermedadOTraumatismo"],
+["cv_condicion_enfermedad_o_traumatismo_tomador_si","¿Padece o ha padecido alguna condición, enfermedad o traumatismo que haya requerido atención, tratamiento, estudios o seguimiento médico?: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].indicadorCondicionEnfermedadOTraumatismo"],
+["cv_condicion_enfermedad_o_traumatismo_tomador_no","¿Padece o ha padecido alguna condición, enfermedad o traumatismo que haya requerido atención, tratamiento, estudios o seguimiento médico?: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].indicadorCondicionEnfermedadOTraumatismo"],
+["nombre_condicion_enfermedad_o_traumatismo_asegurado_1","Nombre de la condición, enfermedad o traumatismo","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].nombreCondicionEnfermedadOTraumatismo"],
+["nombre_condicion_enfermedad_o_traumatismo_asegurado_2","Nombre de la condición, enfermedad o traumatismo","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].nombreCondicionEnfermedadOTraumatismo"],
+["nombre_condicion_enfermedad_o_traumatismo_asegurado_3","Nombre de la condición, enfermedad o traumatismo","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].nombreCondicionEnfermedadOTraumatismo"],
+["nombre_condicion_enfermedad_o_traumatismo_tomador_1","Nombre de la condición, enfermedad o traumatismo","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].nombreCondicionEnfermedadOTraumatismo"],
+["nombre_condicion_enfermedad_o_traumatismo_tomador_2","Nombre de la condición, enfermedad o traumatismo","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].nombreCondicionEnfermedadOTraumatismo"],
+["nombre_condicion_enfermedad_o_traumatismo_tomador_3","Nombre de la condición, enfermedad o traumatismo","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].nombreCondicionEnfermedadOTraumatismo"],
+["fecha_diagnostico_asegurado_1_dia","Fecha de diagnóstico (día)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaDiagnostico"],
+["fecha_diagnostico_asegurado_1_mes","Fecha de diagnóstico (mes)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaDiagnostico"],
+["fecha_diagnostico_asegurado_1_ano","Fecha de diagnóstico (año)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaDiagnostico"],
+["fecha_diagnostico_asegurado_2_dia","Fecha de diagnóstico (día)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaDiagnostico"],
+["fecha_diagnostico_asegurado_2_mes","Fecha de diagnóstico (mes)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaDiagnostico"],
+["fecha_diagnostico_asegurado_2_ano","Fecha de diagnóstico (año)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaDiagnostico"],
+["fecha_diagnostico_asegurado_3_dia","Fecha de diagnóstico (día)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaDiagnostico"],
+["fecha_diagnostico_asegurado_3_mes","Fecha de diagnóstico (mes)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaDiagnostico"],
+["fecha_diagnostico_asegurado_3_ano","Fecha de diagnóstico (año)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaDiagnostico"],
+["fecha_diagnostico_tomador_1_dia","Fecha de diagnóstico (día)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaDiagnostico"],
+["fecha_diagnostico_tomador_1_mes","Fecha de diagnóstico (mes)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaDiagnostico"],
+["fecha_diagnostico_tomador_1_ano","Fecha de diagnóstico (año)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaDiagnostico"],
+["fecha_diagnostico_tomador_2_dia","Fecha de diagnóstico (día)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaDiagnostico"],
+["fecha_diagnostico_tomador_2_mes","Fecha de diagnóstico (mes)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaDiagnostico"],
+["fecha_diagnostico_tomador_2_ano","Fecha de diagnóstico (año)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaDiagnostico"],
+["fecha_diagnostico_tomador_3_dia","Fecha de diagnóstico (día)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaDiagnostico"],
+["fecha_diagnostico_tomador_3_mes","Fecha de diagnóstico (mes)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaDiagnostico"],
+["fecha_diagnostico_tomador_3_ano","Fecha de diagnóstico (año)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaDiagnostico"],
+["tratamientos_recibidos_asegurado_1","Tratamientos recibidos","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].tratamientosRecibidos"],
+["tratamientos_recibidos_asegurado_2","Tratamientos recibidos","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].tratamientosRecibidos"],
+["tratamientos_recibidos_asegurado_3","Tratamientos recibidos","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].tratamientosRecibidos"],
+["tratamientos_recibidos_tomador_1","Tratamientos recibidos","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].tratamientosRecibidos"],
+["tratamientos_recibidos_tomador_2","Tratamientos recibidos","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].tratamientosRecibidos"],
+["tratamientos_recibidos_tomador_3","Tratamientos recibidos","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].tratamientosRecibidos"],
+["estado_actual_condicion_asegurado_1","Estado actual de la condición, enfermedad o traumatismo","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].codigoEstadoActualCondicion"],
+["estado_actual_condicion_asegurado_2","Estado actual de la condición, enfermedad o traumatismo","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].codigoEstadoActualCondicion"],
+["estado_actual_condicion_asegurado_3","Estado actual de la condición, enfermedad o traumatismo","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].codigoEstadoActualCondicion"],
+["estado_actual_condicion_tomador_1","Estado actual de la condición, enfermedad o traumatismo","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].codigoEstadoActualCondicion"],
+["estado_actual_condicion_tomador_2","Estado actual de la condición, enfermedad o traumatismo","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].codigoEstadoActualCondicion"],
+["estado_actual_condicion_tomador_3","Estado actual de la condición, enfermedad o traumatismo","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].codigoEstadoActualCondicion"],
+["fecha_alta_medica_asegurado_1_dia","Fecha de alta médica (día)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaAltaMedica"],
+["fecha_alta_medica_asegurado_1_mes","Fecha de alta médica (mes)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaAltaMedica"],
+["fecha_alta_medica_asegurado_1_ano","Fecha de alta médica (año)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaAltaMedica"],
+["fecha_alta_medica_asegurado_2_dia","Fecha de alta médica (día)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaAltaMedica"],
+["fecha_alta_medica_asegurado_2_mes","Fecha de alta médica (mes)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaAltaMedica"],
+["fecha_alta_medica_asegurado_2_ano","Fecha de alta médica (año)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaAltaMedica"],
+["fecha_alta_medica_asegurado_3_dia","Fecha de alta médica (día)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaAltaMedica"],
+["fecha_alta_medica_asegurado_3_mes","Fecha de alta médica (mes)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaAltaMedica"],
+["fecha_alta_medica_asegurado_3_ano","Fecha de alta médica (año)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaAltaMedica"],
+["fecha_alta_medica_tomador_1_dia","Fecha de alta médica (día)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaAltaMedica"],
+["fecha_alta_medica_tomador_1_mes","Fecha de alta médica (mes)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaAltaMedica"],
+["fecha_alta_medica_tomador_1_ano","Fecha de alta médica (año)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaAltaMedica"],
+["fecha_alta_medica_tomador_2_dia","Fecha de alta médica (día)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaAltaMedica"],
+["fecha_alta_medica_tomador_2_mes","Fecha de alta médica (mes)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaAltaMedica"],
+["fecha_alta_medica_tomador_2_ano","Fecha de alta médica (año)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaAltaMedica"],
+["fecha_alta_medica_tomador_3_dia","Fecha de alta médica (día)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaAltaMedica"],
+["fecha_alta_medica_tomador_3_mes","Fecha de alta médica (mes)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaAltaMedica"],
+["fecha_alta_medica_tomador_3_ano","Fecha de alta médica (año)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaAltaMedica"],
+["nombre_medico_clinica_hospital_padecimientos_asegurado_1","Nombre y dirección de los médicos, clínicas u hospitales que le atendieron","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].nombreMedicoClinicaHospital"],
+["nombre_medico_clinica_hospital_padecimientos_asegurado_2","Nombre y dirección de los médicos, clínicas u hospitales que le atendieron","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].nombreMedicoClinicaHospital"],
+["nombre_medico_clinica_hospital_padecimientos_asegurado_3","Nombre y dirección de los médicos, clínicas u hospitales que le atendieron","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].nombreMedicoClinicaHospital"],
+["nombre_medico_clinica_hospital_padecimientos_tomador_1","Nombre y dirección de los médicos, clínicas u hospitales que le atendieron","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].nombreMedicoClinicaHospital"],
+["nombre_medico_clinica_hospital_padecimientos_tomador_2","Nombre y dirección de los médicos, clínicas u hospitales que le atendieron","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].nombreMedicoClinicaHospital"],
+["nombre_medico_clinica_hospital_padecimientos_tomador_3","Nombre y dirección de los médicos, clínicas u hospitales que le atendieron","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].nombreMedicoClinicaHospital"],
+["cv_uso_droga_medicamento_asegurado_si","¿Consume o ha consumido drogas o sustancias psicoactivas?: Sí","Casilla","Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.indicadorUso"],
+["cv_uso_droga_medicamento_asegurado_no","¿Consume o ha consumido drogas o sustancias psicoactivas?: No","Casilla","Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.indicadorUso"],
+["cv_uso_droga_medicamento_tomador_si","¿Consume o ha consumido drogas o sustancias psicoactivas?: Sí","Casilla","Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.indicadorUso"],
+["cv_uso_droga_medicamento_tomador_no","¿Consume o ha consumido drogas o sustancias psicoactivas?: No","Casilla","Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.indicadorUso"],
+["nombre_quien_usa_asegurado","Nombre de quien usa","Texto","Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.nombreQuienUsa"],
+["nombre_quien_usa_tomador","Nombre de quien usa","Texto","Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.nombreQuienUsa"],
+["frecuencia_asegurado","Frecuencia","Texto","Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.frecuencia"],
+["frecuencia_tomador","Frecuencia","Texto","Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.frecuencia"],
+["cantidad_asegurado","Cantidad","Texto","Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.cantidad"],
+["cantidad_tomador","Cantidad","Texto","Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.cantidad"],
+["motivo_asegurado","Motivo","Texto","Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.motivo"],
+["motivo_tomador","Motivo","Texto","Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.motivo"],
+["nombre_asegurado","Nombre","Texto","Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.nombre"],
+["nombre_tomador","Nombre","Texto","Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.nombre"],
+["detalle_uso_droga_medicamento_asegurado","Detalles sobre el uso de drogas o sustancias psicoactivas","Texto","Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.detalleUso"],
+["detalle_uso_droga_medicamento_tomador","Detalles sobre el uso de drogas o sustancias psicoactivas","Texto","Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.detalleUso"],
+["cv_uso_medicamentos_droga_medicamento_asegurado_si","¿Utiliza medicamentos o tratamientos médicos actualmente, o ha recibido medicina nuclear, isótopos radioactivos o quimioterapia?: Sí","Casilla","Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.indicadorUsoMedicamentos"],
+["cv_uso_medicamentos_droga_medicamento_asegurado_no","¿Utiliza medicamentos o tratamientos médicos actualmente, o ha recibido medicina nuclear, isótopos radioactivos o quimioterapia?: No","Casilla","Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.indicadorUsoMedicamentos"],
+["cv_uso_medicamentos_droga_medicamento_tomador_si","¿Utiliza medicamentos o tratamientos médicos actualmente, o ha recibido medicina nuclear, isótopos radioactivos o quimioterapia?: Sí","Casilla","Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.indicadorUsoMedicamentos"],
+["cv_uso_medicamentos_droga_medicamento_tomador_no","¿Utiliza medicamentos o tratamientos médicos actualmente, o ha recibido medicina nuclear, isótopos radioactivos o quimioterapia?: No","Casilla","Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.indicadorUsoMedicamentos"],
+["detalle_uso_medicamentos_asegurado","Detalles de medicamentos o tratamientos médicos","Texto","Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.detalleUsoMedicamentos"],
+["detalle_uso_medicamentos_tomador","Detalles de medicamentos o tratamientos médicos","Texto","Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.detalleUsoMedicamentos"],
+["cv_fumador_tabaquismo_asegurado_si","Alguna vez ha fumado: Sí","Casilla","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorFumador"],
+["cv_fumador_tabaquismo_asegurado_no","Alguna vez ha fumado: No","Casilla","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorFumador"],
+["cv_fumador_tabaquismo_tomador_si","Alguna vez ha fumado: Sí","Casilla","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorFumador"],
+["cv_fumador_tabaquismo_tomador_no","Alguna vez ha fumado: No","Casilla","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorFumador"],
+["cantidad_fumado_diario_asegurado","Cantidad fumada diaria","Texto","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.cantidadFumadoDiario"],
+["cantidad_fumado_diario_tomador","Cantidad fumada diaria","Texto","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.cantidadFumadoDiario"],
+["hace_cuanto_tiempo_fuma_asegurado","Hace cuánto tiempo fuma","Texto","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.haceCuantoTiempoFuma"],
+["hace_cuanto_tiempo_fuma_tomador","Hace cuánto tiempo fuma","Texto","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.haceCuantoTiempoFuma"],
+["cv_vapea_tabaquismo_asegurado_si","Vapea actualmente: Sí","Casilla","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorVapea"],
+["cv_vapea_tabaquismo_asegurado_no","Vapea actualmente: No","Casilla","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorVapea"],
+["cv_vapea_tabaquismo_tomador_si","Vapea actualmente: Sí","Casilla","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorVapea"],
+["cv_vapea_tabaquismo_tomador_no","Vapea actualmente: No","Casilla","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorVapea"],
+["cantidad_vapeo_diario_asegurado","Cantidad de vapeo diario","Texto","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.cantidadVapeoDiario"],
+["cantidad_vapeo_diario_tomador","Cantidad de vapeo diario","Texto","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.cantidadVapeoDiario"],
+["hace_cuanto_tiempo_vapea_asegurado","Hace cuánto tiempo vapea","Texto","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.haceCuantoTiempoVapea"],
+["hace_cuanto_tiempo_vapea_tomador","Hace cuánto tiempo vapea","Texto","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.haceCuantoTiempoVapea"],
+["cv_dejo_de_fumar_tabaquismo_asegurado_si","Dejó de fumar: Sí","Casilla","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorDejoDeFumar"],
+["cv_dejo_de_fumar_tabaquismo_asegurado_no","Dejó de fumar: No","Casilla","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorDejoDeFumar"],
+["cv_dejo_de_fumar_tabaquismo_tomador_si","Dejó de fumar: Sí","Casilla","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorDejoDeFumar"],
+["cv_dejo_de_fumar_tabaquismo_tomador_no","Dejó de fumar: No","Casilla","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorDejoDeFumar"],
+["hace_cuanto_tiempo_dejo_de_fumar_asegurado","Hace cuánto dejó de fumar","Texto","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.haceCuantoTiempoDejoDeFumar"],
+["hace_cuanto_tiempo_dejo_de_fumar_tomador","Hace cuánto dejó de fumar","Texto","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.haceCuantoTiempoDejoDeFumar"],
+["cv_fuma_actualmente_tabaquismo_asegurado_si","¿Fuma actualmente?: Sí","Casilla","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorFumaActualmente"],
+["cv_fuma_actualmente_tabaquismo_asegurado_no","¿Fuma actualmente?: No","Casilla","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorFumaActualmente"],
+["cv_fuma_actualmente_tabaquismo_tomador_si","¿Fuma actualmente?: Sí","Casilla","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorFumaActualmente"],
+["cv_fuma_actualmente_tabaquismo_tomador_no","¿Fuma actualmente?: No","Casilla","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorFumaActualmente"],
+["cv_dejo_vapear_tabaquismo_asegurado_si","¿Dejó de vapear?: Sí","Casilla","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorDejoVapear"],
+["cv_dejo_vapear_tabaquismo_asegurado_no","¿Dejó de vapear?: No","Casilla","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorDejoVapear"],
+["cv_dejo_vapear_tabaquismo_tomador_si","¿Dejó de vapear?: Sí","Casilla","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorDejoVapear"],
+["cv_dejo_vapear_tabaquismo_tomador_no","¿Dejó de vapear?: No","Casilla","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorDejoVapear"],
+["cv_consulta_medica_asegurado_si","Consulta médica: Sí","Casilla","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].indicadorConsultaMedica"],
+["cv_consulta_medica_asegurado_no","Consulta médica: No","Casilla","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].indicadorConsultaMedica"],
+["cv_consulta_medica_tomador_si","Consulta médica: Sí","Casilla","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].indicadorConsultaMedica"],
+["cv_consulta_medica_tomador_no","Consulta médica: No","Casilla","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].indicadorConsultaMedica"],
+["quien_consulta_consulta_medica_asegurado_1","Quién consulta","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].quienConsulta"],
+["quien_consulta_consulta_medica_asegurado_2","Quién consulta","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].quienConsulta"],
+["quien_consulta_consulta_medica_asegurado_3","Quién consulta","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].quienConsulta"],
+["quien_consulta_consulta_medica_tomador_1","Quién consulta","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].quienConsulta"],
+["quien_consulta_consulta_medica_tomador_2","Quién consulta","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].quienConsulta"],
+["quien_consulta_consulta_medica_tomador_3","Quién consulta","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].quienConsulta"],
+["detalle_motivo_asegurado_1","Motivo de consulta","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].detalleMotivo"],
+["detalle_motivo_asegurado_2","Motivo de consulta","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].detalleMotivo"],
+["detalle_motivo_asegurado_3","Motivo de consulta","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].detalleMotivo"],
+["detalle_motivo_tomador_1","Motivo de consulta","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].detalleMotivo"],
+["detalle_motivo_tomador_2","Motivo de consulta","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].detalleMotivo"],
+["detalle_motivo_tomador_3","Motivo de consulta","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].detalleMotivo"],
+["diagnostico_medico_asegurado_1","Diagnóstico médico","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].diagnosticoMedico"],
+["diagnostico_medico_asegurado_2","Diagnóstico médico","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].diagnosticoMedico"],
+["diagnostico_medico_asegurado_3","Diagnóstico médico","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].diagnosticoMedico"],
+["diagnostico_medico_tomador_1","Diagnóstico médico","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].diagnosticoMedico"],
+["diagnostico_medico_tomador_2","Diagnóstico médico","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].diagnosticoMedico"],
+["diagnostico_medico_tomador_3","Diagnóstico médico","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].diagnosticoMedico"],
+["nombre_medico_tratante_consulta_medica_asegurado_1","Nombre del médico tratante","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].nombreMedicoTratante"],
+["nombre_medico_tratante_consulta_medica_asegurado_2","Nombre del médico tratante","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].nombreMedicoTratante"],
+["nombre_medico_tratante_consulta_medica_asegurado_3","Nombre del médico tratante","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].nombreMedicoTratante"],
+["nombre_medico_tratante_consulta_medica_tomador_1","Nombre del médico tratante","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].nombreMedicoTratante"],
+["nombre_medico_tratante_consulta_medica_tomador_2","Nombre del médico tratante","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].nombreMedicoTratante"],
+["nombre_medico_tratante_consulta_medica_tomador_3","Nombre del médico tratante","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].nombreMedicoTratante"],
+["cv_diagnostico_especial_asegurado_si","Diagnóstico especial: Sí","Casilla","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].indicadorDiagnosticoEspecial"],
+["cv_diagnostico_especial_asegurado_no","Diagnóstico especial: No","Casilla","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].indicadorDiagnosticoEspecial"],
+["cv_diagnostico_especial_tomador_si","Diagnóstico especial: Sí","Casilla","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].indicadorDiagnosticoEspecial"],
+["cv_diagnostico_especial_tomador_no","Diagnóstico especial: No","Casilla","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].indicadorDiagnosticoEspecial"],
+["quien_consulta_diagnostico_especial_asegurado_1","Quién consulta","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].quienConsulta"],
+["quien_consulta_diagnostico_especial_asegurado_2","Quién consulta","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].quienConsulta"],
+["quien_consulta_diagnostico_especial_asegurado_3","Quién consulta","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].quienConsulta"],
+["quien_consulta_diagnostico_especial_tomador_1","Quién consulta","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].quienConsulta"],
+["quien_consulta_diagnostico_especial_tomador_2","Quién consulta","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].quienConsulta"],
+["quien_consulta_diagnostico_especial_tomador_3","Quién consulta","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].quienConsulta"],
+["motivo_asegurado_1","Motivo","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].motivo"],
+["motivo_asegurado_2","Motivo","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].motivo"],
+["motivo_asegurado_3","Motivo","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].motivo"],
+["motivo_tomador_1","Motivo","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].motivo"],
+["motivo_tomador_2","Motivo","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].motivo"],
+["motivo_tomador_3","Motivo","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].motivo"],
+["resultado_diagnostico_especial_asegurado_1","Resultado","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].resultado"],
+["resultado_diagnostico_especial_asegurado_2","Resultado","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].resultado"],
+["resultado_diagnostico_especial_asegurado_3","Resultado","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].resultado"],
+["resultado_diagnostico_especial_tomador_1","Resultado","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].resultado"],
+["resultado_diagnostico_especial_tomador_2","Resultado","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].resultado"],
+["resultado_diagnostico_especial_tomador_3","Resultado","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].resultado"],
+["nombre_medico_tratante_diagnostico_especial_asegurado_1","Nombre del médico tratante","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].nombreMedicoTratante"],
+["nombre_medico_tratante_diagnostico_especial_asegurado_2","Nombre del médico tratante","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].nombreMedicoTratante"],
+["nombre_medico_tratante_diagnostico_especial_asegurado_3","Nombre del médico tratante","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].nombreMedicoTratante"],
+["nombre_medico_tratante_diagnostico_especial_tomador_1","Nombre del médico tratante","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].nombreMedicoTratante"],
+["nombre_medico_tratante_diagnostico_especial_tomador_2","Nombre del médico tratante","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].nombreMedicoTratante"],
+["nombre_medico_tratante_diagnostico_especial_tomador_3","Nombre del médico tratante","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].nombreMedicoTratante"],
+["cv_positivo_covid_asegurado_si","Diagnóstico COVID-19: Sí","Casilla","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.indicadorPositivo"],
+["cv_positivo_covid_asegurado_no","Diagnóstico COVID-19: No","Casilla","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.indicadorPositivo"],
+["cv_positivo_covid_tomador_si","Diagnóstico COVID-19: Sí","Casilla","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.indicadorPositivo"],
+["cv_positivo_covid_tomador_no","Diagnóstico COVID-19: No","Casilla","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.indicadorPositivo"],
+["fecha_diagnostico_asegurado_dia","Fecha de diagnóstico (día)","Fecha (parte)","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.fechaDiagnostico"],
+["fecha_diagnostico_asegurado_mes","Fecha de diagnóstico (mes)","Fecha (parte)","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.fechaDiagnostico"],
+["fecha_diagnostico_asegurado_ano","Fecha de diagnóstico (año)","Fecha (parte)","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.fechaDiagnostico"],
+["fecha_diagnostico_tomador_dia","Fecha de diagnóstico (día)","Fecha (parte)","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.fechaDiagnostico"],
+["fecha_diagnostico_tomador_mes","Fecha de diagnóstico (mes)","Fecha (parte)","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.fechaDiagnostico"],
+["fecha_diagnostico_tomador_ano","Fecha de diagnóstico (año)","Fecha (parte)","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.fechaDiagnostico"],
+["fecha_alta_asegurado_dia","Fecha de alta (día)","Fecha (parte)","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.fechaAlta"],
+["fecha_alta_asegurado_mes","Fecha de alta (mes)","Fecha (parte)","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.fechaAlta"],
+["fecha_alta_asegurado_ano","Fecha de alta (año)","Fecha (parte)","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.fechaAlta"],
+["fecha_alta_tomador_dia","Fecha de alta (día)","Fecha (parte)","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.fechaAlta"],
+["fecha_alta_tomador_mes","Fecha de alta (mes)","Fecha (parte)","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.fechaAlta"],
+["fecha_alta_tomador_ano","Fecha de alta (año)","Fecha (parte)","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.fechaAlta"],
+["cv_hospitalizacion_covid_asegurado_si","Requirió hospitalización: Sí","Casilla","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.indicadorHospitalizacion"],
+["cv_hospitalizacion_covid_asegurado_no","Requirió hospitalización: No","Casilla","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.indicadorHospitalizacion"],
+["cv_hospitalizacion_covid_tomador_si","Requirió hospitalización: Sí","Casilla","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.indicadorHospitalizacion"],
+["cv_hospitalizacion_covid_tomador_no","Requirió hospitalización: No","Casilla","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.indicadorHospitalizacion"],
+["centro_hospitalario_asegurado","Centro hospitalario","Texto","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.centroHospitalario"],
+["centro_hospitalario_tomador","Centro hospitalario","Texto","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.centroHospitalario"],
+["detalle_sintomas_secuelas_asegurado","Síntomas o secuelas","Texto","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.detalleSintomasSecuelas"],
+["detalle_sintomas_secuelas_tomador","Síntomas o secuelas","Texto","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.detalleSintomasSecuelas"],
+["cv_vacunacion_completa_sars_cov2_covid_asegurado_si","Vacunación completa SARS-CoV-2: Sí","Casilla","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.indicadorVacunacionCompletaSarsCov2"],
+["cv_vacunacion_completa_sars_cov2_covid_asegurado_no","Vacunación completa SARS-CoV-2: No","Casilla","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.indicadorVacunacionCompletaSarsCov2"],
+["cv_vacunacion_completa_sars_cov2_covid_tomador_si","Vacunación completa SARS-CoV-2: Sí","Casilla","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.indicadorVacunacionCompletaSarsCov2"],
+["cv_vacunacion_completa_sars_cov2_covid_tomador_no","Vacunación completa SARS-CoV-2: No","Casilla","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.indicadorVacunacionCompletaSarsCov2"],
+["fecha_ultima_dosis_sars_cov2_asegurado_dia","Fecha de última dosis SARS-CoV-2 (día)","Fecha (parte)","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.fechaUltimaDosisSarsCov2"],
+["fecha_ultima_dosis_sars_cov2_asegurado_mes","Fecha de última dosis SARS-CoV-2 (mes)","Fecha (parte)","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.fechaUltimaDosisSarsCov2"],
+["fecha_ultima_dosis_sars_cov2_asegurado_ano","Fecha de última dosis SARS-CoV-2 (año)","Fecha (parte)","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.fechaUltimaDosisSarsCov2"],
+["fecha_ultima_dosis_sars_cov2_tomador_dia","Fecha de última dosis SARS-CoV-2 (día)","Fecha (parte)","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.fechaUltimaDosisSarsCov2"],
+["fecha_ultima_dosis_sars_cov2_tomador_mes","Fecha de última dosis SARS-CoV-2 (mes)","Fecha (parte)","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.fechaUltimaDosisSarsCov2"],
+["fecha_ultima_dosis_sars_cov2_tomador_ano","Fecha de última dosis SARS-CoV-2 (año)","Fecha (parte)","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.fechaUltimaDosisSarsCov2"],
+["detalle_otro_beneficiario_beneficiario_1","Detalle otro beneficiario","Texto","Beneficiarios","Beneficiarios","datosFormulario.personas[].detalleOtroBeneficiario"],
+["detalle_otro_beneficiario_beneficiario_2","Detalle otro beneficiario","Texto","Beneficiarios","Beneficiarios","datosFormulario.personas[].detalleOtroBeneficiario"],
+["detalle_otro_beneficiario_beneficiario_3","Detalle otro beneficiario","Texto","Beneficiarios","Beneficiarios","datosFormulario.personas[].detalleOtroBeneficiario"],
+["detalle_otro_beneficiario_beneficiario_4","Detalle otro beneficiario","Texto","Beneficiarios","Beneficiarios","datosFormulario.personas[].detalleOtroBeneficiario"],
+["detalle_otro_beneficiario_beneficiario_5","Detalle otro beneficiario","Texto","Beneficiarios","Beneficiarios","datosFormulario.personas[].detalleOtroBeneficiario"],
+["interes_asegurable_otro_beneficiario_beneficiario_1","Interés asegurable","Texto","Beneficiarios","Beneficiarios","datosFormulario.personas[].interesAsegurableOtroBeneficiario"],
+["interes_asegurable_otro_beneficiario_beneficiario_2","Interés asegurable","Texto","Beneficiarios","Beneficiarios","datosFormulario.personas[].interesAsegurableOtroBeneficiario"],
+["interes_asegurable_otro_beneficiario_beneficiario_3","Interés asegurable","Texto","Beneficiarios","Beneficiarios","datosFormulario.personas[].interesAsegurableOtroBeneficiario"],
+["interes_asegurable_otro_beneficiario_beneficiario_4","Interés asegurable","Texto","Beneficiarios","Beneficiarios","datosFormulario.personas[].interesAsegurableOtroBeneficiario"],
+["interes_asegurable_otro_beneficiario_beneficiario_5","Interés asegurable","Texto","Beneficiarios","Beneficiarios","datosFormulario.personas[].interesAsegurableOtroBeneficiario"],
+["cv_agregar_beneficiario_beneficiario_1_si","¿Desea agregar beneficiarios?: Sí","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].indicadorAgregarBeneficiario"],
+["cv_agregar_beneficiario_beneficiario_1_no","¿Desea agregar beneficiarios?: No","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].indicadorAgregarBeneficiario"],
+["cv_agregar_beneficiario_beneficiario_2_si","¿Desea agregar beneficiarios?: Sí","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].indicadorAgregarBeneficiario"],
+["cv_agregar_beneficiario_beneficiario_2_no","¿Desea agregar beneficiarios?: No","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].indicadorAgregarBeneficiario"],
+["cv_agregar_beneficiario_beneficiario_3_si","¿Desea agregar beneficiarios?: Sí","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].indicadorAgregarBeneficiario"],
+["cv_agregar_beneficiario_beneficiario_3_no","¿Desea agregar beneficiarios?: No","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].indicadorAgregarBeneficiario"],
+["cv_agregar_beneficiario_beneficiario_4_si","¿Desea agregar beneficiarios?: Sí","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].indicadorAgregarBeneficiario"],
+["cv_agregar_beneficiario_beneficiario_4_no","¿Desea agregar beneficiarios?: No","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].indicadorAgregarBeneficiario"],
+["cv_agregar_beneficiario_beneficiario_5_si","¿Desea agregar beneficiarios?: Sí","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].indicadorAgregarBeneficiario"],
+["cv_agregar_beneficiario_beneficiario_5_no","¿Desea agregar beneficiarios?: No","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].indicadorAgregarBeneficiario"],
+["cv_parentesco_beneficiario_1_madre","Parentesco: madre","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_1_padre","Parentesco: padre","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_1_hijo","Parentesco: hijo","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_1_hermano","Parentesco: hermano","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_1_conyuge","Parentesco: conyuge","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_1_otro","Parentesco: otro","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_2_madre","Parentesco: madre","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_2_padre","Parentesco: padre","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_2_hijo","Parentesco: hijo","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_2_hermano","Parentesco: hermano","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_2_conyuge","Parentesco: conyuge","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_2_otro","Parentesco: otro","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_3_madre","Parentesco: madre","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_3_padre","Parentesco: padre","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_3_hijo","Parentesco: hijo","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_3_hermano","Parentesco: hermano","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_3_conyuge","Parentesco: conyuge","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_3_otro","Parentesco: otro","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_4_madre","Parentesco: madre","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_4_padre","Parentesco: padre","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_4_hijo","Parentesco: hijo","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_4_hermano","Parentesco: hermano","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_4_conyuge","Parentesco: conyuge","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_4_otro","Parentesco: otro","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_5_madre","Parentesco: madre","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_5_padre","Parentesco: padre","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_5_hijo","Parentesco: hijo","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_5_hermano","Parentesco: hermano","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_5_conyuge","Parentesco: conyuge","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_5_otro","Parentesco: otro","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["porcentaje_beneficiario_1","Porcentaje","Texto","Beneficiarios","Beneficiarios","datosFormulario.personas[].porcentaje"],
+["porcentaje_beneficiario_2","Porcentaje","Texto","Beneficiarios","Beneficiarios","datosFormulario.personas[].porcentaje"],
+["porcentaje_beneficiario_3","Porcentaje","Texto","Beneficiarios","Beneficiarios","datosFormulario.personas[].porcentaje"],
+["porcentaje_beneficiario_4","Porcentaje","Texto","Beneficiarios","Beneficiarios","datosFormulario.personas[].porcentaje"],
+["porcentaje_beneficiario_5","Porcentaje","Texto","Beneficiarios","Beneficiarios","datosFormulario.personas[].porcentaje"],
+["cv_cliente_da_consentimiento_solicitud_si","Autorización: Sí","Casilla","Declaraciones y Autorización","Autorizaciones","datosFormulario.datosGenerales.indicadorClienteDaConsentimiento"],
+["cv_cliente_da_consentimiento_solicitud_no","Autorización: No","Casilla","Declaraciones y Autorización","Autorizaciones","datosFormulario.datosGenerales.indicadorClienteDaConsentimiento"],
+["cv_cliente_da_consentimiento_asegurado_si","Consentimiento: Sí","Casilla","Declaraciones y Autorización","Autorizaciones","datosFormulario.personas[].indicadorClienteDaConsentimiento"],
+["cv_cliente_da_consentimiento_asegurado_no","Consentimiento: No","Casilla","Declaraciones y Autorización","Autorizaciones","datosFormulario.personas[].indicadorClienteDaConsentimiento"],
+["cv_cliente_da_consentimiento_tomador_si","Consentimiento: Sí","Casilla","Declaraciones y Autorización","Autorizaciones","datosFormulario.personas[].indicadorClienteDaConsentimiento"],
+["cv_cliente_da_consentimiento_tomador_no","Consentimiento: No","Casilla","Declaraciones y Autorización","Autorizaciones","datosFormulario.personas[].indicadorClienteDaConsentimiento"],
+["cv_acepta_terminos_solicitud_si","Acepta términos: Sí","Casilla","Declaraciones y Autorización","Declaraciones Legales","datosFormulario.datosGenerales.indicadorAceptaTerminos"],
+["cv_acepta_terminos_solicitud_no","Acepta términos: No","Casilla","Declaraciones y Autorización","Declaraciones Legales","datosFormulario.datosGenerales.indicadorAceptaTerminos"]
+];
+/*DIC:end*/
+
+;
+
+/* ═══════════════════ Lectura de la ficha ═══════════════════ */
+const cellTxt=v=>{
+  if(v==null)return"";
+  if(typeof v==="object"){
+    if(v.richText)return v.richText.map(r=>r.text).join("");
+    if(v.text!=null)return String(v.text);
+    if(v.result!=null)return String(v.result);
+    if(v instanceof Date)return v.toISOString().slice(0,10);
+    return"";
+  }
+  return String(v);
+};
+function sheetRows(ws){
+  const out=[];if(!ws)return out;
+  const n=ws.columnCount;
+  ws.eachRow({includeEmpty:true},(row,i)=>{const a=[];for(let c=1;c<=n;c++)a.push(cellTxt(row.getCell(c).value).trim());out[i-1]=a});
+  for(let i=0;i<out.length;i++)if(!out[i])out[i]=[];
+  return out;
+}
+const normR=r=>String(r||"").trim().replace(/\[(?:i|\d*)\]/g,"[0]");
+const unq=s=>String(s||"").trim().replace(/^["“”']+|["“”']+$/g,"").trim();
+const deacc=s=>String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"");
+const slug=s=>deacc(s).toLowerCase().replace(/\(.*?\)/g,"").replace(/[^a-z0-9]+/g,"_").replace(/^_|_$/g,"");
+const snake=s=>String(s||"").replace(/([a-z0-9])([A-Z])/g,"$1_$2").toLowerCase();
+const leafOf=r=>{const m=String(r||"").match(/([A-Za-z0-9_]+)(?:\[\d*\])?$/);return m?m[1]:""};
+const parentOf=r=>String(r||"").replace(/\.[^.]+$/,"");
+
+function readFicha(wb){
+  const ws=wb.getWorksheet("Formulario");
+  if(!ws)throw new Error("La ficha no tiene la hoja «Formulario»");
+  const rows=sheetRows(ws);
+  const hi=rows.findIndex(r=>r.includes("ID")&&r.includes("Pregunta"));
+  if(hi<0)throw new Error("No encuentro el encabezado de «Formulario»");
+  const H=rows[hi],col=n=>H.indexOf(n);
+  const C={id:col("ID"),sec:col("Sección"),sub:col("Subsección"),label:col("Pregunta"),tipo:col("Tipo de respuesta"),oblig:col("Obligatoria"),
+    origen:col("Origen"),repite:col("Se repite"),armado:col("Se arma con / parte de"),muestra:col("Se muestra si"),opts:col("Opciones"),
+    reglas:col("Reglas / formato"),valor:col("Valor o cálculo"),boxes:col("Casilleros del PDF"),estadoPdf:col("Estado PDF"),
+    ruta:col("Ruta JSON"),estadoJson:col("Estado JSON"),notas:col("Trazabilidad")};
+  if(C.notas<0)C.notas=col("Notas");
+  const g=(r,k)=>C[k]>=0?(r[C[k]]||""):"";
+  const Q=[];
+  for(const r of rows.slice(hi+1)){
+    const id=g(r,"id");
+    if(!/^P-\d+/.test(id))continue;
+    const boxes=g(r,"boxes").split(/\s*\/\s*|\n/).map(s=>s.trim()).filter(s=>s&&!/^[—-]/.test(s));
+    Q.push({id,sec:g(r,"sec"),sub:g(r,"sub"),label:g(r,"label").replace(/\s*:\s*$/,""),rawLabel:g(r,"label"),tipo:g(r,"tipo"),
+      oblig:/^s[ií]/i.test(g(r,"oblig")),obligTxt:g(r,"oblig"),origen:g(r,"origen"),repite:g(r,"repite"),reglas:g(r,"reglas"),
+      valor:g(r,"valor"),boxes,ruta:normR(g(r,"ruta")),rutaFicha:g(r,"ruta"),estadoJson:g(r,"estadoJson"),notas:g(r,"notas"),opts:[]});
+  }
+  const byId=Object.fromEntries(Q.map(q=>[q.id,q]));
+  const wo=wb.getWorksheet("Opciones");
+  if(wo){
+    const R=sheetRows(wo),h=R[0]||[],oc=n=>h.indexOf(n);
+    const ci={id:oc("ID"),ord:oc("Orden"),lab:oc("Opción (como se ve)"),code:oc("Código"),box:oc("Casilla del PDF")};
+    for(const r of R.slice(1)){
+      const q=byId[r[ci.id]];if(!q)continue;
+      const box=(r[ci.box]||"").trim();
+      q.opts.push({ord:+r[ci.ord]||q.opts.length+1,label:(r[ci.lab]||"").trim(),code:unq(r[ci.code]),box:/^[—-]/.test(box)?"":box});
+    }
+  }
+  const routes=new Set();
+  const wj=wb.getWorksheet("JSON del cliente");
+  if(wj){const R=sheetRows(wj);const c=(R[0]||[]).indexOf("Ruta");for(const r of R.slice(1))if(r[c])routes.add(normR(r[c]))}
+  const sheets=wb.worksheets.map(w=>({name:w.name,rows:sheetRows(w)}));
+  return{Q,byId,routes,sheets};
+}
+
+/* Texto legal de la Matriz del INS: filas «Texto Informativo» */
+function readInsLegal(wb){
+  const out=[];
+  for(const ws of wb.worksheets){
+    const R=sheetRows(ws);const h=R[0]||[];
+    const cTipo=h.findIndex(x=>/tipo de control/i.test(x)),cNom=h.findIndex(x=>/nombre del campo en formulario/i.test(x)),cSec=h.findIndex(x=>/^secci/i.test(x));
+    if(cTipo<0||cNom<0)continue;
+    for(const r of R.slice(1))if(/texto informativo/i.test(r[cTipo]||"")&&(r[cNom]||"").length>40)out.push({hoja:ws.name,seccion:r[cSec]||"",texto:r[cNom]});
+  }
+  return out;
+}
+
+/* ═══════════════════ Reglas ═══════════════════ */
+const CR_DATE={placeholder:"dd/mm/aaaa",jsonDateFormat:"DD/MM/YYYY",pdfDateFormat:"DD/MM/YYYY"};
+const EMAIL={validationPattern:"^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",validationErrorMessage:"Correo electrónico no válido"};
+/* Códigos INS de tipo de identificación (los mismos del 5919 y de la matriz v1) */
+const TIPO_ID=[["Cédula Física Nacional","0",/cedula/],["DIMEX","6",/dimex/],["DIDI","12",/didi/],["Pasaporte","9",/pasaporte/]];
+const NAME_PARTS=["primerApellido","segundoApellido","primerNombre","segundoNombre"];
+const IDENT_ORDER=["codigoTipoIdentificacion","numeroIdentificacion",...NAME_PARTS,"nombreCompleto","correoElectronico"];
+const ENC_ID={codigoTipoFormulario:"codigo_tipo_formulario",descripcionTipoFormulario:"descripcion_tipo_formulario",codigoTipoTramite:"codigo_tipo_tramite",
+  descripcionTipoTramite:"descripcion_tipo_tramite",identificadorTransaccionInterno:"identificador_transaccion",correoElectronico:"correo",
+  codigoProducto:"codigo_producto",descripcionProducto:"descripcion_producto",nombreCompletoCliente:"nombre_cliente",identificadorArchivo:"identificador_archivo",
+  conozcaClienteActualizado:"conozca_cliente",sedeAdministradora:"sede",descripcionSedeAdministradora:"descripcion_sede",metodoEnvioFormulario:"metodo_envio"};
+
+/* Pasos en el orden fijo del diccionario */
+const STEPS=[
+  {k:"dg",id:"section_datos_generales",title:"Datos Generales"},
+  {k:"per",id:"section_persona",title:"Datos del Asegurado"},
+  {k:"dep",id:"section_dependientes",title:"Dependientes"},
+  {k:"rie",id:"section_riesgo",title:"Información del Riesgo"},
+  {k:"ben",id:"section_beneficiarios",title:"Beneficiarios"},
+  {k:"fir",id:"section_firmas",title:"Firmas",hidden:true,always:true},
+  {k:"dec",id:"section_declaraciones",title:"Declaraciones y Autorización",always:true}
+];
+/* Subsecciones fijas (nombres del diccionario V10) */
+const SUBS=[
+  {k:"poliza",step:"dg",id:"sub_poliza_madre",title:"Datos de la Póliza Madre (oculto)",hidden:true,re:/datosGenerales\.polizaMadre\./},
+  {k:"asesor",step:"dg",id:"sub_asesor",title:"Datos del Asesor",re:/datosGenerales\.intermediario\./},
+  {k:"solicitud",step:"dg",id:"sub_solicitud",title:"Información de la Solicitud",re:/datosGenerales\.(lugar|fechaCreacion)$/},
+  {k:"adicional",step:"dg",id:"sub_informacion_adicional",title:"Información adicional",re:/datosFormulario\.datosAdicionales\./},
+  {k:"sistema",step:"dg",id:"sub_datos_sistema",title:"Datos del Sistema (oculto)",hidden:true,re:/^encabezado\.|personas\[0\]\.(codigoTipo|descripcionTipo)$/},
+  {k:"persona",step:"per",id:"sub_datos_persona",title:"Datos del Asegurado",re:/personas\[0\]\.[A-Za-z]+$/},
+  {k:"contacto",step:"per",id:"sub_contacto",title:"Contacto y Ubicación",re:/personas\[0\]\.direccion/},
+  {k:"notif",step:"per",id:"sub_notificacion",title:"Preferencias de Notificación",re:/personas\[0\]\.mediosNotificacion/},
+  {k:"firmas",step:"fir",id:"sub_firmas",title:"Firmas"},
+  {k:"decl",step:"dec",id:"sub_declaraciones",title:"Declaraciones y Autorización",re:/indicadorAceptaTerminos$/}
+];
+const DIC_BY_ROUTE={};
+for(const d of DIC)DIC_BY_ROUTE[normR(String(d[4]||"").replace(/\[\]/g,"[0]"))]=d;
+
+function placeQ(q){
+  const r=q.ruta;
+  for(const s of SUBS)if(s.re&&s.re.test(r)&&s.k!=="persona")return{step:s.step,sub:s};
+  if(/\.riesgo\[/.test(r)||/riesgo/i.test(q.sec))return{step:"rie",subTitle:q.sub||"Riesgo"};
+  if(/beneficiari/i.test(r)||/beneficiari/i.test(q.sub))return{step:"ben",subTitle:q.sub||"Beneficiarios"};
+  if(/personas\[[1-9]\d*\]|dependiente/i.test(r)||/dependiente/i.test(q.sub))return{step:"dep",subTitle:q.sub||"Dependientes"};
+  if(/^datosFormulario\.datosGenerales\./.test(r))return{step:"dg",sub:SUBS.find(s=>s.k==="solicitud")};
+  const per=SUBS.find(s=>s.k==="persona");
+  if(per.re.test(r))return{step:"per",sub:per};
+  const d=DIC_BY_ROUTE[r];
+  if(d){const st=/riesgo/i.test(d[2])?"rie":/benef/i.test(d[2])?"ben":/depend/i.test(d[2])?"dep":/declarac/i.test(d[2])?"dec":/general/i.test(d[2])?"dg":"per";return{step:st,subTitle:d[3]}}
+  return{step:"per",sub:per};
+}
+
+/* Ids: los campos del PDF son siempre field_<casillero>; el resto sale de la ruta */
+function baseFromRoute(r){
+  const leaf=leafOf(r);
+  if(/^encabezado\./.test(r))return"enc_"+(ENC_ID[leaf]||snake(leaf));
+  if(/polizaMadre\./.test(r))return"pm_"+snake(leaf).replace("tipo_identificacion","tipo_id");
+  if(/intermediario\./.test(r))return"intermediario_"+snake(leaf).replace(/_intermediario$/,"").replace("correo_electronico","correo").replace("tipo_identificacion","tipo_id");
+  let b=snake(leaf).replace("correo_electronico","correo").replace(/^indicador_/,"");
+  if(/^descripcion_/.test(b))b=b.replace("tipo_identificacion","tipo_id");
+  if(/^codigo_[a-z]+_/.test(b))b=b.replace(/^codigo_/,"");
+  else if(/^codigo_(provincia|canton|distrito|pais)$/.test(b))b=b.replace(/^codigo_/,"");
+  return(/personas\[0\]/.test(r)?"asg_":"")+b;
+}
+const boxBase=bs=>{ // prefijo común de un grupo de casilleros
+  if(!bs.length)return"";
+  let p=bs[0];for(const b of bs)while(!b.startsWith(p))p=p.slice(0,-1);
+  return p.replace(/_+$/,"");
+};
+const helperBase=b=>b.replace(/^asg_/,"").replace(/^field_/,"");
+
+function buildMatrix(F,opts={}){
+  const main=opts.main||null,CAT=opts.cat||null,legal=opts.legal||[];
+  const R={warn:[],added:[],dropped:[],fuera:[],repeaters:[]};
+  const mainNames=main?new Set(main.sections.flatMap(s=>s.fields||[]).filter(f=>f.sourceMeta&&f.sourceMeta.sourceName).map(f=>f.sourceMeta.sourceName)):null;
+  const usedIds=new Set();
+  const uid=id=>{let x=id,n=2;while(usedIds.has(x))x=id+"_"+(n++);usedIds.add(x);return x};
+  const ficha=q=>q?{q}:{interno:true};
+  const hasNombreCompleto=F.Q.some(q=>leafOf(q.ruta)==="nombreCompleto"&&/personas\[0\]/.test(q.ruta));
+  const forced=q=>/datosGenerales\.(polizaMadre|intermediario)\.|^encabezado\.|indicadorAceptaTerminos$|personas\[0\]\.(codigoTipo|descripcionTipo)$/.test(q.ruta)
+    ||(hasNombreCompleto&&NAME_PARTS.includes(leafOf(q.ruta))&&/personas\[0\]\.[a-zA-Z]+$/.test(q.ruta));
+
+  /* 1 · dentro / fuera */
+  const inQ=[];
+  for(const q of F.Q){
+    const inJson=F.routes.has(q.ruta);
+    if(!q.boxes.length&&!inJson&&!forced(q)){q.fuera="No está en el PDF ni en el JSON del cliente";R.fuera.push(q);continue}
+    inQ.push(q);
+  }
+
+  /* 2 · ubicación en pasos y subsecciones */
+  const steps=STEPS.map(s=>({...s,subs:[]}));
+  const stepOf=k=>steps.find(s=>s.k===k);
+  const subOf=(stepK,def)=>{
+    const st=stepOf(stepK);
+    let s=st.subs.find(x=>x.id===def.id);
+    if(!s){s={id:def.id,title:def.title,hidden:!!def.hidden,k:def.k||def.id,qs:[],fields:[],tail:[]};st.subs.push(s)}
+    return s;
+  };
+  for(const q of inQ){
+    const p=placeQ(q);
+    const def=p.sub||{id:"sub_"+slug(p.subTitle),title:p.subTitle};
+    q._sub=subOf(p.step,def);q._sub.qs.push(q);
+  }
+  /* orden fijo de subsecciones de Datos Generales y Persona */
+  const ORD=SUBS.map(s=>s.id);
+  for(const st of steps)if(st.k==="dg"||st.k==="per")st.subs.sort((a,b)=>(ORD.indexOf(a.id)+1||99)-(ORD.indexOf(b.id)+1||99));
+
+  /* orden dentro de la subsección */
+  for(const st of steps)for(const s of st.subs){
+    if(s.id==="sub_datos_persona"){
+      const idx=q=>{const i=IDENT_ORDER.indexOf(leafOf(q.ruta));return i<0?99:i};
+      const head=s.qs.filter(q=>idx(q)<99).sort((a,b)=>idx(a)-idx(b));
+      let rest=s.qs.filter(q=>idx(q)===99);
+      // la moneda va pegada al monto (tipoMonedaIngreso → ingreso…)
+      for(const m of rest.filter(q=>/^tipoMoneda(\w+)/.test(leafOf(q.ruta)))){
+        const w=leafOf(m.ruta).replace(/^tipoMoneda/,"").toLowerCase();
+        const t=rest.find(q=>q!==m&&leafOf(q.ruta).toLowerCase().startsWith(w));
+        if(t){rest=rest.filter(q=>q!==m);rest.splice(rest.indexOf(t)+1,0,m)}
+      }
+      s.qs=[...head,...rest];
+    }
+    // la pregunta que «despliega todas» va primero
+    const all=s.qs.find(q=>/despliega todas/i.test(q.reglas));
+    if(all){s.qs=[all,...s.qs.filter(q=>q!==all)]}
+  }
+
+  /* 3 · campos */
+  const isSiNo=q=>/s[ií]\s*\/\s*no/i.test(q.tipo);
+  const T={"Texto corto":"text","Texto largo":"textarea","Número":"number","Fecha":"date","Email":"text","Porcentaje":"number","Casilla de aceptación":"checkbox"};
+  const maxLenOf=q=>{let m=q.reglas.match(/alfanum[ée]rico\s*\((\d+)\)/i)||q.notas.match(/num[ée]rico y (\d+) d[ií]gitos/i)||q.notas.match(/(\d+) caracteres/i);return m?+m[1]:null};
+  const phOf=q=>{const m=q.notas.match(/placeholder con el texto:\s*(.+)/i);return m?m[1].trim():null};
+  const helpOf=q=>{const m=q.notas.match(/descripci[oó]n de cada opci[oó]n del combo:\s*([\s\S]+?)(?:\n(?:Cruce|La matriz|La ficha|Mapeo|dato solo)|$)/i);
+    return m?m[1].split(/\n+/).map(x=>x.trim()).filter(Boolean).map(x=>x.replace(/:\s*(\p{Lu})/u,(_,c)=>": "+c.toLowerCase())).join(" "):null};
+  const prellen=q=>/prellenado/i.test(q.origen);
+  const optsClean=q=>{
+    const out=[];
+    for(const o of q.opts){
+      if(/^s[ií]\s*\/\s*no$/i.test(o.label))continue;
+      if(/^pendiente$/i.test(o.code)){R.dropped.push(`${q.id} «${q.label}»: opción «${o.label}» sin código (pendiente) — no se incluye`);continue}
+      const code=/^del$/i.test(o.code)?"":o.code;
+      out.push({label:o.label,pdfValue:o.label,jsonValue:code||o.label,_box:o.box});
+    }
+    return out;
+  };
+  const base=(q,f)=>{ // propiedades comunes de un campo con JSON
+    f.jsonOutputPath=q.ruta;f.prefillKey=q.ruta;
+    return f;
+  };
+  const push=(s,q,f,{tail=false}={})=>{f._q=q;(tail?s.tail:s.fields).push(f);return f};
+  const W=(q,type)=>{
+    const l=leafOf(q.ruta);
+    if(type==="date")return l==="fechaCreacion"?"fit":"quarter";
+    if(type==="number")return"quarter";
+    if(type==="select")return"third";
+    if(NAME_PARTS.includes(l))return"quarter";
+    if(/^(numeroIdentificacion|lugar|correoElectronico|nombre)$/.test(l))return"half";
+    if(l==="identificacion"||l==="codigoIntermediario")return"quarter";
+    if(l==="datosNotificacion")return"two-thirds";
+    return"full";
+  };
+  const siNoRadios=(s,q,b,{withBox})=>{
+    const si=uid("field_"+b+"_si"),no=uid("field_"+b+"_no");
+    const common={optionsLayout:"horizontal",sharedValue:true,pdfValue:"X"};
+    if(withBox)common.checkedPdfValue=true;
+    const fs=push(s,q,{id:si,type:"radio",label:"Sí",radioGroupLabel:q.label,required:q.oblig,width:"full",excludeFromJson:true,_box:withBox?b+"_si":"",
+      ...common,radioGroupFields:[no],jsonValue:"true"});
+    const fn=push(s,q,{id:no,type:"radio",label:"No",required:q.oblig,width:null,excludeFromJson:true,_box:withBox?b+"_no":"",
+      ...common,radioGroupFields:[si],jsonValue:"false"});
+    if(q.ruta)push(s,q,{id:uid("field_helper_"+helperBase(b)),type:"boolean",label:q.label+" (helper)",hidden:true,readOnly:true,jsonOutputPath:q.ruta,
+      autoFillConcat:{sourceFieldIds:[si,no],separator:"",parts:[{kind:"text",value:"true",condition:{fieldId:si,op:"notEmpty"}}]},sharedValue:true},{tail:true});
+    q._si=si;q._no=no;
+  };
+
+  /* repeaters: grupos de preguntas cuyo arreglo tiene casilleros numerados (cond_1_…, cond_2_…) */
+  const repGroups={};
+  for(const q of inQ){
+    const nums=new Set(q.boxes.map(b=>(b.match(/_(\d+)_/)||[])[1]).filter(Boolean));
+    const m=q.ruta.match(/^(.*\.([A-Za-z]+))\[0\]\.[A-Za-z]+$/);
+    if(nums.size>1&&m){(repGroups[m[1]]=repGroups[m[1]]||{path:m[1],leaf:m[2],qs:[]}).qs.push(q);q._rep=repGroups[m[1]]}
+  }
+
+  for(const st of steps)for(const s of st.subs){
+    const system=s.k==="sistema"||s.k==="poliza";
+    for(const q of s.qs){
+      const leaf=leafOf(q.ruta),opts=optsClean(q);
+      /* sistema / póliza madre: ocultos, prellenados, solo lectura */
+      if(system){
+        const t=isSiNo(q)?"boolean":"text";
+        push(s,q,base(q,{id:uid("field_"+baseFromRoute(q.ruta)),type:t,label:q.label,hidden:true,readOnly:true,sharedValue:true}));
+        continue;
+      }
+      /* asesor: prellenado y bloqueado */
+      if(s.k==="asesor"){
+        const hid=/codigoTipoIdentificacion$/.test(leaf);
+        const f=base(q,{id:uid("field_"+baseFromRoute(q.ruta)),type:q.tipo==="Número"?"number":"text",label:q.label,hidden:hid||undefined,readOnly:true,width:hid?null:W(q,q.tipo==="Número"?"number":"text")});
+        const ml=maxLenOf(q);if(ml)f.maxLength=ml;
+        if(hid)f.sharedValue=true;
+        push(s,q,f);continue;
+      }
+      /* repeater */
+      if(q._rep){
+        const g=q._rep;
+        if(!g.done){
+          g.done=true;
+          const ctrl=s.qs.slice(0,s.qs.indexOf(q)).reverse().find(x=>x._si);
+          const sing=g.leaf.replace(/es$/,"").replace(/s$/,"");
+          const maxN=Math.max(...g.qs.flatMap(x=>x.boxes.map(b=>+(b.match(/_(\d+)_/)||[])[1]||0)));
+          const sub=[],slots=[];
+          for(const x of g.qs){
+            const sl=leafOf(x.ruta),xo=optsClean(x);
+            let t=T[x.tipo]||(xo.length?"select":"text");
+            const sf={id:sl,type:t,label:x.label,options:t==="select"?xo.map(({_box,...o})=>o):null,required:x.oblig,readOnly:false,defaultValue:null};
+            if(t==="date")Object.assign(sf,CR_DATE);
+            const h=helpOf(x);if(h)sf.helpText=h;
+            sub.push(sf);
+            for(const b of x.boxes){const n=+(b.match(/_(\d+)_/)||[])[1];if(n)slots.push({n,sub:sl,box:b,q:x})}
+          }
+          slots.sort((a,b)=>a.n-b.n||sub.findIndex(z=>z.id===a.sub)-sub.findIndex(z=>z.id===b.sub));
+          const repId=uid("field_repeater_"+snake(g.leaf));
+          const rep=push(s,null,{id:repId,type:"repeater",label:q.sub||g.leaf,required:false,width:"full",sharedValue:true,
+            conditionalVisibility:ctrl?JSON.stringify({logic:"or",conditions:[{fieldId:ctrl._si,operator:"not_empty"}]}):null,
+            repeaterConfig:{itemLabel:sing.charAt(0).toUpperCase()+sing.slice(1),itemLabelPlural:g.leaf.charAt(0).toUpperCase()+g.leaf.slice(1),
+              addButtonLabel:"Agregar "+sing,minItems:1,maxItems:maxN,fields:sub,child:null,
+              slotMappings:slots.map(z=>({itemIndex:z.n-1,subFieldId:z.sub,targetFieldId:"field_"+z.box})),
+              slotPattern:null,jsonSlotPattern:g.path+"[{i}].{sub}",overflow:null,overflowThreshold:maxN}});
+          rep._origen="Interno Signaframe";
+          const ss=subOf(st.k,{id:s.id+"_casilleros",title:s.title+" · casilleros del PDF (oculto)",hidden:true});
+          ss._after=s.id;
+          for(const z of slots)push(ss,z.q,{id:uid("field_"+z.box),type:"text",label:`${z.q.label} ${z.n} (casillero PDF)`,hidden:true,readOnly:true,excludeFromJson:true,sharedValue:true,_box:z.box});
+          R.repeaters.push({id:repId,items:maxN,slots:slots.length,pattern:g.path+"[{i}].{sub}"});
+        }
+        continue;
+      }
+      /* Sí / No */
+      if(isSiNo(q)){
+        const bs=q.boxes.filter(b=>/_(si|no)$/.test(b));
+        if(bs.length===2)siNoRadios(s,q,boxBase(bs.map(b=>b.replace(/_(si|no)$/,""))),{withBox:true});
+        else siNoRadios(s,q,leaf.replace(/^indicador/,"").replace(/^./,c=>c.toLowerCase()).replace(/([a-z0-9])([A-Z])/g,"$1_$2").toLowerCase()||slug(q.label),{withBox:false});
+        continue;
+      }
+      /* número + unidad (combo) que se concatenan */
+      if(opts.some(o=>/del combo:/i.test(o.label))&&/concaten/i.test(q.reglas)){
+        const box=q.boxes[0]||"",k=box?helperBase(box):baseFromRoute(q.ruta).replace(/^asg_/,"");
+        const ml=(q.opts.map(o=>o.label).join(" ").match(/(\d+)\s*caracteres/)||[])[1];
+        const ph=phOf(q)||"Ej.: 15";
+        const nId=uid("field_"+k+"_numero"),uId=uid("field_"+k+"_unidad");
+        const nf=push(s,q,{id:nId,type:"number",label:q.label,required:q.oblig,width:"quarter",excludeFromJson:true});
+        if(ml)nf.maxLength=+ml;nf.placeholder=ph;nf.sharedValue=true;
+        push(s,q,{id:uId,type:"select",label:"Unidad",required:q.oblig,width:"quarter",excludeFromJson:true,
+          options:opts.filter(o=>/del combo:/i.test(o.label)).map(o=>{const v=o.label.replace(/^.*del combo:\s*/i,"").trim();return{label:v,pdfValue:v,jsonValue:v}}),sharedValue:true});
+        push(s,q,{id:uid(box?"field_"+box:"field_"+baseFromRoute(q.ruta)),type:"text",label:q.label+" (PDF/JSON concatenado)",hidden:true,readOnly:true,jsonOutputPath:q.ruta,
+          autoFillConcat:{sourceFieldIds:[nId,uId],separator:" ",parts:[{kind:"field",fieldId:nId},{kind:"field",fieldId:uId,valueSource:"visible"}]},sharedValue:true,_box:box});
+        q._ctrlIds=[nId,uId];
+        continue;
+      }
+      /* lista con un casillero por opción → radios + helper */
+      if(opts.length>1&&opts.every(o=>o._box)){
+        const ids=opts.map(o=>uid("field_"+o._box));
+        opts.forEach((o,i)=>push(s,q,{id:ids[i],type:"radio",label:o.label,radioGroupLabel:i?undefined:q.label,required:q.oblig,width:i?null:"full",excludeFromJson:true,_box:o._box,
+          radioGroupFields:ids.filter((_,j)=>j!==i),optionsLayout:"horizontal",checkedPdfValue:true,sharedValue:true,jsonValue:o.jsonValue,pdfValue:"X"}));
+        q._optRadios=Object.fromEntries(opts.map((o,i)=>[o.label,ids[i]]));
+        push(s,q,{id:uid("field_helper_"+helperBase(boxBase(opts.map(o=>o._box)))),type:"text",label:q.label+" (helper)",hidden:true,readOnly:true,jsonOutputPath:q.ruta,
+          autoFillConcat:{sourceFieldIds:ids,separator:"",parts:opts.map((o,i)=>({kind:"text",value:o.jsonValue,condition:{fieldId:ids[i],op:"notEmpty"}}))},sharedValue:true},{tail:true});
+        continue;
+      }
+      /* tipo de identificación: select + casillas ocultas que pintan el PDF */
+      if(leaf==="codigoTipoIdentificacion"&&(q.boxes.length>1||opts.some(o=>/c[ée]dula f[ií]sica/i.test(o.label)))){
+        const sel=base(q,{id:uid("field_"+baseFromRoute(q.ruta)),type:"select",label:q.label,required:q.oblig,width:"half",
+          options:TIPO_ID.map(([l,c])=>({label:l,pdfValue:l,jsonValue:c})),sharedValue:true});
+        push(s,q,sel);
+        for(const b of q.boxes){
+          const t=TIPO_ID.find(x=>x[2].test(b));
+          const f={id:uid("field_"+b),type:"checkbox",label:(t?t[0]:"Otro")+(t?" (casilla PDF)":" (casilla PDF, sin código INS)"),hidden:true,readOnly:true,excludeFromJson:true,_box:b};
+          if(t){f.autoFillConcat={sourceFieldIds:[sel.id],separator:"",parts:[{kind:"text",value:true,condition:{fieldId:sel.id,op:"equals",values:t[0]}},{kind:"text",value:true,condition:{fieldId:sel.id,op:"equals",values:t[1]}}]};f.sharedValue=true}
+          else R.warn.push(`${q.id}: el casillero ${b} no tiene código INS; queda sin pintar`);
+          f.checkedPdfValue=true;
+          push(s,q,f,{tail:true});
+        }
+        q._sel=sel.id;continue;
+      }
+      /* descripciones que salen del select hermano */
+      const sib=leaf==="medioNotificacion"?"codigoMedioNotificacion":/^descripcion[A-Z]/.test(leaf)?"codigo"+leaf.replace(/^descripcion/,""):null;
+      const sibQ=sib&&s.qs.concat(...st.subs.map(x=>x.qs)).find(x=>x.ruta===parentOf(q.ruta)+"."+sib);
+      if(sibQ){q._descOf=sibQ;continue} // se arma al final, cuando ya existe el select
+      /* catálogo geográfico */
+      if(/^codigo(Provincia|Canton|Distrito)$/.test(leaf)&&CAT){
+        const lvl=leaf.replace("codigo","").toLowerCase();
+        const f=base(q,{id:uid("field_"+baseFromRoute(q.ruta)),type:"select",label:q.label,required:q.oblig,width:"third",sharedValue:true});
+        f.options=(CAT[lvl==="canton"?"canton":lvl]||[]).map(([l,c,p])=>({label:l,pdfValue:l,jsonValue:c,parentValues:lvl==="provincia"?"":p}));
+        push(s,q,f);q._geo=lvl;continue;
+      }
+      if(leaf==="codigoPais"){push(s,q,base(q,{id:uid("field_"+baseFromRoute(q.ruta)),type:"text",label:q.label+" (código)",hidden:true,readOnly:true,sharedValue:true}));continue}
+      /* nombre completo concatenado */
+      if(leaf==="nombreCompleto"&&/personas\[0\]\.nombreCompleto$/.test(q.ruta)){
+        const f={id:uid(q.boxes[0]?"field_"+q.boxes[0]:"field_asg_nombre_completo"),type:"text",label:q.label,readOnly:true,width:"full",jsonOutputPath:q.ruta,_box:q.boxes[0]||"",sharedValue:true};
+        q._nc=f;push(s,q,f);continue;
+      }
+      /* resto: un campo por pregunta */
+      let t=T[q.tipo]||(opts.length?"select":"text");
+      if(/opci[oó]n/i.test(q.tipo))t="select";
+      if(q.boxes.length>1)R.warn.push(`${q.id} «${q.label}»: ${q.boxes.length} casilleros para un solo campo (${q.boxes.join(", ")})`);
+      const box=q.boxes[0]||"";
+      const f=base(q,{id:uid(box?"field_"+box:"field_"+baseFromRoute(q.ruta)),type:t,label:q.label,required:q.oblig,width:W(q,t),_box:box});
+      if(/prellenado bloqueado/i.test(q.origen))f.readOnly=true;
+      if(t==="select"){f.options=opts.map(({_box,...o})=>o);if(!f.options.length)R.warn.push(`${q.id} «${q.label}»: lista sin opciones en la ficha`)}
+      if(t==="date"){if(leaf==="fechaCreacion")f.defaultValue="today";Object.assign(f,CR_DATE)}
+      if(q.tipo==="Email")Object.assign(f,EMAIL);
+      if(t!=="select"&&t!=="date"){const ml=maxLenOf(q);if(ml)f.maxLength=ml}
+      const ph=phOf(q);if(ph)f.placeholder=ph;
+      const h=helpOf(q);if(h)f.helpText=h;
+      if(t==="checkbox"){f.width="full";f.sharedValue=true}
+      if(prellen(q))f.sharedValue=true;
+      push(s,q,f);
+    }
+  }
+
+  /* ids de cada pregunta → para condiciones y helpers */
+  const fieldsOfQ=q=>steps.flatMap(st=>st.subs.flatMap(s=>s.fields.concat(s.tail))).filter(f=>f._q===q);
+  const mainField=q=>q._sel||fieldsOfQ(q).find(f=>!f.hidden)?.id||fieldsOfQ(q)[0]?.id;
+
+  /* geo: padres y abuelos */
+  const geo={};for(const q of inQ)if(q._geo)geo[q._geo]=mainField(q);
+  for(const st of steps)for(const s of st.subs)for(const f of s.fields){
+    if(f.id===geo.canton&&geo.provincia)f.parentFieldId=geo.provincia;
+    if(f.id===geo.distrito&&geo.canton){f.parentFieldId=geo.canton;if(geo.provincia)f.grandParentFieldId=geo.provincia}
+  }
+  /* descripciones (valueSource visible) */
+  for(const st of steps)for(const s of st.subs)for(const q of s.qs)if(q._descOf){
+    const src=mainField(q._descOf);
+    if(!src){R.warn.push(`${q.id}: no encuentro el campo de ${q._descOf.id} para armar la descripción`);continue}
+    let id="field_"+baseFromRoute(q.ruta);if(usedIds.has(id))id+="_desc";
+    push(s,q,{id:uid(id),type:"text",label:q.label+" (helper)",hidden:true,readOnly:true,jsonOutputPath:q.ruta,
+      autoFillConcat:{sourceFieldIds:[src],separator:"",parts:[{kind:"field",fieldId:src,valueSource:"visible"}]},sharedValue:true},{tail:true});
+  }
+  /* nombre completo: se arma con las partes */
+  for(const q of inQ)if(q._nc){
+    const P={};for(const x of inQ)if(NAME_PARTS.includes(leafOf(x.ruta))&&/personas\[0\]\.[a-zA-Z]+$/.test(x.ruta))P[leafOf(x.ruta)]=mainField(x);
+    const src=NAME_PARTS.map(k=>P[k]).filter(Boolean),ord=["primerNombre","segundoNombre","primerApellido","segundoApellido"].map(k=>P[k]).filter(Boolean);
+    if(src.length)q._nc.autoFillConcat={sourceFieldIds:src,separator:" ",parts:ord.map(id=>({kind:"field",fieldId:id}))};
+    else{q._nc.prefillKey=q.ruta;R.warn.push(`${q.id}: nombre completo sin partes en la ficha; queda prellenado`)}
+  }
+
+  /* 4 · lo que no puede faltar (Diccionario V10 + Signaframe) */
+  noPuedeFaltar({steps,subOf,push,uid,R,legal,mainField,inQ,mainNames});
+
+  /* 5 · condiciones (lectura de «Reglas / formato») */
+  const cond=ids=>JSON.stringify({logic:"or",conditions:ids.map(id=>({fieldId:id,operator:"not_empty"}))});
+  for(const st of steps)for(const s of st.subs){
+    const all=s.qs.find(q=>/despliega todas/i.test(q.reglas)&&q._si);
+    s.qs.forEach((q,i)=>{
+      if(q._rep||q._descOf)return;
+      const prev=s.qs.slice(0,i).reverse();
+      const reg=q.reglas;let ids=null,m;
+      if((m=reg.match(/visualiza si indic[oó] que no (\w+)/i))){
+        const t=prev.find(x=>x._no&&new RegExp("\\b"+m[1],"i").test(x.label));if(t)ids=[t._no];
+      }else if((m=reg.match(/dej[oó] de (\w+) o (\w+)/i))&&/visualiza/i.test(reg)){
+        ids=prev.filter(x=>x._si&&(new RegExp("dej[oó] de "+m[1],"i").test(x.label)||new RegExp("dej[oó] de "+m[2],"i").test(x.label))).map(x=>x._si).reverse();
+      }else if(/combo anterior/i.test(reg)){
+        const t=prev.find(x=>x._optRadios);if(t)ids=Object.entries(t._optRadios).filter(([l])=>new RegExp("\\b"+l+"\\b","i").test(reg)).map(([,id])=>id);
+      }else if(/(habilita|despliega|visualiza)[\s\S]*s[ií]\b/i.test(reg)&&!q._si||/^detalle/i.test(q.label)){
+        const t=prev.find(x=>x._si);if(t)ids=[t._si];
+      }
+      if(!ids&&!q._si){ // preguntas que despliegan un bloque (fuma / vapea → cantidad y tiempo)
+        const blk=[];for(const x of prev){if(x._si&&/despliega preguntas de/i.test(x.reglas))blk.unshift(x._si);else if(blk.length||x._si)break}
+        if(blk.length)ids=blk;
+      }
+      if(!ids&&/datosNotificacion$/.test(q.ruta)){const t=s.qs.find(x=>/codigoMedioNotificacion$/.test(x.ruta));if(t)ids=[mainField(t)]}
+      if(!ids&&all&&all!==q)ids=[all._si];
+      if(!ids||!ids.length)return;
+      for(const f of fieldsOfQ(q))if(!f.hidden)f.conditionalVisibility=cond(ids);
+    });
+  }
+
+  /* subsecciones de casilleros ocultos: justo después de su subsección */
+  for(const st of steps){
+    const extra=st.subs.filter(s=>s._after);
+    for(const e of extra){st.subs.splice(st.subs.indexOf(e),1);st.subs.splice(st.subs.findIndex(s=>s.id===e._after)+1,0,e)}
+  }
+
+  /* 6 · casilleros del main */
+  const allF=steps.flatMap(st=>st.subs.flatMap(s=>s.fields.concat(s.tail)));
+  const chk={total:0,ok:0,missing:[],extra:[]};
+  if(mainNames){
+    chk.total=mainNames.size;
+    const got=new Set(allF.filter(f=>f._box).map(f=>f._box));
+    for(const n of mainNames){if(got.has(n)&&allF.find(f=>f._box===n).id==="field_"+n.toLowerCase())chk.ok++;else chk.missing.push(n)}
+    for(const n of got)if(!mainNames.has(n))chk.extra.push(n);
+  }
+
+  return{steps,fuera:R.fuera,R,chk,F,legal};
+}
+
+/* ═══════════════════ v3 · No puede faltar ═══════════════════ */
+const DIC_ROUTE=d=>normR(String(d[4]||"").replace(/\[\]/g,"[0]"));
+const DIC_SIS=DIC.filter(d=>/^encabezado\./.test(d[4])||/personas\[\]\.(codigoTipo|descripcionTipo)$/.test(d[4]));
+const DIC_PM=DIC.filter(d=>/datosGenerales\.polizaMadre\./.test(d[4])&&+d[5]===1);
+const DIC_ASE=DIC.filter(d=>/datosGenerales\.intermediario\./.test(d[4]));
+const DIC_ACEPTA=DIC.find(d=>/indicadorAceptaTerminos$/.test(d[4]));
+/* Firma: mismas claves que la matriz interna v1 de D0873 */
+const FIRMA={id:"field_firma_asegurado",type:"signature",label:"Firma del Asegurado",hidden:true,excludeFromJson:true,prefillKey:"encabezado.correoElectronico",
+  sharedValue:true,visibleInReview:true,signatureSignerNamePrefillKey:"encabezado.nombreCompletoCliente",
+  signatureCcPrefillKey:"datosFormulario.datosGenerales.intermediario.correoElectronico",
+  signatureCcNamesPrefillKey:"datosFormulario.datosGenerales.intermediario.nombre",signatureSendCopy:true};
+const legalHtml=t=>{
+  const ps=[];let cur="";
+  for(const line of String(t).split(/\n/).map(x=>x.trim()).filter(Boolean)){cur+=(cur?" ":"")+line;if(/[.:]$/.test(line)){ps.push(cur);cur=""}}
+  if(cur)ps.push(cur);
+  return ps.map(p=>"<p>"+esc(p)+"</p>").join("");
+};
+
+function noPuedeFaltar({steps,subOf,push,uid,R,legal,mainField,inQ,mainNames}){
+  const all=()=>steps.flatMap(st=>st.subs.flatMap(s=>s.fields.concat(s.tail)));
+  const writes=()=>new Set(all().map(f=>f.jsonOutputPath).filter(Boolean));
+  const SUB=k=>SUBS.find(s=>s.k===k);
+  const add=(subK,f,d,why)=>{
+    const sd=SUB(subK);const s=subOf(sd.step,sd);
+    f._origen="Obligatorio por diccionario";if(d)f._dic={label:d[0],ruta:DIC_ROUTE(d),donde:d[2]+" › "+d[3]};
+    const bx=f.id.replace(/^field_/,"");  // si el main trae ese casillero y nadie lo usa, es de este campo
+    if(mainNames&&!f.hidden&&[...mainNames].some(n=>n.toLowerCase()===bx)&&!all().some(x=>x._box&&x._box.toLowerCase()===bx))f._box=[...mainNames].find(n=>n.toLowerCase()===bx);
+    push(s,null,f,{tail:!!f.hidden&&!["sistema","poliza"].includes(subK)});
+    R.added.push({id:f.id,que:f.label,por:why});
+    return f;
+  };
+  const sysField=d=>{const r=DIC_ROUTE(d),l=leafOf(r);
+    return{id:uid("field_"+baseFromRoute(r)),type:/^(conozca|indicador)/.test(l)?"boolean":"text",label:d[0],hidden:true,readOnly:true,jsonOutputPath:r,prefillKey:r,sharedValue:true}};
+
+  /* encabezado (14) + codigoTipo / descripcionTipo */
+  let w=writes();
+  for(const d of DIC_SIS)if(!w.has(DIC_ROUTE(d)))add("sistema",sysField(d),d,"Datos del sistema: el JSON siempre lleva "+DIC_ROUTE(d));
+  /* póliza madre, oculta */
+  for(const d of DIC_PM)if(!w.has(DIC_ROUTE(d)))add("poliza",sysField(d),d,"Póliza Madre (oculta, se prellena)");
+  for(const f of all())if(/datosGenerales\.polizaMadre\./.test(f.jsonOutputPath||"")){f.hidden=true;f.readOnly=true}
+  /* asesor: prellenado y solo lectura */
+  for(const d of DIC_ASE){
+    const r=DIC_ROUTE(d);
+    if(!w.has(r)){const hid=/codigoTipoIdentificacion$/.test(r);
+      add("asesor",{id:uid("field_"+baseFromRoute(r)),type:/codigoIntermediario$/.test(r)?"number":"text",label:d[0],hidden:hid||undefined,readOnly:true,
+        width:hid?null:(/nombre$|correo/i.test(r)?"half":"quarter"),jsonOutputPath:r,prefillKey:r,sharedValue:hid||undefined},d,"Asesor: prellenado y bloqueado")}
+  }
+  for(const f of all())if(/datosGenerales\.intermediario\./.test(f.jsonOutputPath||"")){
+    if(!f.readOnly||!f.prefillKey)R.added.push({id:f.id,que:f.label,por:"Asesor: se marcó solo lectura y prellenado"});f.readOnly=true;f.prefillKey=f.jsonOutputPath}
+  /* firma */
+  if(!all().some(f=>f.type==="signature")){
+    add("firmas",{...FIRMA,id:uid(FIRMA.id)},null,"Signaframe: el formulario se firma (paso Firmas, oculto)");
+    R.warn.push("La firma no tiene posición en el PDF: el main no trae sourceMeta para la firma. Cargarla en Signaframe (sin rect no se genera la firma).");
+  }
+  /* declaraciones: texto legal + casilla de aceptación */
+  const ds=subOf("dec",SUB("decl"));
+  const txt=legal.map(x=>x.texto).find(t=>/hago constar|declaro|autorizo/i.test(t))||legal[0]?.texto;
+  if(!ds.instructions){
+    if(txt){ds.instructions=legalHtml(txt);R.added.push({id:ds.id,que:"Texto de Declaraciones y Autorización",por:"Texto legal de la Matriz del INS («Texto Informativo»)"})}
+    else R.warn.push("Falta el texto legal de Declaraciones: subí la Matriz del INS o cargalo a mano en «Otras propiedades» de sub_declaraciones (instructions).");
+  }
+  w=writes();
+  if(DIC_ACEPTA&&!w.has(DIC_ROUTE(DIC_ACEPTA)))
+    add("decl",{id:uid("field_acepta_terminos"),type:"checkbox",label:"He leído y comprendo el texto anterior, declaro que la información es verídica y acepto las condiciones y autorizaciones descritas.",
+      required:true,width:"full",jsonOutputPath:DIC_ROUTE(DIC_ACEPTA),sharedValue:true},DIC_ACEPTA,"Declaraciones: casilla de aceptación obligatoria");
+  /* descripciones de cada select (descripcionX ← codigoX, valueSource visible) */
+  w=writes();
+  for(const f of all().filter(f=>f.type==="select"&&f.jsonOutputPath)){
+    const r=f.jsonOutputPath,l=leafOf(r);
+    const dl=l==="codigoMedioNotificacion"?"medioNotificacion":/^codigo[A-Z]/.test(l)?"descripcion"+l.replace(/^codigo/,""):null;
+    if(!dl)continue;
+    const dr=parentOf(r)+"."+dl;
+    if(w.has(dr)||!DIC_BY_ROUTE[dr])continue;
+    const st=steps.find(st=>st.subs.some(s=>s.fields.includes(f)));const s=st.subs.find(s=>s.fields.includes(f));
+    let id="field_"+baseFromRoute(dr);if(all().some(x=>x.id===id))id+="_desc";
+    const h={id:uid(id),type:"text",label:DIC_BY_ROUTE[dr][0]+" (helper)",hidden:true,readOnly:true,jsonOutputPath:dr,
+      autoFillConcat:{sourceFieldIds:[f.id],separator:"",parts:[{kind:"field",fieldId:f.id,valueSource:"visible"}]},sharedValue:true,
+      _origen:"Obligatorio por diccionario",_dic:{label:DIC_BY_ROUTE[dr][0],ruta:dr,donde:DIC_BY_ROUTE[dr][2]+" › "+DIC_BY_ROUTE[dr][3]}};
+    push(s,null,h,{tail:true});R.added.push({id:h.id,que:h.label,por:"Descripción del select "+f.id});
+  }
+  /* nombre completo concatenado */
+  const parts=Object.fromEntries(NAME_PARTS.map(k=>[k,all().find(f=>f.jsonOutputPath==="datosFormulario.personas[0]."+k&&!f.hidden)]).filter(x=>x[1]));
+  const ncR="datosFormulario.personas[0].nombreCompleto";
+  if(Object.keys(parts).length&&!all().some(f=>f.jsonOutputPath===ncR)){
+    const ord=["primerNombre","segundoNombre","primerApellido","segundoApellido"].filter(k=>parts[k]).map(k=>parts[k].id);
+    add("persona",{id:uid("field_asg_nombre_completo"),type:"text",label:"Nombre completo",readOnly:true,width:"full",jsonOutputPath:ncR,sharedValue:true,
+      autoFillConcat:{sourceFieldIds:NAME_PARTS.filter(k=>parts[k]).map(k=>parts[k].id),separator:" ",parts:ord.map(id=>({kind:"field",fieldId:id}))}},DIC_BY_ROUTE[ncR]||null,"Nombre completo: se arma con nombres y apellidos");
+  }
+  /* Sí/No → radios + helper booleano */
+  for(const f of all().filter(f=>f.type==="radio"&&f.jsonValue==="true")){
+    const has=all().some(h=>h.type==="boolean"&&(h.autoFillConcat?.sourceFieldIds||[]).includes(f.id));
+    if(!has){const q=f._q;
+      if(q&&q.ruta)R.warn.push(`${f.id}: grupo Sí/No sin helper booleano (${q.ruta})`);
+      else if(!q)R.warn.push(`${f.id}: grupo Sí/No sin ruta JSON; no lleva helper`)}
+  }
+}
+
+/* ═══════════════════ Excel (formato de matriz_io.py) ═══════════════════ */
+const FICHA_COLS=["ID ficha","Pregunta (ficha)","Tipo de respuesta","Obligatoria (ficha)","Origen","Reglas / formato","Ruta JSON (ficha)","Notas"];
+const SF_COLS=["Nivel","id","Tipo","Etiqueta","Pregunta del grupo","Oculto","Solo lectura","Obligatorio","Ancho","Casillero PDF","Ruta JSON","Prellenado desde","Excluir del JSON","Se muestra si","Se arma con","Opciones","Otras propiedades"];
+const HDR=[...FICHA_COLS,...SF_COLS];
+const KEYS={"id":"id","Tipo":"type","Etiqueta":"label","Pregunta del grupo":"radioGroupLabel","Oculto":"hidden","Solo lectura":"readOnly","Obligatorio":"required","Ancho":"width",
+  "Ruta JSON":"jsonOutputPath","Prellenado desde":"prefillKey","Excluir del JSON":"excludeFromJson","Se muestra si":"conditionalVisibility","Se arma con":"autoFillConcat","Opciones":"options"};
+const BOOLK=new Set(["hidden","readOnly","required","excludeFromJson"]);
+const DERIVED=new Set(["sourceMeta","order","salidaJSON","prefillMode"]);
+const ARGB=h=>"FF"+h;
+const fill=h=>({type:"pattern",pattern:"solid",fgColor:{argb:ARGB(h)}});
+
+function fichaVals(f){
+  const q=f._q;
+  if(!q&&f._dic)return{"Pregunta (ficha)":"      (no está en la ficha) "+f._dic.label,"Origen":f._origen,"Ruta JSON (ficha)":f._dic.ruta,"Notas":"Diccionario V10: "+f._dic.donde};
+  if(!q)return{"Pregunta (ficha)":"      (campo interno)","Origen":f._origen||"Interno Signaframe"};
+  return{"ID ficha":q.id,"Pregunta (ficha)":"      "+q.rawLabel,"Tipo de respuesta":q.tipo,"Obligatoria (ficha)":q.obligTxt,"Origen":f._origen||q.origen,
+    "Reglas / formato":q.reglas,"Ruta JSON (ficha)":q.rutaFicha,"Notas":q.notas};
+}
+function sfVals(f,optRows){
+  const v={"Nivel":"Campo","Casillero PDF":f._box||""};
+  for(const [col,key] of Object.entries(KEYS)){
+    let x=f[key];
+    if(BOOLK.has(key))x=x?"Sí":"";
+    else if(key==="options"){
+      if(x&&x.length){x.forEach((o,i)=>{const{label,pdfValue,jsonValue,parentValues,...rest}=o;
+        optRows.push([f.id,i+1,label,pdfValue,jsonValue,parentValues===""?"(vacío)":(parentValues??""),Object.keys(rest).length?JSON.stringify(rest):""])});
+        x=`${x.length} opciones → hoja Opciones`}else x="";
+    }else if(key==="autoFillConcat"||key==="conditionalVisibility")x=x?(typeof x==="string"?x:JSON.stringify(x)):"";
+    v[col]=x==null?"":x;
+  }
+  const extra={};
+  for(const [k,x] of Object.entries(f))if(!Object.values(KEYS).includes(k)&&!DERIVED.has(k)&&!k.startsWith("_")&&x!==undefined&&x!==null)extra[k]=x;
+  v["Otras propiedades"]=Object.keys(extra).length?JSON.stringify(extra):"";
+  return v;
+}
+
+async function exportXlsx(M){
+  const wb=new ExcelJS.Workbook();
+  const ws=wb.addWorksheet("Formulario Signaframe",{properties:{outlineProperties:{summaryBelow:false,summaryRight:false}},views:[{state:"frozen",xSplit:FICHA_COLS.length+2,ySplit:2}]});
+  const NF=FICHA_COLS.length;
+  ws.addRow(["FICHA DEL CLIENTE (solo lectura)",...Array(NF-1).fill(""),"SIGNAFRAME (fuente del form-def)",...Array(SF_COLS.length-1).fill("")]);
+  ws.mergeCells(1,1,1,NF);ws.mergeCells(1,NF+1,1,HDR.length);
+  ws.addRow(HDR);
+  for(const r of [1,2])for(let c=1;c<=HDR.length;c++){const cell=ws.getCell(r,c);cell.fill=fill(c<=NF?"1F4E79":"1E6B45");cell.font={bold:true,color:{argb:"FFFFFFFF"}};cell.alignment={vertical:"middle",wrapText:true}}
+  const optRows=[];
+  const border={bottom:{style:"thin",color:{argb:"FFDDDDDD"}}};
+  const row=(lvl,vals,fl,font)=>{
+    const arr=HDR.map(h=>vals[h]??"");
+    const r=ws.addRow(arr);
+    if(lvl)r.outlineLevel=lvl;
+    for(let c=1;c<=HDR.length;c++){const cell=r.getCell(c);cell.alignment={vertical:"top",wrapText:false};cell.border=border;if(fl)cell.fill=fill(fl);if(font)cell.font=font}
+    return r;
+  };
+  let n=0;const counts={paso:0,sub:0,campo:0,fuera:0,hidden:0};
+  for(const st of M.steps){
+    if(!st.subs.some(s=>s.fields.length||s.tail.length||s.instructions)&&!st.always)continue;
+    n++;counts.paso++;
+    row(0,{"Pregunta (ficha)":`PASO ${n} · ${st.title}`,"Nivel":"Paso","id":st.id,"Etiqueta":st.title,"Oculto":st.hidden?"Sí":""},"2F3B52",{bold:true,color:{argb:"FFFFFFFF"}});
+    for(const s of st.subs){
+      const fs=s.fields.concat(s.tail);
+      if(!fs.length&&!s.instructions)continue;
+      counts.sub++;
+      const extra={};if(s.instructions)extra.instructions=s.instructions;
+      row(1,{"Pregunta (ficha)":"   "+s.title,"Nivel":"Subsección","id":s.id,"Etiqueta":s.title,"Oculto":s.hidden?"Sí":"","Se muestra si":s.cond||"",
+        "Otras propiedades":Object.keys(extra).length?JSON.stringify(extra):""},"E8ECF4",{bold:true});
+      for(const f of fs){counts.campo++;if(f.hidden)counts.hidden++;row(2,{...fichaVals(f),...sfVals(f,optRows)},f.hidden?"F2F2F2":null)}
+    }
+  }
+  row(0,{"Pregunta (ficha)":"PREGUNTAS DE LA FICHA SIN CAMPO EN EL FORMULARIO","Nivel":"Fuera"},"7F1D1D",{bold:true,color:{argb:"FFFFFFFF"}});
+  for(const q of M.fuera){counts.fuera++;
+    const r=row(2,{"ID ficha":q.id,"Pregunta (ficha)":"      "+q.rawLabel,"Tipo de respuesta":q.tipo,"Obligatoria (ficha)":q.obligTxt,"Origen":q.origen,"Reglas / formato":q.reglas,
+      "Ruta JSON (ficha)":q.rutaFicha,"Notas":(q.notas?q.notas+"\n":"")+"Motivo: "+q.fuera,"Nivel":"Fuera"},null);
+    for(let c=1;c<=HDR.length;c++)r.getCell(c).font={color:{argb:"FFB4231D"}};
+  }
+  [8,46,16,10,16,30,40,30,11,34,9,30,30,7,7,7,10,30,48,40,7,34,34,30,40].forEach((w,i)=>ws.getColumn(i+1).width=w);
+  ws.autoFilter={from:{row:2,column:1},to:{row:ws.rowCount,column:HDR.length}};
+  const colOf=h=>HDR.indexOf(h)+1;
+  /* una validación por columna, como rango entero (por celda ExcelJS las superpone) */
+  const L=h=>ws.getColumn(colOf(h)).letter,last=ws.rowCount;
+  const dv=(cols,list)=>{for(const h of cols)ws.dataValidations.model[`${L(h)}3:${L(h)}${last}`]={type:"list",allowBlank:true,formulae:[`"${list}"`]}};
+  dv(["Oculto","Solo lectura","Obligatorio","Excluir del JSON"],"Sí");
+  dv(["Ancho"],"full,three-quarters,two-thirds,half,third,quarter,fit");
+  dv(["Tipo"],"text,textarea,number,date,select,radio,checkbox,boolean,button,signature,label,repeater");
+  const wo=wb.addWorksheet("Opciones",{views:[{state:"frozen",xSplit:1,ySplit:1}]});
+  wo.addRow(["id del campo","Orden","Etiqueta","Valor PDF","Valor JSON","Depende de (parentValues)","Otras propiedades"]);
+  wo.getRow(1).eachCell(c=>{c.fill=fill("1E6B45");c.font={bold:true,color:{argb:"FFFFFFFF"}}});
+  for(const r of optRows)wo.addRow(r);
+  [38,7,40,30,16,14,20].forEach((w,i)=>wo.getColumn(i+1).width=w);
+  wo.autoFilter={from:{row:1,column:1},to:{row:Math.max(1,wo.rowCount),column:7}};
+  const wa=wb.addWorksheet("Agregados por diccionario");
+  wa.addRow(["id","Qué","Por qué"]);
+  wa.getRow(1).eachCell(c=>{c.fill=fill("1E6B45");c.font={bold:true,color:{argb:"FFFFFFFF"}}});
+  for(const a of M.R.added)wa.addRow([a.id,a.que,a.por]);
+  [34,50,70].forEach((w,i)=>wa.getColumn(i+1).width=w);
+  for(const sh of M.F.sheets){
+    const d=wb.addWorksheet(("Ficha · "+sh.name).slice(0,31));
+    for(const r of sh.rows)d.addRow(r);
+  }
+  M.counts={...counts,opciones:optRows.length};
+  return wb.xlsx.writeBuffer();
+}
+
+/* ═══════════════════ Página ═══════════════════ */
+const IN={ficha:null,main:null,ins:null};
+let CAT=null,OUT=null,OUTNAME="matriz_interna.xlsx";
+async function loadCat(){if(CAT)return CAT;try{const r=await fetch(__PSTOOLS_BASE__+"apps/ficha-formulario/docs/catalogo_cr.json");if(r.ok)CAT=await r.json()}catch(e){}return CAT}
+async function miRun({fichaBuf,mainText,insBuf}){
+  const wb=new ExcelJS.Workbook();await wb.xlsx.load(fichaBuf);
+  const F=readFicha(wb);
+  const main=mainText?JSON.parse(mainText):null;
+  let legal=[];
+  if(insBuf){const w2=new ExcelJS.Workbook();await w2.xlsx.load(insBuf);legal=readInsLegal(w2)}
+  const M=buildMatrix(F,{main,cat:await loadCat(),legal});
+  const buf=await exportXlsx(M);
+  return{M,buf};
+}
+window.miRun=miRun;
+
+function render(M){
+  const c=M.counts,k=M.chk;
+  const kp=[[c.campo,"campos"],[M.R.added.length,"agregados por el diccionario"],[c.sub,"subsecciones"],[c.paso,"pasos"],[c.fuera,"preguntas fuera"],[c.opciones,"opciones"]];
+  if(k.total)kp.unshift([`${k.ok}/${k.total}`,"casilleros del PDF",k.ok===k.total?"good":"bad"]);
+  $("#kpis").innerHTML=kp.map(([v,l,cl])=>`<div class="kpi ${cl||""}"><b>${esc(v)}</b><span>${esc(l)}</span></div>`).join("");
+  const box=(t,items,cls="")=>items.length?`<div class="${cls}"><b>${esc(t)}</b><ul class="lst">${items.map(x=>`<li>${x}</li>`).join("")}</ul></div>`:"";
+  let h="";
+  if(k.total&&k.missing.length)h+=box("Casilleros del main sin campo",k.missing.map(x=>`<span class="mono">${esc(x)}</span>`),"warn");
+  if(k.extra.length)h+=box("Casilleros en la matriz que no están en el main",k.extra.map(x=>`<span class="mono">${esc(x)}</span>`),"warn");
+  if(M.R.repeaters.length)h+=box("Repeaters (riesgo §21: los slotMappings no siempre pintan el PDF; probarlo en Signaframe)",M.R.repeaters.map(r=>`<span class="mono">${esc(r.id)}</span>: ${r.items} ítems, ${r.slots} casilleros · <span class="mono">${esc(r.pattern)}</span>`),"warn");
+  h+=box("Agregado por el diccionario (no estaba en la ficha)",M.R.added.map(a=>`<span class="mono">${esc(a.id)}</span> ${esc(a.que)} — ${esc(a.por)}`));
+  h+=box("Preguntas fuera del formulario",M.fuera.map(q=>`${esc(q.id)} ${esc(q.label)} — ${esc(q.fuera)}`));
+  h+=box("Opciones que no entran",M.R.dropped.map(esc));
+  h+=box("Avisos",M.R.warn.map(esc));
+  $("#msgs").innerHTML=h;
+  $("#res").hidden=false;
+}
+
+const rdBuf=f=>f.arrayBuffer(),rdTxt=f=>f.text();
+function bindIn(id,key){
+  $("#in-"+id).addEventListener("change",e=>{const f=e.target.files[0];IN[key]=f||null;const st=$("#st-"+id);st.textContent=f?f.name:"Sin archivo";st.classList.toggle("ok",!!f);$("#go").disabled=!IN.ficha});
+}
+bindIn("ficha","ficha");bindIn("main","main");bindIn("ins","ins");
+$("#go").addEventListener("click",async()=>{
+  $("#go").disabled=true;
+  try{
+    const r=await miRun({fichaBuf:await rdBuf(IN.ficha),mainText:IN.main?await rdTxt(IN.main):null,insBuf:IN.ins?await rdBuf(IN.ins):null});
+    OUT=r.buf;OUTNAME=IN.ficha.name.replace(/(_ficha)?\.xlsx$/i,"")+"_matriz_interna.xlsx";
+    render(r.M);$("#dl").disabled=false;
+  }catch(e){$("#msgs").innerHTML=`<div class="warn">${esc(e.message)}</div>`;$("#res").hidden=false;console.error(e)}
+  $("#go").disabled=false;
+});
+$("#dl").addEventListener("click",()=>{
+  if(!OUT)return;
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([OUT],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}));a.download=OUTNAME;a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+});
+
+;
+  // Las funciones que usan los botones viven en window. Si dos herramientas comparten un nombre,
+  // la que está en pantalla vuelve a ponerlas al reaparecer (LegacyTool llama a lo que devuelve mount).
+  const __exposed = {  };
+  Object.assign(window, __exposed);
+  return () => Object.assign(window, __exposed);
+}

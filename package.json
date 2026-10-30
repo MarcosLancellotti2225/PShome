@@ -7,12 +7,18 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "legacy": "for f in scripts/legacy/*.config.mjs; do node scripts/legacy/convert.mjs \"$f\" || exit 1; done"
   },
   "dependencies": {
+    "exceljs": "^4.4.0",
+    "html2canvas": "^1.4.1",
     "jszip": "^3.10.1",
     "lucide-react": "^0.575.0",
+    "mammoth": "^1.6.0",
+    "papaparse": "^5.4.1",
     "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^3.11.174",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.13.1",

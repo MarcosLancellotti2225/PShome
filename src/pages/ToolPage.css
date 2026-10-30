@@ -1,0 +1,22 @@
+.tool-page { display: flex; flex-direction: column; gap: var(--spacing-lg); min-width: 0; }
+
+.tool-head { display: flex; gap: var(--spacing-md); align-items: flex-start; }
+.tool-head-icon {
+  width: 44px; height: 44px; border-radius: var(--radius-md); flex-shrink: 0;
+  background: var(--color-primary-light); color: var(--color-primary);
+  display: flex; align-items: center; justify-content: center;
+}
+.tool-head-section { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-text-muted); }
+.tool-head h2 { font-size: 1.5rem; font-weight: 800; line-height: 1.2; }
+.tool-head p { color: var(--color-text-secondary); font-size: 0.9rem; max-width: 70ch; }
+
+.tool-loading { display: flex; align-items: center; gap: 8px; color: var(--color-text-secondary); }
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
+
+.tool-legacy {
+  background: var(--color-surface); border: 1px dashed var(--color-border); border-radius: var(--radius-lg);
+  padding: var(--spacing-xl); display: flex; flex-direction: column; gap: var(--spacing-md); align-items: flex-start;
+}
+.tool-legacy p { color: var(--color-text-secondary); max-width: 60ch; }

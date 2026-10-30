@@ -1,0 +1,10 @@
+.cj-code {
+  background: var(--color-primary-deep); color: #e4f2f2; border-radius: var(--radius-md);
+  padding: 14px 16px; max-height: 520px; overflow: auto;
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace; font-size: 0.78rem; line-height: 1.5;
+}
+.cj-key { color: #59d8ce; }
+.cj-ph { color: #fcd086; }
+.cj-sub { color: var(--color-text-muted); font-size: 0.75rem; margin-top: 2px; }
+.cj-suggest { color: var(--color-primary); margin-top: 2px; }
+.cj-filter { width: 260px; max-width: 100%; }

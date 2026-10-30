@@ -1,0 +1,160 @@
+<!-- GENERADO por scripts/legacy/convert.mjs desde legacy-src/ficha-formulario (ex repo SingaframeFormBuilder) (index.html) (HTML). La lógica es la original. -->
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">Signaframe · del PDF al formulario</div>
+  <h1>Ficha de formulario</h1>
+  <p class="lead">Subí el PDF del cliente tal como viene, renombrá sus casilleros, cargá el JSON del cliente, uní casilleros, preguntas y datos, y probá el formulario con el PDF y el JSON reales. Arranca cargado con un ejemplo; reemplazalo con tus archivos.</p>
+</header>
+
+
+<section id="paso0">
+  
+  <nav class="steps" aria-label="Pasos"><button data-st="0" class="on" aria-current="step">0 · Nombres del PDF</button><button data-st="1">1 · JSON del cliente</button><button data-st="m">2 · Matriz del INS</button><button data-st="2">3 · Armar el formulario</button><button data-st="3">4 · Probar</button></nav>
+  <div id="st0">
+  <p class="lead">Subí el PDF tal como viene. Se lee el texto impreso alrededor de cada casillero y se propone un nombre. Revisás, corregís lo que haga falta y bajás el PDF renombrado: ese es el que entra a Signaframe.</p>
+  <div class="rn-bar" style="margin-top:16px">
+    <label class="btn rn-file" style="font:500 14px var(--sans);padding:8px 14px;border-radius:7px;border:1px solid var(--line);background:var(--paper);cursor:pointer">Subir PDF<input type="file" id="rn-in" accept="application/pdf,.pdf"></label>
+    <button class="btn" id="rn-sample">Usar PDF de ejemplo</button>
+    <span class="msg" id="rn-file"></span>
+    <span style="flex:1"></span>
+    <div class="rn-prog" id="rn-stats"></div>
+  </div>
+  <div class="rn-legend" aria-label="Qué significa cada color">
+    <span><i style="border-color:#2f6fd6;background:rgba(47,111,214,.12)"></i>Azul: nombre seguro, falta aceptarlo</span>
+    <span><i style="border-color:#d08f00;background:rgba(240,170,20,.26)"></i>Amarillo: nombre probable, revisalo</span>
+    <span><i style="border-color:#c0261f;background:rgba(192,38,31,.20)"></i>Rojo: sin rótulo claro o con error</span>
+    <span><i style="border-color:#17784f;background:rgba(23,120,79,.55)"></i>Verde con ✓: aceptado</span>
+    <span><i style="border-color:#7b3fe4;background:rgba(123,63,228,.30)"></i>Violeta: seleccionado</span>
+  </div>
+  <div class="rn-wrap">
+    <div class="rn-pdf" id="rn-pdf" aria-label="Vista del PDF con los casilleros"></div>
+    <div class="rn-list" id="rn-list" role="list"></div>
+  </div>
+  <div class="rn-done todo" id="rn-done"></div>
+  <div class="rn-bulk" id="rn-bulk" hidden>
+    <span><b id="rn-bn">0</b> seleccionados</span>
+    <label class="rn-keys" for="rn-base">Nombre común</label><input id="rn-base" placeholder="tomador_referencias_ocupacion" spellcheck="false">
+    <label class="rn-keys" for="rn-start">numerar desde</label><select id="rn-start"><option value="0">_0, _1, _2…</option><option value="1">_1, _2, _3…</option></select>
+    <button class="btn pri" id="rn-bapply">Aplicar</button>
+    <button class="btn" id="rn-bok">Aceptar seleccionados</button>
+    <button class="btn" id="rn-bclear">Quitar selección</button>
+    <span class="pv" id="rn-bpv"></span>
+  </div>
+  <div class="rn-tools">
+    <button class="btn" id="rn-multi" aria-pressed="false">Seleccionar varios</button>
+    <span class="rn-keys"><kbd>Enter</kbd> acepta y pasa al siguiente · <kbd>↑</kbd><kbd>↓</kbd> moverse · para elegir varios: arrastrá un rectángulo sobre el PDF, <kbd>Ctrl</kbd>/<kbd>Shift</kbd> + clic, o tildá en la lista</span>
+  </div>
+  <div class="rn-tools">
+    <button class="btn" id="rn-okall">Aceptar todos los de confianza alta</button>
+    <label class="rn-keys" for="rn-from">Cambiar prefijo</label><input id="rn-from" placeholder="cliente_"><span class="rn-keys">por</span><input id="rn-to" placeholder="tomador_"><button class="btn" id="rn-pref">Aplicar</button>
+    <select id="rn-filter" class="btn" aria-label="Filtrar lista" style="padding:7px 10px"><option value="all">Ver todos</option><option value="todo">Ver pendientes</option><option value="ok">Ver aceptados</option><option value="err">Ver con error</option></select>
+    <span style="flex:1"></span>
+    <button class="btn" id="rn-csv">Bajar lista (.csv)</button>
+    <button class="btn pri" id="rn-dl">Bajar PDF renombrado</button>
+  </div>
+  <p class="msg" id="rn-msg" aria-live="polite" style="margin-top:8px"></p>
+  <div class="next"><button class="btn pri" id="go1">Siguiente: cargar el JSON →</button></div>
+  </div>
+
+  <div id="st1" hidden>
+    <p class="lead">Subí o pegá un JSON de ejemplo del cliente: lo que quieren recibir. Se aplana en una fila por dato; los que están dentro de una lista se marcan como «se repite». Viene cargado un ejemplo que corresponde al PDF de prueba.</p>
+    <div class="rn-bar" style="margin-top:14px">
+      <label class="btn rn-file" style="font:500 14px var(--sans);padding:8px 14px;border-radius:7px;border:1px solid var(--line);background:var(--paper);cursor:pointer">Subir JSON<input type="file" id="js-file" accept=".json,application/json,text/plain"></label>
+      <button class="btn" id="js-sample">Usar JSON de ejemplo</button>
+      <span class="msg" id="js-count"></span>
+    </div>
+    <div class="js-grid">
+      <div><div class="fb-h">JSON</div><textarea id="js-in" spellcheck="false" aria-label="JSON del cliente"></textarea></div>
+      <div><div class="fb-h">Datos encontrados</div><div class="js-box" id="js-list"></div></div>
+    </div>
+    <p class="msg" id="js-msg" aria-live="polite" style="margin-top:8px"></p>
+    <div class="next"><button class="btn" id="back0">← Volver a los nombres</button><button class="btn" id="go2b">Seguir sin JSON</button><button class="btn pri" id="go2">Siguiente: matriz del INS →</button></div>
+  </div>
+
+  <div id="stm" hidden>
+    <p class="lead">¿El INS mandó su matriz (la ficha en Excel)? Subila y se cruza con el PDF del paso 0 y el JSON del paso 1: tocás cualquier campo y ves su casillero, su pregunta y su ruta, y en «Revisar» lo que queda vacío o fuera del PDF. Si no la tenés, seguí y armá el formulario a mano.</p>
+    <div class="next" style="justify-content:flex-start"><button class="btn" id="gm-skip">No la tengo: armar el formulario →</button></div>
+    <iframe id="gm-frame" title="Matriz del INS" style="width:100%;height:260px;border:0;display:block;margin-top:10px" loading="eager"></iframe>
+    <p class="msg" id="gm-msg" aria-live="polite" style="margin-top:8px"></p>
+    <div class="next"><button class="btn" id="back1m">← Volver al JSON</button><button class="btn pri" id="gm-go" disabled>Pasar al formulario →</button></div>
+  </div>
+
+  <div id="st2" hidden>
+    <p class="lead">Armá el formulario web como lo querés: secciones, preguntas y su orden. Después asociá cada pregunta con sus casilleros del PDF y su dato del JSON. Elegí una pregunta y tocá sus casilleros en el PDF y su dato en el JSON.</p>
+    <div class="rn-tools">
+      <div class="vsel" role="group" aria-label="Qué paneles ver"><span class="rn-keys">Ver:</span><button data-v="all" class="on">Los 3</button><button data-v="fp">Formulario + PDF</button><button data-v="fj">Formulario + JSON</button><button data-v="pj">PDF + JSON</button><button data-v="p">Solo PDF</button><button data-v="f">Solo formulario</button><button data-v="j">Solo JSON</button></div>
+      <span style="flex:1"></span>
+      <div class="fb-stats" id="f2-stats"></div>
+    </div>
+    <div class="f2-grid v-all" id="f2-grid">
+      <div class="f2-pane" id="f2-cf">
+        <div class="f2-ph"><span class="fb-h">Formulario</span><button class="mini" id="f2-addsec">+ Sección</button></div>
+        <input class="f2-quick" id="f2-quick" placeholder="Escribí una pregunta y Enter (va a la sección marcada)" aria-label="Nueva pregunta">
+        <input class="f2-search" id="f2-qs" type="search" placeholder="Buscar pregunta…" aria-label="Buscar pregunta">
+        <div class="fb-col f2-col" id="f2-form"></div>
+      </div>
+      <div class="f2-pane" id="f2-cp">
+        <div class="f2-ph"><span class="fb-h">PDF</span></div>
+        <input class="f2-search" id="f2-ps" type="search" placeholder="Buscar casillero por nombre…" aria-label="Buscar casillero">
+        <div class="f2-pres" id="f2-pres" hidden></div>
+        <div class="fb-col f2-col" id="f2-pdf" style="background:var(--soft);padding:10px"></div>
+      </div>
+      <div class="f2-pane" id="f2-cj">
+        <div class="f2-ph"><span class="fb-h">JSON del cliente</span><select id="f2-jf" class="mini" aria-label="Filtrar datos"><option value="all">Todos</option><option value="free">Sin pregunta</option><option value="used">Con pregunta</option></select></div>
+        <input class="f2-search" id="f2-js" type="search" placeholder="Buscar dato o valor…" aria-label="Buscar dato del JSON">
+        <div class="fb-col f2-col" id="f2-json"></div>
+      </div>
+      <aside class="f2-side" id="f2-side" hidden aria-live="polite"></aside>
+    </div>
+    <div class="rn-legend">
+      <span><i style="border-color:#2f6fd6;background:rgba(47,111,214,.14)"></i>Casillero con pregunta</span>
+      <span><i style="border:1.5px dashed #c0261f;background:rgba(192,38,31,.14)"></i>Casillero libre</span>
+      <span><i style="border-color:#7b3fe4;background:rgba(123,63,228,.30)"></i>De la pregunta elegida</span>
+      <span><i style="border-color:#d08f00;background:rgba(240,170,20,.26)"></i>JSON sugerido, falta confirmar</span>
+      <span><i style="border-color:#17784f;background:rgba(23,120,79,.25)"></i>JSON confirmado</span>
+    </div>
+    <div class="rn-tools">
+      <span class="rn-keys">Arrastrá preguntas y secciones para reordenarlas (o usá ↑ ↓) · tocá una pregunta para editarla · con una pregunta elegida, tocá casilleros libres para sumarlos y los suyos para quitarlos (<kbd>Ctrl</kbd>/<kbd>Shift</kbd> + clic quita un casillero a otra pregunta) · en el JSON, «+ pregunta» crea una con ese dato</span>
+    </div>
+    <div class="rn-tools">
+      <span class="rn-keys">Plantilla:</span>
+      <button class="btn" id="f2-tpl-dl">Bajar plantilla de preguntas</button>
+      <label class="btn rn-file" style="font:500 14px var(--sans);padding:8px 14px;border-radius:7px;border:1px solid var(--line);background:var(--paper);cursor:pointer">Subir plantilla<input type="file" id="f2-tpl-in" accept=".xlsx"></label>
+    </div>
+    <div class="rn-tools">
+      <span class="rn-keys">Ayudas opcionales:</span>
+      <button class="btn" id="f2-propdf">Proponer preguntas desde el PDF</button>
+      <button class="btn" id="f2-projson">Proponer preguntas desde el JSON</button>
+      <button class="btn" id="f2-okall">Confirmar todas las sugerencias del JSON</button>
+      <span style="flex:1"></span>
+      <button class="btn" id="back1">← Volver a la matriz</button>
+      <button class="btn" id="f2-xlsx">Bajar ficha (.xlsx)</button>
+    </div>
+    <p class="msg" id="f2-msg" aria-live="polite" style="margin-top:8px"></p>
+    <div class="next"><button class="btn pri" id="go3">Siguiente: probar el formulario →</button></div>
+  </div>
+
+  <div id="st3" hidden>
+    <p class="lead">El formulario funcionando. Completalo a mano o cargalo con los datos del JSON del cliente: el PDF se llena en vivo con lo que va a recibir cada casillero, y a la derecha ves el JSON que sale.</p>
+    <div class="rn-tools">
+      <button class="btn pri" id="tp-fill">Completar con el JSON del cliente</button>
+      <button class="btn" id="tp-clear">Vaciar</button>
+      <div class="fb-stats" id="tp-stats"></div>
+      <span style="flex:1"></span>
+      <button class="btn" id="tp-pdf-dl">Bajar PDF completado</button>
+      <button class="btn" id="tp-json-dl">Bajar JSON</button>
+      <button class="btn" id="tp-xlsx">Bajar ficha (.xlsx)</button>
+    </div>
+    <div class="rn-tools"><div class="vsel" role="group" aria-label="Qué paneles ver"><span class="rn-keys">Ver:</span><button data-v="all" class="on">Los 3</button><button data-v="fp">Formulario + PDF</button><button data-v="fj">Formulario + JSON</button><button data-v="pj">PDF + JSON</button></div></div>
+    <p class="msg" id="tp-msg" aria-live="polite" style="margin-top:8px"></p>
+    <div class="fb-grid tp-grid v-all" id="tp-grid">
+      <div id="tp-cf"><div class="fb-h">Formulario</div><div class="fb-col pv" id="tp-form"></div></div>
+      <div id="tp-cp"><div class="fb-h">PDF</div><div class="fb-col" id="tp-pdf" style="background:var(--soft);padding:10px"></div></div>
+      <div id="tp-cj"><div class="fb-h">JSON que sale</div><pre class="fb-col tp-json" id="tp-json"></pre></div>
+    </div>
+    <div class="next"><button class="btn" id="back2">← Volver a las preguntas</button></div>
+  </div>
+</section>
+
+</div>

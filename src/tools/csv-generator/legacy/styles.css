@@ -1,0 +1,702 @@
+/* GENERADO por scripts/legacy/convert.mjs desde legacy-src/csv-generator (ex repo toolsImport) (index.html, styles.css, formatLoaders.js, transformations.js, app.js) (CSS). La lógica es la original. */
+.lg-csv-generator { font-family: var(--font-family); }
+.lg-csv-generator * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.lg-csv-generator {
+    font-family: var(--font-family);
+    background: linear-gradient(135deg, #047c76 0%, #012825 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.lg-csv-generator .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    overflow: hidden;
+}
+
+.lg-csv-generator .header {
+    background: linear-gradient(135deg, #047c76 0%, #012825 100%);
+    color: white;
+    padding: 30px;
+    text-align: center;
+}
+
+.lg-csv-generator .header h1 {
+    font-size: 2em;
+    margin-bottom: 10px;
+}
+
+.lg-csv-generator .header p {
+    opacity: 0.9;
+    font-size: 1.1em;
+}
+
+.lg-csv-generator .content {
+    padding: 40px;
+}
+
+.lg-csv-generator .step {
+    margin-bottom: 40px;
+}
+
+.lg-csv-generator .step-title {
+    font-size: 1.3em;
+    color: #047c76;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.lg-csv-generator .step-number {
+    background: #047c76;
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+.lg-csv-generator .command-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.lg-csv-generator .command-btn,
+.lg-csv-generator .command-item {
+    padding: 15px;
+    border: 2px solid #cddbdb;
+    border-radius: 10px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: left;
+    font-size: 0.95em;
+}
+
+.lg-csv-generator .command-btn:hover,
+.lg-csv-generator .command-item:hover {
+    border-color: #047c76;
+    background: #f0f3f8;
+    transform: translateY(-2px);
+}
+
+.lg-csv-generator .command-btn.active,
+.lg-csv-generator .command-item.selected {
+    border-color: #047c76;
+    background: #047c76;
+    color: white;
+}
+
+.lg-csv-generator .command-category {
+    font-size: 0.75em;
+    opacity: 0.7;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.lg-csv-generator .command-name {
+    font-weight: 600;
+    font-size: 1.1em;
+}
+
+.lg-csv-generator .upload-area {
+    border: 3px dashed #047c76;
+    border-radius: 15px;
+    padding: 50px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: #f0f3f8;
+}
+
+.lg-csv-generator .upload-area:hover {
+    background: #defffb;
+    border-color: #012825;
+}
+
+.lg-csv-generator .upload-area.dragover {
+    background: #defffb;
+    border-color: #012825;
+    transform: scale(1.02);
+}
+
+.lg-csv-generator .upload-icon {
+    font-size: 3em;
+    margin-bottom: 15px;
+}
+
+.lg-csv-generator .file-input {
+    display: none;
+}
+
+.lg-csv-generator .mapping-section {
+    display: none;
+}
+
+.lg-csv-generator .mapping-section.active {
+    display: block;
+}
+
+.lg-csv-generator .mapping-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.lg-csv-generator .mapping-table th,
+.lg-csv-generator .mapping-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #cddbdb;
+}
+
+.lg-csv-generator .mapping-table th {
+    background: #f0f3f8;
+    color: #047c76;
+    font-weight: 600;
+}
+
+.lg-csv-generator .mapping-table select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #cddbdb;
+    border-radius: 5px;
+    font-size: 0.95em;
+}
+
+.lg-csv-generator .btn {
+    padding: 15px 30px;
+    border: none;
+    border-radius: 10px;
+    font-size: 1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.lg-csv-generator .btn-primary {
+    background: linear-gradient(135deg, #047c76 0%, #012825 100%);
+    color: white;
+}
+
+.lg-csv-generator .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(4, 124, 118, 0.4);
+}
+
+.lg-csv-generator .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.lg-csv-generator .preview-section {
+    display: none;
+    margin-top: 30px;
+}
+
+.lg-csv-generator .preview-section.active {
+    display: block;
+}
+
+.lg-csv-generator .preview-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    max-height: 300px;
+    overflow: auto;
+    display: block;
+}
+
+.lg-csv-generator .preview-table th,
+.lg-csv-generator .preview-table td {
+    padding: 10px;
+    text-align: left;
+    border: 1px solid #cddbdb;
+    font-size: 0.9em;
+}
+
+.lg-csv-generator .preview-table th {
+    background: #047c76;
+    color: white;
+    position: sticky;
+    top: 0;
+}
+
+.lg-csv-generator .info-box {
+    background: #ffecce;
+    border-left: 4px solid #cca157;
+    padding: 15px;
+    margin: 20px 0;
+    border-radius: 5px;
+}
+
+.lg-csv-generator .success-box {
+    background: #dfffe6;
+    border-left: 4px solid #198446;
+    padding: 15px;
+    margin: 20px 0;
+    border-radius: 5px;
+}
+
+.lg-csv-generator .columns-info {
+    background: #f0f3f8;
+    padding: 15px;
+    border-radius: 10px;
+    margin-top: 15px;
+    font-size: 0.9em;
+}
+
+.lg-csv-generator .columns-info strong {
+    color: #047c76;
+}
+
+.lg-csv-generator .button-group {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.lg-csv-generator .header-option {
+    transition: all 0.3s ease;
+}
+
+.lg-csv-generator .header-option:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.lg-csv-generator .header-option h4 {
+    transition: color 0.3s ease;
+}
+
+.lg-csv-generator .mapping-summary {
+    background: #dfffe6;
+    border-left: 4px solid #36995a;
+    padding: 15px;
+    margin: 15px 0;
+    border-radius: 5px;
+}
+
+.lg-csv-generator .mapping-summary strong {
+    color: #006d36;
+}
+
+.lg-csv-generator input[type="text"]:focus,
+.lg-csv-generator select:focus {
+    outline: none;
+    border-color: #047c76;
+    box-shadow: 0 0 0 3px rgba(4, 124, 118, 0.1);
+}
+
+.lg-csv-generator input[type="checkbox"] {
+    cursor: pointer;
+    accent-color: #047c76;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.lg-csv-generator .btn-primary:hover {
+    animation: pulse 0.5s ease-in-out;
+}
+/* ==========================================
+   CONSTRUCTOR VISUAL v3.0 - ESTILOS
+   ========================================== */
+
+.lg-csv-generator .constructor-block {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+opacity: 0;
+transform: translateY(-10px);
+    }
+    to {
+opacity: 1;
+transform: translateY(0);
+    }
+}
+
+.lg-csv-generator .block-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2em;
+    padding: 5px;
+    transition: transform 0.2s;
+}
+
+.lg-csv-generator .block-btn:hover {
+    transform: scale(1.2);
+}
+
+.lg-csv-generator .block-btn:active {
+    transform: scale(0.9);
+}
+
+/* Version Badge Styles */
+.lg-csv-generator .version-badge {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    padding: 10px 20px;
+    border-radius: 25px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    min-width: 100px;
+}
+
+.lg-csv-generator .version-label {
+    font-size: 0.7em;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.8;
+}
+
+.lg-csv-generator .version-number {
+    font-size: 1.2em;
+    font-weight: 700;
+    font-family: 'Courier New', monospace;
+}
+
+/* Product Cards */
+.lg-csv-generator .product-card {
+    background: white;
+    padding: 40px 30px;
+    border-radius: 15px;
+    border: 3px solid #cddbdb;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.lg-csv-generator .product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    border-color: #047c76;
+}
+
+.lg-csv-generator .product-card.selected {
+    border-color: #047c76;
+    background: #f0f3f8;
+    box-shadow: 0 5px 20px rgba(4, 124, 118, 0.3);
+}
+
+.lg-csv-generator .product-icon {
+    min-height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.lg-csv-generator .icon-cloud {
+    font-size: 4em;
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+
+.lg-csv-generator .icon-envelopes {
+    position: relative;
+    width: 120px;
+    height: 80px;
+}
+
+.lg-csv-generator .envelope {
+    position: absolute;
+    font-size: 2.5em;
+    transition: all 0.3s ease;
+}
+
+.lg-csv-generator .env-1 {
+    left: 0;
+    top: 0;
+    color: #a1782c;
+}
+
+.lg-csv-generator .env-2 {
+    left: 35px;
+    top: 15px;
+    color: #54b574;
+}
+
+.lg-csv-generator .env-3 {
+    left: 70px;
+    top: 0;
+    color: #2b5cd1;
+}
+
+.lg-csv-generator .product-card:hover .envelope {
+    transform: scale(1.1);
+}
+
+.lg-csv-generator .product-card:hover .env-1 {
+    transform: translateX(-5px) scale(1.1);
+}
+
+.lg-csv-generator .product-card:hover .env-2 {
+    transform: translateY(-5px) scale(1.1);
+}
+
+.lg-csv-generator .product-card:hover .env-3 {
+    transform: translateX(5px) scale(1.1);
+}
+
+.lg-csv-generator .product-card h3 {
+    color: #1a2424;
+    font-size: 2em;
+    margin-bottom: 8px;
+    font-weight: 700;
+}
+
+.lg-csv-generator .product-subtitle {
+    color: #047c76;
+    font-size: 0.9em;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 5px;
+}
+
+.lg-csv-generator .product-desc {
+    color: #636f6f;
+    font-size: 1em;
+}
+
+@media (max-width: 768px) {
+    .lg-csv-generator .header > div {
+flex-direction: column !important;
+gap: 15px;
+    }
+    
+    .lg-csv-generator .header h1 {
+font-size: 1.5em;
+    }
+    
+    .lg-csv-generator .version-badge {
+align-self: center;
+    }
+    
+    .lg-csv-generator .constructor-block {
+font-size: 0.9em;
+    }
+    
+    .lg-csv-generator .block-btn {
+font-size: 1em;
+    }
+}
+
+/* Modal */
+.lg-csv-generator .modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.lg-csv-generator .modal-content {
+    background: white;
+    border-radius: 15px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    width: 100%;
+}
+
+.lg-csv-generator .modal-header {
+    background: linear-gradient(135deg, #047c76 0%, #012825 100%);
+    color: white;
+    padding: 20px 30px;
+    border-radius: 15px 15px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.lg-csv-generator .modal-header h2 {
+    margin: 0;
+    font-size: 1.3em;
+}
+
+.lg-csv-generator .modal-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5em;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background 0.3s;
+}
+
+.lg-csv-generator .modal-close:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+.lg-csv-generator .modal-body {
+    padding: 30px;
+}
+
+.lg-csv-generator .form-group {
+    margin-bottom: 20px;
+}
+
+.lg-csv-generator .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #0a1111;
+}
+
+/* Format selector cards */
+.lg-csv-generator .format-card:hover {
+    border-color: #047c76 !important;
+    background: #f0f3f8 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(4, 124, 118, 0.15);
+}
+
+.lg-csv-generator .format-card.selected {
+    border-color: #047c76 !important;
+    background: #047c76 !important;
+    color: white;
+}
+
+.lg-csv-generator .format-card.selected div {
+    color: white !important;
+}
+
+/* Transform option buttons v4.5.1 */
+.lg-csv-generator .transform-option-btn:hover {
+    border-color: #047c76 !important;
+    background: #f0f3f8 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(4, 124, 118, 0.15);
+}
+
+.lg-csv-generator .transform-option-btn.selected {
+    border-color: #047c76 !important;
+    background: #047c76 !important;
+    color: white;
+}
+
+.lg-csv-generator .transform-option-btn.selected div {
+    color: white !important;
+}
+
+.lg-csv-generator .btn-secondary {
+    background: linear-gradient(135deg, #4f5b5b 0%, #3a4646 100%);
+    color: white;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.lg-csv-generator .btn-secondary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(79, 91, 91, 0.3);
+}
+
+/* Audit Report icon */
+.lg-csv-generator .icon-audit {
+    font-size: 4em;
+    animation: pulse-audit 2s ease-in-out infinite;
+}
+
+@keyframes pulse-audit {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+/* Audit Stats Cards */
+.lg-csv-generator .audit-stat-card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    border: 2px solid #cddbdb;
+    text-align: center;
+    transition: all 0.3s;
+}
+
+.lg-csv-generator .audit-stat-card:hover {
+    border-color: #047c76;
+    box-shadow: 0 4px 12px rgba(4, 124, 118, 0.15);
+}
+
+.lg-csv-generator .audit-stat-value {
+    font-size: 2em;
+    font-weight: 700;
+    color: #047c76;
+    font-family: 'Courier New', monospace;
+}
+
+.lg-csv-generator .audit-stat-label {
+    font-size: 0.85em;
+    color: #4f5b5b;
+    margin-top: 5px;
+    font-weight: 600;
+}
+
+/* Audit preview table - ellipsis for long columns */
+.lg-csv-generator #auditPreviewTable td.audit-cell-long {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+    .lg-csv-generator .audit-stat-card {
+        padding: 15px;
+    }
+    .lg-csv-generator .audit-stat-value {
+        font-size: 1.5em;
+    }
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Ajustes para correr dentro de la app */
+.lg-csv-generator { background: none; padding: 0; min-height: 0; }
+.lg-csv-generator .container { max-width: none; box-shadow: none; border: 1px solid var(--color-border); }

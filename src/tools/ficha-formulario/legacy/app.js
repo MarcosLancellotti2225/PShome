@@ -1,0 +1,2725 @@
+/* eslint-disable */
+// GENERADO por scripts/legacy/convert.mjs desde legacy-src/ficha-formulario (ex repo SingaframeFormBuilder) (index.html) (JS). La lógica es la original.
+// Ruta base de la app (para archivos de public/, como docs/ o mapear.html).
+const __PSTOOLS_BASE__ = import.meta.env.BASE_URL;
+export const EXPOSED = [];
+
+export function mount() {
+
+const TIPOS=["Texto corto","Texto largo","Número","Importe","Porcentaje","Fecha","Hora","Email","Teléfono","Una opción de una lista","Varias opciones de una lista","Sí / No","Casilla de aceptación","Firma","Texto informativo"];
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+;
+
+const RN_STOP=new Set(["de","del","la","el","los","las","y","o","por","para","n","nro","a","en","datos","uso","su","sus","al"]);
+const RN_SYM=[["%"," porcentaje "],["#"," numero "],["n°"," numero "],["nº"," numero "],["no."," numero "]];
+const RN_DETAIL=new Set(["cual","especifique","especificar","detalle","otro","otra","indique"]);
+function rnSlug(t,keepAll,maxw){
+  maxw=maxw||4;t=String(t).toLowerCase();
+  for(const [k,v] of RN_SYM)t=t.split(k).join(v);
+  t=t.normalize("NFKD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g," ");
+  const ws=t.split(" ").filter(w=>w&&(keepAll||!RN_STOP.has(w)));
+  return ws.slice(0,maxw).join("_");
+}
+function rnJoin(prefix,label){
+  const pw=new Set(prefix.replace(/\d+$/,"").split("_"));
+  const lw=label.split("_").filter(w=>w&&!pw.has(w));
+  return lw.length?prefix+"_"+lw.join("_"):prefix;
+}
+async function rnExtract(pdf){
+  const W=[],P=[];
+  for(let p=1;p<=pdf.numPages;p++){
+    const page=await pdf.getPage(p);
+    const vp=page.getViewport({scale:1});
+    const ann=await page.getAnnotations();
+    const seen=new Map();
+    for(const a of ann){
+      if(a.subtype!=="Widget"||!a.fieldName)continue;
+      const r=a.rect;const box={x0:Math.min(r[0],r[2]),x1:Math.max(r[0],r[2]),y0:Math.min(r[1],r[3]),y1:Math.max(r[1],r[3])};
+      if(seen.has(a.fieldName)){seen.get(a.fieldName).extra.push(box);continue}
+      let kind="text";
+      if(a.fieldType==="Btn")kind=a.pushButton?"other":(a.radioButton?"radio":"check");
+      else if(a.fieldType==="Sig")kind="sig";
+      else if(a.fieldType==="Ch")kind="choice";
+      const w={page:p,name:a.fieldName,kind,...box,extra:[],radioValue:a.buttonValue||null};
+      seen.set(a.fieldName,w);W.push(w);
+    }
+    const tc=await page.getTextContent();
+    const words=[];
+    for(const it of tc.items){
+      const s=it.str||"";if(!s.trim())continue;
+      const t=it.transform;const size=Math.hypot(t[2],t[3])||it.height||10;
+      const x=t[4],y=t[5],cw=(it.width||s.length*size*0.5)/s.length;
+      let i=0;
+      for(const tok of s.split(/(\s+)/)){
+        if(tok&&!/^\s+$/.test(tok))words.push({text:tok,x0:x+i*cw,x1:x+(i+tok.length)*cw,top:y+0.75*size,bottom:y-0.2*size,cy:y+0.27*size});
+        i+=tok.length;
+      }
+    }
+    P.push({page:p,width:vp.width,height:vp.height,words});
+  }
+  return {widgets:W,pages:P};
+}
+function rnLines(words){
+  const rows=[];
+  for(const w of [...words].sort((a,b)=>b.cy-a.cy)){
+    const last=rows[rows.length-1];
+    if(last&&Math.abs(last.cy-w.cy)<=3)last.w.push(w);else rows.push({cy:w.cy,w:[w]});
+  }
+  rows.forEach(r=>{r.w.sort((a,b)=>a.x0-b.x0);r.text=r.w.map(x=>x.text).join(" ")});
+  return rows;
+}
+function rnSuggest(data){
+  const res=new Map();
+  for(const pg of data.pages){
+    const words=pg.words,L=rnLines(words);
+    const secs=L.filter(r=>{const letters=r.text.replace(/[^A-Za-zÁÉÍÓÚÑáéíóúñ]/g,"");return letters.length>3&&r.text===r.text.toUpperCase()&&r.w[0].x0<pg.width*0.5});
+    const pw=data.widgets.filter(w=>w.page===pg.page&&w.kind!=="other");
+    const cy=w=>(w.y0+w.y1)/2;
+    const section=w=>{const ab=secs.filter(s=>s.cy>w.y1+1);if(!ab.length)return"general";const s=ab.reduce((a,b)=>a.cy<b.cy?a:b);w._sec=s.text;return rnSlug(s.text,false,1)||"general"};
+    const sameLine=w=>{const h=Math.max(6,(w.y1-w.y0)/2+2);return words.filter(x=>Math.abs(x.cy-cy(w))<=h)};
+    const sameRow=(a,b)=>Math.abs(a.y1-b.y1)<8;
+    const leftLabel=w=>{
+      const lim=Math.max(-1,...pw.filter(o=>o!==w&&o.x1<=w.x0+1&&sameRow(o,w)).map(o=>o.x1));
+      const cand=sameLine(w).filter(x=>x.x1<=w.x0+2&&x.x0>=lim).sort((a,b)=>b.x1-a.x1);
+      const run=[];let edge=w.x0;
+      for(const x of cand){const gap=edge-x.x1;if(gap>(run.length?6:40))break;run.unshift(x);edge=x.x0}
+      return run.filter(x=>x.text!=="/").map(x=>x.text).join(" ");
+    };
+    const rightLabel=w=>{
+      const nxt=Math.min(1e9,...pw.filter(o=>o!==w&&o.x0>=w.x1-1&&sameRow(o,w)).map(o=>o.x0));
+      const cand=sameLine(w).filter(x=>x.x0>=w.x1-2&&x.x1<=nxt+1).sort((a,b)=>a.x0-b.x0);
+      const run=[];let edge=w.x1;
+      for(const x of cand){const gap=x.x0-edge;if(gap>(run.length?6:10))break;run.push(x);edge=x.x1}
+      return run.map(x=>x.text).join(" ");
+    };
+    const headerAbove=w=>{
+      const ab=L.filter(r=>r.cy>w.y1&&r.cy-w.y1<90&&!/^[\d\s.]+$/.test(r.text)).sort((a,b)=>a.cy-b.cy);
+      for(const r of ab){const hit=r.w.filter(x=>x.x0<w.x1&&x.x1>w.x0-4);if(hit.length)return hit.map(x=>x.text).join(" ")}
+      return null;
+    };
+    const clusters=[];
+    for(const w of [...pw].sort((a,b)=>cy(b)-cy(a))){
+      const c=clusters[clusters.length-1];
+      if(c&&Math.abs(c.cy-cy(w))<=7)c.w.push(w);else clusters.push({cy:cy(w),w:[w]});
+    }
+    for(const cl of clusters){
+      const row=cl.w.sort((a,b)=>a.x0-b.x0);
+      const pre=section(row[0]);
+      const done=new Set();let lastGroup=null;
+      for(let i=0;i+2<row.length;i++){
+        const tri=row.slice(i,i+3);
+        if(tri.every(r=>r.kind==="text"&&r.x1-r.x0<=48)&&!tri.some(r=>done.has(r))){
+          const sl=sameLine(tri[0]).filter(x=>/^[\/\-]$/.test(x.text)&&x.x0>tri[0].x0&&x.x0<tri[2].x0);
+          const hdr=tri.map(t=>rnSlug(headerAbove(t)||"",true,1));
+          const dmy=hdr.join(",").match(/dia|mes|ano/g);
+          if(sl.length>=2||(dmy&&dmy.length>=2)){
+            const base=rnSlug(leftLabel(tri[0]))||"fecha";
+            ["dia","mes","ano"].forEach((part,j)=>{tri[j]._lab=leftLabel(tri[0]);res.set(tri[j],[rnJoin(pre,base)+"_"+part,"alta","fecha en 3 partes"]);done.add(tri[j])});
+            i+=2;
+          }
+        }
+      }
+      const checks=row.filter(w=>w.kind==="check"||w.kind==="radio");
+      if(checks.length){
+        const groups=[];let g=[checks[0]];
+        for(let i=1;i<checks.length;i++){
+          const a=checks[i-1],b=checks[i];
+          const between=row.some(t=>t.kind==="text"&&t.x0>a.x1&&t.x0<b.x0);
+          if(between){groups.push(g);g=[b]}else g.push(b);
+        }
+        groups.push(g);
+        for(const g of groups){
+          const qRaw=leftLabel(g[0]);const q=rnSlug(qRaw);g.forEach(c=>{c._q=qRaw;c._o=rightLabel(c)||c.radioValue||"";section(c)});
+          const opts=g.map(c=>rnSlug(rightLabel(c),true)||rnSlug(c.radioValue||"",true));
+          const yn=[...opts].sort().join(",")==="no,si";
+          const base=q?rnJoin(pre,q):pre;
+          g.forEach((c,j)=>{
+            const o=opts[j];
+            if(g.length===1&&!q&&o)res.set(c,[rnJoin(pre,rnSlug(rightLabel(c))),"alta","casilla única"]);
+            else if(o)res.set(c,[base+"_"+o,q?"alta":"media",yn?"Sí / No":(q?"una casilla por opción":"opción sin pregunta a la izquierda")]);
+            else res.set(c,[base+"_opcion"+(j+1),"baja","casilla sin texto al lado"]);
+            done.add(c);
+          });
+          lastGroup={base,last:opts[opts.length-1],x1:g[g.length-1].x1};
+        }
+      }
+      for(const w of row){
+        if(done.has(w))continue;
+        if(w.kind==="sig"){res.set(w,[rnJoin(pre,rnSlug(leftLabel(w)||headerAbove(w)||"firma")),"media","firma"]);continue}
+        if(w.kind!=="text"&&w.kind!=="choice")continue;
+        const lab=leftLabel(w);w._lab=lab;section(w);
+        const ls=rnSlug(lab);
+        if(lab&&!/^\d+$/.test(lab.trim())){
+          if(lastGroup&&lastGroup.x1<w.x0&&RN_DETAIL.has(ls.split("_")[0]))res.set(w,[lastGroup.base+"_"+(lastGroup.last||"otro")+"_detalle","alta","detalle de la opción anterior"]);
+          else res.set(w,[rnJoin(pre,ls),"alta","rótulo a la izquierda"]);
+        }else{
+          const h=headerAbove(w);
+          if(h){
+            let n=/^\d+$/.test((lab||"").trim())?lab.trim():"";
+            if(!n){const fl=leftLabel(row[0]).trim();if(/^\d+$/.test(fl))n=fl}
+            w._lab=h;res.set(w,[n?rnJoin(pre+n,rnSlug(h)):rnJoin(pre,rnSlug(h)),"media",n?`columna «${h}», fila ${n}`:`rótulo arriba: «${h}»`]);
+          }else res.set(w,[pre+"_revisar","baja","sin rótulo cercano"]);
+        }
+      }
+    }
+  }
+  const cyw=w=>(w.y0+w.y1)/2;
+  const order=[...data.widgets].filter(w=>w.kind!=="other").sort((a,b)=>a.page-b.page||(Math.abs(cyw(a)-cyw(b))<=7?a.x0-b.x0:cyw(b)-cyw(a)));
+  const count={};
+  /* si el PDF ya viene renombrado (nombres con sentido, no Text12 / Check Box3), se conservan */
+  const sem=n=>/^[a-z][a-z0-9_]*_[a-z0-9_]+$/.test(n||"")&&!/^(text|check|campo|field|untitled|casilla|textfield|checkbox|radio|button|combo|list)_?\d*$/.test(n)&&n.length>4;
+  const keep=order.length>0&&order.filter(w=>sem(w.name)).length>=order.length*0.6;
+  return order.map((w,i)=>{
+    let [nm,conf,why]=res.get(w)||["revisar","baja","sin datos"];
+    if(keep&&sem(w.name))[nm,conf,why]=[w.name,"alta","ya venía con este nombre"];
+    nm=nm.replace(/_+/g,"_").replace(/^_|_$/g,"")||"revisar";
+    if(count[nm]){count[nm]++;nm=nm+"_"+count[nm];if(conf==="alta")conf="media";why+=" · nombre repetido"}else count[nm]=1;
+    if(w.extra.length&&w.kind!=="radio")why+=` · aparece en ${w.extra.length+1} lugares`;
+    return {i,page:w.page,old:w.name,kind:w.kind,rect:[w.x0,w.y0,w.x1,w.y1],extra:w.extra,sug:nm,nuevo:nm,conf,why,ok:false,lab:(w._lab||"").replace(/[:¿?]+$/,"").trim(),qlab:(w._q||"").replace(/[:]+$/,"").trim(),olab:(w._o||"").trim(),sec:w._sec||""};
+  });
+}
+function rnValidate(rows){
+  const cnt={};rows.forEach(r=>{cnt[r.nuevo]=(cnt[r.nuevo]||0)+1});
+  rows.forEach(r=>{
+    const n=r.nuevo;
+    r.err=!n?"vacío":/[^a-z0-9_]/.test(n)?"solo minúsculas, números y _":/^\d/.test(n)?"no puede empezar con número":cnt[n]>1?"repetido":"";
+  });
+  return rows.filter(r=>r.err).length;
+}
+async function rnRename(bytes,map){
+  const {PDFDocument,PDFName,PDFString,PDFArray,PDFDict}=PDFLib;
+  const doc=await PDFDocument.load(bytes,{ignoreEncryption:true,updateMetadata:false});
+  const ctx=doc.context;
+  const af=doc.catalog.lookup(PDFName.of("AcroForm"),PDFDict);
+  const fields=af.lookup(PDFName.of("Fields"),PDFArray);
+  const INH=["FT","Ff","DA","Q","Opt","MaxLen"];
+  const terms=[];
+  const decode=v=>v&&typeof v.decodeText==="function"?v.decodeText():String(v||"");
+  const walk=(ref,prefix,inh)=>{
+    const d=ctx.lookup(ref,PDFDict);
+    const t=d.get(PDFName.of("T"));
+    const nm=t?(prefix?prefix+".":"")+decode(t):prefix;
+    const inh2={...inh};INH.forEach(k=>{const v=d.get(PDFName.of(k));if(v)inh2[k]=v});
+    const kids=d.lookup(PDFName.of("Kids"));
+    const kf=kids instanceof PDFArray?kids.asArray().filter(k=>ctx.lookup(k,PDFDict).get(PDFName.of("T"))):[];
+    if(kf.length)kf.forEach(k=>walk(k,nm,inh2));else terms.push({ref,d,nm,inh:inh2});
+  };
+  fields.asArray().forEach(r=>walk(r,"",{}));
+  const out=[];let renamed=0;
+  for(const t of terms){
+    const nn=map[t.nm]||t.nm.replace(/\./g,"_");
+    if(nn!==decode(t.d.get(PDFName.of("T")))||t.d.get(PDFName.of("Parent"))){
+      t.d.set(PDFName.of("T"),PDFString.of(nn));
+      INH.forEach(k=>{if(!t.d.get(PDFName.of(k))&&t.inh[k])t.d.set(PDFName.of(k),t.inh[k])});
+      t.d.delete(PDFName.of("Parent"));
+      if(map[t.nm])renamed++;
+    }
+    const ft=t.d.get(PDFName.of("FT"))||t.inh.FT;
+    if(ft&&ft.toString()==="/Tx"){t.d.delete(PDFName.of("V"));t.d.delete(PDFName.of("DV"))}
+    out.push(t.ref);
+  }
+  af.set(PDFName.of("Fields"),ctx.obj(out));
+  return {bytes:await doc.save({useObjectStreams:false}),renamed,total:terms.length};
+}
+
+
+const RN_SAMPLE="JVBERi0xLjQKJZOMi54gUmVwb3J0TGFiIEdlbmVyYXRlZCBQREYgZG9jdW1lbnQgKG9wZW5zb3VyY2UpCjEgMCBvYmoKPDwKL0YxIDIgMCBSIC9GMiAzIDAgUgo+PgplbmRvYmoKMiAwIG9iago8PAovQmFzZUZvbnQgL0hlbHZldGljYSAvRW5jb2RpbmcgL1dpbkFuc2lFbmNvZGluZyAvTmFtZSAvRjEgL1N1YnR5cGUgL1R5cGUxIC9UeXBlIC9Gb250Cj4+CmVuZG9iagozIDAgb2JqCjw8Ci9CYXNlRm9udCAvSGVsdmV0aWNhLUJvbGQgL0VuY29kaW5nIC9XaW5BbnNpRW5jb2RpbmcgL05hbWUgL0YyIC9TdWJ0eXBlIC9UeXBlMSAvVHlwZSAvRm9udAo+PgplbmRvYmoKNCAwIG9iago8PC9UeXBlIC9FbmNvZGluZyAvRGlmZmVyZW5jZXMgWzI0IC9icmV2ZSAvY2Fyb24gL2NpcmN1bWZsZXggL2RvdGFjY2VudCAvaHVuZ2FydW1sYXV0IC9vZ29uZWsgL3JpbmcgL3RpbGRlIDM5IC9xdW90ZXNpbmdsZSA5NiAvZ3JhdmUgMTI4IC9idWxsZXQgL2RhZ2dlciAvZGFnZ2VyZGJsIC9lbGxpcHNpcyAvZW1kYXNoIC9lbmRhc2ggL2Zsb3JpbiAvZnJhY3Rpb24gL2d1aWxzaW5nbGxlZnQgL2d1aWxzaW5nbHJpZ2h0IC9taW51cyAvcGVydGhvdXNhbmQgL3F1b3RlZGJsYmFzZSAvcXVvdGVkYmxsZWZ0IC9xdW90ZWRibHJpZ2h0IC9xdW90ZWxlZnQgL3F1b3RlcmlnaHQgL3F1b3Rlc2luZ2xiYXNlIC90cmFkZW1hcmsgL2ZpIC9mbCAvTHNsYXNoIC9PRSAvU2Nhcm9uIC9ZZGllcmVzaXMgL1pjYXJvbiAvZG90bGVzc2kgL2xzbGFzaCAvb2UgL3NjYXJvbiAvemNhcm9uIDE2MCAvRXVybyAxNjQgL2N1cnJlbmN5IDE2NiAvYnJva2VuYmFyIDE2OCAvZGllcmVzaXMgL2NvcHlyaWdodCAvb3JkZmVtaW5pbmUgMTcyIC9sb2dpY2Fsbm90IC8ubm90ZGVmIC9yZWdpc3RlcmVkIC9tYWNyb24gL2RlZ3JlZSAvcGx1c21pbnVzIC90d29zdXBlcmlvciAvdGhyZWVzdXBlcmlvciAvYWN1dGUgL211IDE4MyAvcGVyaW9kY2VudGVyZWQgL2NlZGlsbGEgL29uZXN1cGVyaW9yIC9vcmRtYXNjdWxpbmUgMTg4IC9vbmVxdWFydGVyIC9vbmVoYWxmIC90aHJlZXF1YXJ0ZXJzIDE5MiAvQWdyYXZlIC9BYWN1dGUgL0FjaXJjdW1mbGV4IC9BdGlsZGUgL0FkaWVyZXNpcyAvQXJpbmcgL0FFIC9DY2VkaWxsYSAvRWdyYXZlIC9FYWN1dGUgL0VjaXJjdW1mbGV4IC9FZGllcmVzaXMgL0lncmF2ZSAvSWFjdXRlIC9JY2lyY3VtZmxleCAvSWRpZXJlc2lzIC9FdGggL050aWxkZSAvT2dyYXZlIC9PYWN1dGUgL09jaXJjdW1mbGV4IC9PdGlsZGUgL09kaWVyZXNpcyAvbXVsdGlwbHkgL09zbGFzaCAvVWdyYXZlIC9VYWN1dGUgL1VjaXJjdW1mbGV4IC9VZGllcmVzaXMgL1lhY3V0ZSAvVGhvcm4gL2dlcm1hbmRibHMgL2FncmF2ZSAvYWFjdXRlIC9hY2lyY3VtZmxleCAvYXRpbGRlIC9hZGllcmVzaXMgL2FyaW5nIC9hZSAvY2NlZGlsbGEgL2VncmF2ZSAvZWFjdXRlIC9lY2lyY3VtZmxleCAvZWRpZXJlc2lzIC9pZ3JhdmUgL2lhY3V0ZSAvaWNpcmN1bWZsZXggL2lkaWVyZXNpcyAvZXRoIC9udGlsZGUgL29ncmF2ZSAvb2FjdXRlIC9vY2lyY3VtZmxleCAvb3RpbGRlIC9vZGllcmVzaXMgL2RpdmlkZSAvb3NsYXNoIC91Z3JhdmUgL3VhY3V0ZSAvdWNpcmN1bWZsZXggL3VkaWVyZXNpcyAveWFjdXRlIC90aG9ybiAveWRpZXJlc2lzXT4+CmVuZG9iago1IDAgb2JqCjw8IC9CYXNlRm9udCAvSGVsdmV0aWNhIC9TdWJ0eXBlIC9UeXBlMSAvTmFtZSAvSGVsdiAvVHlwZSAvRm9udCAvRW5jb2RpbmcgNCAwIFIgPj4KZW5kb2JqCjYgMCBvYmoKPDwKL0JCb3ggWyAwIDAgMTkwIDE0IF0gL0ZpbHRlciBbIC9GbGF0ZURlY29kZSBdIC9Gb3JtVHlwZSAxIC9MZW5ndGggODQgL01hdHJpeCBbIDEgMCAwIDEgMCAwIF0gL1Jlc291cmNlcyA8PCAvUHJvY1NldCBbL1BERiAvVGV4dF0gL0ZvbnQgPDwvSGVsdiA1IDAgUj4+ID4+IAogIC9TdWJ0eXBlIC9Gb3JtIC9UeXBlIC9YT2JqZWN0Cj4+CnN0cmVhbQp4nNMzVNADoyB3LgM9M4VyIGmsAMKGFpZ6JgqGxkCiKJWrmEs/pELByddZgauQy1DPSAGMLcyBWgwNgQRQSThXHpeBQjoQu3MFcrn6OnMBAFtmEnRlbmRzdHJlYW0KZW5kb2JqCjcgMCBvYmoKPDwKL0FQIDw8Ci9OIDYgMCBSCj4+IC9CUyA8PAovUyAvUyAvVyAuNgo+PiAvREEgKC9IZWx2IDEyIFRmIC4xIC4xIC4xIHJnKSAvRFYgKCkgL0YgNCAvRlQgL1R4IAogIC9GZiAwIC9NSyA8PAovQkMgWyAuMSAuMSAuMSBdCj4+IC9NYXhMZW4gMTAwIC9QIDk1IDAgUiAvUmVjdCBbIDgwIDcyNy44ODk4IDI3MCA3NDEuODg5OCBdIC9TdWJ0eXBlIC9XaWRnZXQgCiAgL1QgKFRleHQ0MikgL1R5cGUgL0Fubm90IC9WICgpCj4+CmVuZG9iago4IDAgb2JqCjw8IC9CYXNlRm9udCAvSGVsdmV0aWNhIC9TdWJ0eXBlIC9UeXBlMSAvTmFtZSAvSGVsdiAvVHlwZSAvRm9udCAvRW5jb2RpbmcgNCAwIFIgPj4KZW5kb2JqCjkgMCBvYmoKPDwKL0JCb3ggWyAwIDAgMjI1IDE0IF0gL0ZpbHRlciBbIC9GbGF0ZURlY29kZSBdIC9Gb3JtVHlwZSAxIC9MZW5ndGggODUgL01hdHJpeCBbIDEgMCAwIDEgMCAwIF0gL1Jlc291cmNlcyA8PCAvUHJvY1NldCBbL1BERiAvVGV4dF0gL0ZvbnQgPDwvSGVsdiA4IDAgUj4+ID4+IAogIC9TdWJ0eXBlIC9Gb3JtIC9UeXBlIC9YT2JqZWN0Cj4+CnN0cmVhbQp4nNMzVNADoyB3LgM9M4VyIGmsAMJGRiZ6JgqGxkCiKJWrmEs/pELByddZgauQy1DPSAGEjYyMgFoMDYEEUEk4Vx6XgUI6ELtzBXK5+jpzAQBXqBJgZW5kc3RyZWFtCmVuZG9iagoxMCAwIG9iago8PAovQVAgPDwKL04gOSAwIFIKPj4gL0JTIDw8Ci9TIC9TIC9XIC42Cj4+IC9EQSAoL0hlbHYgMTIgVGYgLjEgLjEgLjEgcmcpIC9EViAoKSAvRiA0IC9GVCAvVHggCiAgL0ZmIDAgL01LIDw8Ci9CQyBbIC4xIC4xIC4xIF0KPj4gL01heExlbiAxMDAgL1AgOTUgMCBSIC9SZWN0IFsgMzM1IDcyNy44ODk4IDU2MCA3NDEuODg5OCBdIC9TdWJ0eXBlIC9XaWRnZXQgCiAgL1QgKFRleHQyMCkgL1R5cGUgL0Fubm90IC9WICgpCj4+CmVuZG9iagoxMSAwIG9iago8PAovQkJveCBbIDAgMCAxMCAxMCBdIC9GaWx0ZXIgWyAvRmxhdGVEZWNvZGUgXSAvRm9ybVR5cGUgMSAvTGVuZ3RoIDEzNyAvTWF0cml4IFsgMSAwIDAgMSAwIDAgXSAvUmVzb3VyY2VzIDw8IC9Qcm9jU2V0IFsvUERGXSA+PiAKICAvU3VidHlwZSAvRm9ybSAvVHlwZSAvWE9iamVjdAo+PgpzdHJlYW0KeJxVTjkSwzAI7PWKfQFjiUPSC1Lbf8hROIWdIt+PTCw7mWFhYHeBJVDEN6YLBjK8W2ZHJXGsV7zCGBYc0vWOH1soVA2FUuZUFU8omXGJCsUMJyPlqMm8TUWytMkgrVUIMVssm7Srds7L6WxCycbQTvVVp9FvbUuPD86DO/f/64wHbmH8APM9NOBlbmRzdHJlYW0KZW5kb2JqCjEyIDAgb2JqCjw8Ci9CQm94IFsgMCAwIDEwIDEwIF0gL0ZpbHRlciBbIC9GbGF0ZURlY29kZSBdIC9Gb3JtVHlwZSAxIC9MZW5ndGggMzcgL01hdHJpeCBbIDEgMCAwIDEgMCAwIF0gL1Jlc291cmNlcyA8PCAvUHJvY1NldCBbL1BERl0gPj4gCiAgL1N1YnR5cGUgL0Zvcm0gL1R5cGUgL1hPYmplY3QKPj4Kc3RyZWFtCnicK+TSM1SAoCB3BQM9M4VyIGkMxpZ6JmBclKpQzBUIALDpCJplbmRzdHJlYW0KZW5kb2JqCjEzIDAgb2JqCjw8Ci9CQm94IFsgMCAwIDEwIDEwIF0gL0ZpbHRlciBbIC9GbGF0ZURlY29kZSBdIC9Gb3JtVHlwZSAxIC9MZW5ndGggMTM2IC9NYXRyaXggWyAxIDAgMCAxIDAgMCBdIC9SZXNvdXJjZXMgPDwgL1Byb2NTZXQgWy9QREZdID4+IAogIC9TdWJ0eXBlIC9Gb3JtIC9UeXBlIC9YT2JqZWN0Cj4+CnN0cmVhbQp4nFVOORLCMAzs/Yp9gSa2DtsvoA5/4ChCkVDwfRxNjEmx0kh7SGugqaLjesFEhk+r7Kgkju2Gd5jDin/19sDZHApVQ6GUOVXFC0pmXKJCscDJSDlqMh9TkSxtM0kbFULMFssu7aqD8zacTSjZGNqpHjWMfmsP/X0wDh7c+dcFT9zD/AX6xDbYZW5kc3RyZWFtCmVuZG9iagoxNCAwIG9iago8PAovQkJveCBbIDAgMCAxMCAxMCBdIC9GaWx0ZXIgWyAvRmxhdGVEZWNvZGUgXSAvRm9ybVR5cGUgMSAvTGVuZ3RoIDM4IC9NYXRyaXggWyAxIDAgMCAxIDAgMCBdIC9SZXNvdXJjZXMgPDwgL1Byb2NTZXQgWy9QREZdID4+IAogIC9TdWJ0eXBlIC9Gb3JtIC9UeXBlIC9YT2JqZWN0Cj4+CnN0cmVhbQp4nCvk0jOwVIDhIHcFAz0zhXIgaQzGlnomYFyUqlDMFQgAzTwJQmVuZHN0cmVhbQplbmRvYmoKMTUgMCBvYmoKPDwKL0JCb3ggWyAwIDAgMTAgMTAgXSAvRmlsdGVyIFsgL0ZsYXRlRGVjb2RlIF0gL0Zvcm1UeXBlIDEgL0xlbmd0aCAxMzYgL01hdHJpeCBbIDEgMCAwIDEgMCAwIF0gL1Jlc291cmNlcyA8PCAvUHJvY1NldCBbL1BERl0gPj4gCiAgL1N1YnR5cGUgL0Zvcm0gL1R5cGUgL1hPYmplY3QKPj4Kc3RyZWFtCnicVU45EsIwDOz9in2BJrYO2y+gDn/gKEKRUPB9HE2MSbHSSHtIa6BY0XG9YCLDp1V2VBLHdsM7zGHFv3p74GwOhaqhUMqcquIFJTMuUaFY4GSkHDWZj6lIlraZpI0KIWaLZZd21cF5G84mlGwM7VSPGka/tYf+PhgHD+7864In7mH+AgLaNuFlbmRzdHJlYW0KZW5kb2JqCjE2IDAgb2JqCjw8Ci9CQm94IFsgMCAwIDEwIDEwIF0gL0ZpbHRlciBbIC9GbGF0ZURlY29kZSBdIC9Gb3JtVHlwZSAxIC9MZW5ndGggMzggL01hdHJpeCBbIDEgMCAwIDEgMCAwIF0gL1Jlc291cmNlcyA8PCAvUHJvY1NldCBbL1BERl0gPj4gCiAgL1N1YnR5cGUgL0Zvcm0gL1R5cGUgL1hPYmplY3QKPj4Kc3RyZWFtCnicK+TSM7RUgOEgdwUDPTOFciBpDMaWeiZgXJSqUMwVCADNrglFZW5kc3RyZWFtCmVuZG9iagoxNyAwIG9iago8PAovQVAgPDwKL0QgPDwKL09mZiAxNCAwIFIgL1llcyAxMyAwIFIKPj4gL04gPDwKL09mZiAxMiAwIFIgL1llcyAxMSAwIFIKPj4gL1IgPDwKL09mZiAxNiAwIFIgL1llcyAxNSAwIFIKPj4KPj4gL0FTIC9PZmYgL0JTIDw8Ci9TIC9TIC9XIC42Cj4+IC9GIDQgL0ZUIC9CdG4gL0ZmIDIgCiAgL0ggL04gL01LIDw8Ci9CQyBbIC4xIC4xIC4xIF0gL0NBICg1KQo+PiAvUCA5NSAwIFIgL1JlY3QgWyAxNTAgNzA0Ljg4OTggMTYwIDcxNC44ODk4IF0gL1N1YnR5cGUgL1dpZGdldCAvVCAoQ2hlY2sgQm94MzMpIAogIC9UeXBlIC9Bbm5vdCAvViAvT2ZmCj4+CmVuZG9iagoxOCAwIG9iago8PAovQVAgPDwKL0QgPDwKL09mZiAxNCAwIFIgL1llcyAxMyAwIFIKPj4gL04gPDwKL09mZiAxMiAwIFIgL1llcyAxMSAwIFIKPj4gL1IgPDwKL09mZiAxNiAwIFIgL1llcyAxNSAwIFIKPj4KPj4gL0FTIC9PZmYgL0JTIDw8Ci9TIC9TIC9XIC42Cj4+IC9GIDQgL0ZUIC9CdG4gL0ZmIDIgCiAgL0ggL04gL01LIDw8Ci9CQyBbIC4xIC4xIC4xIF0gL0NBICg1KQo+PiAvUCA5NSAwIFIgL1JlY3QgWyAyMDAgNzA0Ljg4OTggMjEwIDcxNC44ODk4IF0gL1N1YnR5cGUgL1dpZGdldCAvVCAoQ2hlY2sgQm94MjcpIAogIC9UeXBlIC9Bbm5vdCAvViAvT2ZmCj4+CmVuZG9iagoxOSAwIG9iago8PAovQVAgPDwKL0QgPDwKL09mZiAxNCAwIFIgL1llcyAxMyAwIFIKPj4gL04gPDwKL09mZiAxMiAwIFIgL1llcyAxMSAwIFIKPj4gL1IgPDwKL09mZiAxNiAwIFIgL1llcyAxNSAwIFIKPj4KPj4gL0FTIC9PZmYgL0JTIDw8Ci9TIC9TIC9XIC42Cj4+IC9GIDQgL0ZUIC9CdG4gL0ZmIDIgCiAgL0ggL04gL01LIDw8Ci9CQyBbIC4xIC4xIC4xIF0gL0NBICg1KQo+PiAvUCA5NSAwIFIgL1JlY3QgWyAyNzUgNzA0Ljg4OTggMjg1IDcxNC44ODk4IF0gL1N1YnR5cGUgL1dpZGdldCAvVCAoQ2hlY2sgQm94MTEpIAogIC9UeXBlIC9Bbm5vdCAvViAvT2ZmCj4+CmVuZG9iagoyMCAwIG9iago8PCAvQmFzZUZvbnQgL0hlbHZldGljYSAvU3VidHlwZSAvVHlwZTEgL05hbWUgL0hlbHYgL1R5cGUgL0ZvbnQgL0VuY29kaW5nIDQgMCBSID4+CmVuZG9iagoyMSAwIG9iago8PAovQkJveCBbIDAgMCAxMjAgMTQgXSAvRmlsdGVyIFsgL0ZsYXRlRGVjb2RlIF0gL0Zvcm1UeXBlIDEgL0xlbmd0aCA4NCAvTWF0cml4IFsgMSAwIDAgMSAwIDAgXSAvUmVzb3VyY2VzIDw8IC9Qcm9jU2V0IFsvUERGIC9UZXh0XSAvRm9udCA8PC9IZWx2IDIwIDAgUj4+ID4+IAogIC9TdWJ0eXBlIC9Gb3JtIC9UeXBlIC9YT2JqZWN0Cj4+CnN0cmVhbQp4nNMzVNADoyB3LgM9M4VyIGmsAMKGhpZ6JgqGxkCiKJWrmEs/pELByddZgauQy1DPSAGMDc2BWgwNgQRQSThXHpeBQjoQu3MFcrn6OnMBAFi/EmZlbmRzdHJlYW0KZW5kb2JqCjIyIDAgb2JqCjw8Ci9BUCA8PAovTiAyMSAwIFIKPj4gL0JTIDw8Ci9TIC9TIC9XIC42Cj4+IC9EQSAoL0hlbHYgMTIgVGYgLjEgLjEgLjEgcmcpIC9EViAoKSAvRiA0IC9GVCAvVHggCiAgL0ZmIDAgL01LIDw8Ci9CQyBbIC4xIC4xIC4xIF0KPj4gL01heExlbiAxMDAgL1AgOTUgMCBSIC9SZWN0IFsgNDQwIDcwMy44ODk4IDU2MCA3MTcuODg5OCBdIC9TdWJ0eXBlIC9XaWRnZXQgCiAgL1QgKFRleHQ1MSkgL1R5cGUgL0Fubm90IC9WICgpCj4+CmVuZG9iagoyMyAwIG9iago8PCAvQmFzZUZvbnQgL0hlbHZldGljYSAvU3VidHlwZSAvVHlwZTEgL05hbWUgL0hlbHYgL1R5cGUgL0ZvbnQgL0VuY29kaW5nIDQgMCBSID4+CmVuZG9iagoyNCAwIG9iago8PAovQkJveCBbIDAgMCAyNCAxNCBdIC9GaWx0ZXIgWyAvRmxhdGVEZWNvZGUgXSAvRm9ybVR5cGUgMSAvTGVuZ3RoIDgxIC9NYXRyaXggWyAxIDAgMCAxIDAgMCBdIC9SZXNvdXJjZXMgPDwgL1Byb2NTZXQgWy9QREYgL1RleHRdIC9Gb250IDw8L0hlbHYgMjMgMCBSPj4gPj4gCiAgL1N1YnR5cGUgL0Zvcm0gL1R5cGUgL1hPYmplY3QKPj4Kc3RyZWFtCnic0zNU0AOjIHcuAz0zhXIgaawAwkbGeiYKhiCiKJWrmEs/pELByddZgauQy1DPSAGEjQyBGgxBBFBFOFcel4FCOhC7cwVyufo6cwEAM2QR+mVuZHN0cmVhbQplbmRvYmoKMjUgMCBvYmoKPDwKL0FQIDw8Ci9OIDI0IDAgUgo+PiAvQlMgPDwKL1MgL1MgL1cgLjYKPj4gL0RBICgvSGVsdiAxMiBUZiAuMSAuMSAuMSByZykgL0RWICgpIC9GIDQgL0ZUIC9UeCAKICAvRmYgMCAvTUsgPDwKL0JDIFsgLjEgLjEgLjEgXQo+PiAvTWF4TGVuIDEwMCAvUCA5NSAwIFIgL1JlY3QgWyAxMzUgNjc5Ljg4OTggMTU5IDY5My44ODk4IF0gL1N1YnR5cGUgL1dpZGdldCAKICAvVCAoVGV4dDcpIC9UeXBlIC9Bbm5vdCAvViAoKQo+PgplbmRvYmoKMjYgMCBvYmoKPDwgL0Jhc2VGb250IC9IZWx2ZXRpY2EgL1N1YnR5cGUgL1R5cGUxIC9OYW1lIC9IZWx2IC9UeXBlIC9Gb250IC9FbmNvZGluZyA0IDAgUiA+PgplbmRvYmoKMjcgMCBvYmoKPDwKL0JCb3ggWyAwIDAgMjQgMTQgXSAvRmlsdGVyIFsgL0ZsYXRlRGVjb2RlIF0gL0Zvcm1UeXBlIDEgL0xlbmd0aCA4MSAvTWF0cml4IFsgMSAwIDAgMSAwIDAgXSAvUmVzb3VyY2VzIDw8IC9Qcm9jU2V0IFsvUERGIC9UZXh0XSAvRm9udCA8PC9IZWx2IDI2IDAgUj4+ID4+IAogIC9TdWJ0eXBlIC9Gb3JtIC9UeXBlIC9YT2JqZWN0Cj4+CnN0cmVhbQp4nNMzVNADoyB3LgM9M4VyIGmsAMJGxnomCoYgoiiVq5hLP6RCwcnXWYGrkMtQz0gBhI0MgRoMQQRQRThXHpeBQjoQu3MFcrn6OnMBADNkEfplbmRzdHJlYW0KZW5kb2JqCjI4IDAgb2JqCjw8Ci9BUCA8PAovTiAyNyAwIFIKPj4gL0JTIDw8Ci9TIC9TIC9XIC42Cj4+IC9EQSAoL0hlbHYgMTIgVGYgLjEgLjEgLjEgcmcpIC9EViAoKSAvRiA0IC9GVCAvVHggCiAgL0ZmIDAgL01LIDw8Ci9CQyBbIC4xIC4xIC4xIF0KPj4gL01heExlbiAxMDAgL1AgOTUgMCBSIC9SZWN0IFsgMTY4IDY3OS44ODk4IDE5MiA2OTMuODg5OCBdIC9TdWJ0eXBlIC9XaWRnZXQgCiAgL1QgKFRleHQxMCkgL1R5cGUgL0Fubm90IC9WICgpCj4+CmVuZG9iagoyOSAwIG9iago8PCAvQmFzZUZvbnQgL0hlbHZldGljYSAvU3VidHlwZSAvVHlwZTEgL05hbWUgL0hlbHYgL1R5cGUgL0ZvbnQgL0VuY29kaW5nIDQgMCBSID4+CmVuZG9iagozMCAwIG9iago8PAovQkJveCBbIDAgMCA0MCAxNCBdIC9GaWx0ZXIgWyAvRmxhdGVEZWNvZGUgXSAvRm9ybVR5cGUgMSAvTGVuZ3RoIDgzIC9NYXRyaXggWyAxIDAgMCAxIDAgMCBdIC9SZXNvdXJjZXMgPDwgL1Byb2NTZXQgWy9QREYgL1RleHRdIC9Gb250IDw8L0hlbHYgMjkgMCBSPj4gPj4gCiAgL1N1YnR5cGUgL0Zvcm0gL1R5cGUgL1hPYmplY3QKPj4Kc3RyZWFtCnic0zNU0AOjIHcuAz0zhXIgaawAwsaWeiYKhsZAoiiVq5hLP6RCwcnXWYGrkMtQz0gBhI3NgRoMDYEEUEU4Vx6XgUI6ELtzBXK5+jpzAQA1+BIIZW5kc3RyZWFtCmVuZG9iagozMSAwIG9iago8PAovQVAgPDwKL04gMzAgMCBSCj4+IC9CUyA8PAovUyAvUyAvVyAuNgo+PiAvREEgKC9IZWx2IDEyIFRmIC4xIC4xIC4xIHJnKSAvRFYgKCkgL0YgNCAvRlQgL1R4IAogIC9GZiAwIC9NSyA8PAovQkMgWyAuMSAuMSAuMSBdCj4+IC9NYXhMZW4gMTAwIC9QIDk1IDAgUiAvUmVjdCBbIDIwMSA2NzkuODg5OCAyNDEgNjkzLjg4OTggXSAvU3VidHlwZSAvV2lkZ2V0IAogIC9UIChUZXh0NjkpIC9UeXBlIC9Bbm5vdCAvViAoKQo+PgplbmRvYmoKMzIgMCBvYmoKPDwgL0Jhc2VGb250IC9IZWx2ZXRpY2EgL1N1YnR5cGUgL1R5cGUxIC9OYW1lIC9IZWx2IC9UeXBlIC9Gb250IC9FbmNvZGluZyA0IDAgUiA+PgplbmRvYmoKMzMgMCBvYmoKPDwKL0JCb3ggWyAwIDAgNDAgMTQgXSAvRmlsdGVyIFsgL0ZsYXRlRGVjb2RlIF0gL0Zvcm1UeXBlIDEgL0xlbmd0aCA4MyAvTWF0cml4IFsgMSAwIDAgMSAwIDAgXSAvUmVzb3VyY2VzIDw8IC9Qcm9jU2V0IFsvUERGIC9UZXh0XSAvRm9udCA8PC9IZWx2IDMyIDAgUj4+ID4+IAogIC9TdWJ0eXBlIC9Gb3JtIC9UeXBlIC9YT2JqZWN0Cj4+CnN0cmVhbQp4nNMzVNADoyB3LgM9M4VyIGmsAMLGlnomCobGQKIolauYSz+kQsHJ11mBq5DLUM9IAYSNzYEaDA2BBFBFOFcel4FCOhC7cwVyufo6cwEANfgSCGVuZHN0cmVhbQplbmRvYmoKMzQgMCBvYmoKPDwKL0FQIDw8Ci9OIDMzIDAgUgo+PiAvQlMgPDwKL1MgL1MgL1cgLjYKPj4gL0RBICgvSGVsdiAxMiBUZiAuMSAuMSAuMSByZykgL0RWICgpIC9GIDQgL0ZUIC9UeCAKICAvRmYgMCAvTUsgPDwKL0JDIFsgLjEgLjEgLjEgXQo+PiAvTWF4TGVuIDEwMCAvUCA5NSAwIFIgL1JlY3QgWyAyOTAgNjc5Ljg4OTggMzMwIDY5My44ODk4IF0gL1N1YnR5cGUgL1dpZGdldCAKICAvVCAoVGV4dDEzKSAvVHlwZSAvQW5ub3QgL1YgKCkKPj4KZW5kb2JqCjM1IDAgb2JqCjw8IC9CYXNlRm9udCAvSGVsdmV0aWNhIC9TdWJ0eXBlIC9UeXBlMSAvTmFtZSAvSGVsdiAvVHlwZSAvRm9udCAvRW5jb2RpbmcgNCAwIFIgPj4KZW5kb2JqCjM2IDAgb2JqCjw8Ci9CQm94IFsgMCAwIDE4MCAxNCBdIC9GaWx0ZXIgWyAvRmxhdGVEZWNvZGUgXSAvRm9ybVR5cGUgMSAvTGVuZ3RoIDg0IC9NYXRyaXggWyAxIDAgMCAxIDAgMCBdIC9SZXNvdXJjZXMgPDwgL1Byb2NTZXQgWy9QREYgL1RleHRdIC9Gb250IDw8L0hlbHYgMzUgMCBSPj4gPj4gCiAgL1N1YnR5cGUgL0Zvcm0gL1R5cGUgL1hPYmplY3QKPj4Kc3RyZWFtCnic0zNU0AOjIHcuAz0zhXIgaawAwobmlnomCobGQKIolauYSz+kQsHJ11mBq5DLUM9IAYzNzYFaDA2BBFBJOFcel4FCOhC7cwVyufo6cwEAWwUScmVuZHN0cmVhbQplbmRvYmoKMzcgMCBvYmoKPDwKL0FQIDw8Ci9OIDM2IDAgUgo+PiAvQlMgPDwKL1MgL1MgL1cgLjYKPj4gL0RBICgvSGVsdiAxMiBUZiAuMSAuMSAuMSByZykgL0RWICgpIC9GIDQgL0ZUIC9UeCAKICAvRmYgMCAvTUsgPDwKL0JDIFsgLjEgLjEgLjEgXQo+PiAvTWF4TGVuIDEwMCAvUCA5NSAwIFIgL1JlY3QgWyA4NSA2NTUuODg5OCAyNjUgNjY5Ljg4OTggXSAvU3VidHlwZSAvV2lkZ2V0IAogIC9UIChUZXh0NDcpIC9UeXBlIC9Bbm5vdCAvViAoKQo+PgplbmRvYmoKMzggMCBvYmoKPDwgL0Jhc2VGb250IC9IZWx2ZXRpY2EgL1N1YnR5cGUgL1R5cGUxIC9OYW1lIC9IZWx2IC9UeXBlIC9Gb250IC9FbmNvZGluZyA0IDAgUiA+PgplbmRvYmoKMzkgMCBvYmoKPDwKL0JCb3ggWyAwIDAgMjQwIDE0IF0gL0ZpbHRlciBbIC9GbGF0ZURlY29kZSBdIC9Gb3JtVHlwZSAxIC9MZW5ndGggODUgL01hdHJpeCBbIDEgMCAwIDEgMCAwIF0gL1Jlc291cmNlcyA8PCAvUHJvY1NldCBbL1BERiAvVGV4dF0gL0ZvbnQgPDwvSGVsdiAzOCAwIFI+PiA+PiAKICAvU3VidHlwZSAvRm9ybSAvVHlwZSAvWE9iamVjdAo+PgpzdHJlYW0KeJzTM1TQA6Mgdy4DPTOFciBprADCRsaWeiYKhsZAoiiVq5hLP6RCwcnXWYGrkMtQz0gBhI2MzYFaDA2BBFBJOFcel4FCOhC7cwVyufo6cwEAWeQSbGVuZHN0cmVhbQplbmRvYmoKNDAgMCBvYmoKPDwKL0FQIDw8Ci9OIDM5IDAgUgo+PiAvQlMgPDwKL1MgL1MgL1cgLjYKPj4gL0RBICgvSGVsdiAxMiBUZiAuMSAuMSAuMSByZykgL0RWICgpIC9GIDQgL0ZUIC9UeCAKICAvRmYgMCAvTUsgPDwKL0JDIFsgLjEgLjEgLjEgXQo+PiAvTWF4TGVuIDEwMCAvUCA5NSAwIFIgL1JlY3QgWyAzMjAgNjU1Ljg4OTggNTYwIDY2OS44ODk4IF0gL1N1YnR5cGUgL1dpZGdldCAKICAvVCAoVGV4dDgpIC9UeXBlIC9Bbm5vdCAvViAoKQo+PgplbmRvYmoKNDEgMCBvYmoKPDwKL0FQIDw8Ci9EIDw8Ci9PZmYgMTQgMCBSIC9ZZXMgMTMgMCBSCj4+IC9OIDw8Ci9PZmYgMTIgMCBSIC9ZZXMgMTEgMCBSCj4+IC9SIDw8Ci9PZmYgMTYgMCBSIC9ZZXMgMTUgMCBSCj4+Cj4+IC9BUyAvT2ZmIC9CUyA8PAovUyAvUyAvVyAuNgo+PiAvRiA0IC9GVCAvQnRuIC9GZiAyIAogIC9IIC9OIC9NSyA8PAovQkMgWyAuMSAuMSAuMSBdIC9DQSAoNSkKPj4gL1AgOTUgMCBSIC9SZWN0IFsgOTUgNjMyLjg4OTggMTA1IDY0Mi44ODk4IF0gL1N1YnR5cGUgL1dpZGdldCAvVCAoQ2hlY2sgQm94NDkpIAogIC9UeXBlIC9Bbm5vdCAvViAvT2ZmCj4+CmVuZG9iago0MiAwIG9iago8PAovQVAgPDwKL0QgPDwKL09mZiAxNCAwIFIgL1llcyAxMyAwIFIKPj4gL04gPDwKL09mZiAxMiAwIFIgL1llcyAxMSAwIFIKPj4gL1IgPDwKL09mZiAxNiAwIFIgL1llcyAxNSAwIFIKPj4KPj4gL0FTIC9PZmYgL0JTIDw8Ci9TIC9TIC9XIC42Cj4+IC9GIDQgL0ZUIC9CdG4gL0ZmIDIgCiAgL0ggL04gL01LIDw8Ci9CQyBbIC4xIC4xIC4xIF0gL0NBICg1KQo+PiAvUCA5NSAwIFIgL1JlY3QgWyAxNzUgNjMyLjg4OTggMTg1IDY0Mi44ODk4IF0gL1N1YnR5cGUgL1dpZGdldCAvVCAoQ2hlY2sgQm94MjIpIAogIC9UeXBlIC9Bbm5vdCAvViAvT2ZmCj4+CmVuZG9iago0MyAwIG9iago8PAovQVAgPDwKL0QgPDwKL09mZiAxNCAwIFIgL1llcyAxMyAwIFIKPj4gL04gPDwKL09mZiAxMiAwIFIgL1llcyAxMSAwIFIKPj4gL1IgPDwKL09mZiAxNiAwIFIgL1llcyAxNSAwIFIKPj4KPj4gL0FTIC9PZmYgL0JTIDw8Ci9TIC9TIC9XIC42Cj4+IC9GIDQgL0ZUIC9CdG4gL0ZmIDIgCiAgL0ggL04gL01LIDw8Ci9CQyBbIC4xIC4xIC4xIF0gL0NBICg1KQo+PiAvUCA5NSAwIFIgL1JlY3QgWyAyNjUgNjMyLjg4OTggMjc1IDY0Mi44ODk4IF0gL1N1YnR5cGUgL1dpZGdldCAvVCAoQ2hlY2sgQm94MTApIAogIC9UeXBlIC9Bbm5vdCAvViAvT2ZmCj4+CmVuZG9iago0NCAwIG9iago8PCAvQmFzZUZvbnQgL0hlbHZldGljYSAvU3VidHlwZSAvVHlwZTEgL05hbWUgL0hlbHYgL1R5cGUgL0ZvbnQgL0VuY29kaW5nIDQgMCBSID4+CmVuZG9iago0NSAwIG9iago8PAovQkJveCBbIDAgMCAyMjAgMTQgXSAvRmlsdGVyIFsgL0ZsYXRlRGVjb2RlIF0gL0Zvcm1UeXBlIDEgL0xlbmd0aCA4NSAvTWF0cml4IFsgMSAwIDAgMSAwIDAgXSAvUmVzb3VyY2VzIDw8IC9Qcm9jU2V0IFsvUERGIC9UZXh0XSAvRm9udCA8PC9IZWx2IDQ0IDAgUj4+ID4+IAogIC9TdWJ0eXBlIC9Gb3JtIC9UeXBlIC9YT2JqZWN0Cj4+CnN0cmVhbQp4nNMzVNADoyB3LgM9M4VyIGmsAMJGhpZ6JgqGxkCiKJWrmEs/pELByddZgauQy1DPSAGEjQzNgVoMDYEEUEk4Vx6XgUI6ELtzBXK5+jpzAQBZIhJoZW5kc3RyZWFtCmVuZG9iago0NiAwIG9iago8PAovQVAgPDwKL04gNDUgMCBSCj4+IC9CUyA8PAovUyAvUyAvVyAuNgo+PiAvREEgKC9IZWx2IDEyIFRmIC4xIC4xIC4xIHJnKSAvRFYgKCkgL0YgNCAvRlQgL1R4IAogIC9GZiAwIC9NSyA8PAovQkMgWyAuMSAuMSAuMSBdCj4+IC9NYXhMZW4gMTAwIC9QIDk1IDAgUiAvUmVjdCBbIDM0MCA2MzEuODg5OCA1NjAgNjQ1Ljg4OTggXSAvU3VidHlwZSAvV2lkZ2V0IAogIC9UIChUZXh0NjUpIC9UeXBlIC9Bbm5vdCAvViAoKQo+PgplbmRvYmoKNDcgMCBvYmoKPDwKL0FQIDw8Ci9EIDw8Ci9PZmYgMTQgMCBSIC9ZZXMgMTMgMCBSCj4+IC9OIDw8Ci9PZmYgMTIgMCBSIC9ZZXMgMTEgMCBSCj4+IC9SIDw8Ci9PZmYgMTYgMCBSIC9ZZXMgMTUgMCBSCj4+Cj4+IC9BUyAvT2ZmIC9CUyA8PAovUyAvUyAvVyAuNgo+PiAvRiA0IC9GVCAvQnRuIC9GZiAyIAogIC9IIC9OIC9NSyA8PAovQkMgWyAuMSAuMSAuMSBdIC9DQSAoNSkKPj4gL1AgOTUgMCBSIC9SZWN0IFsgMTUwIDU3NC44ODk4IDE2MCA1ODQuODg5OCBdIC9TdWJ0eXBlIC9XaWRnZXQgL1QgKENoZWNrIEJveDMyKSAKICAvVHlwZSAvQW5ub3QgL1YgL09mZgo+PgplbmRvYmoKNDggMCBvYmoKPDwKL0FQIDw8Ci9EIDw8Ci9PZmYgMTQgMCBSIC9ZZXMgMTMgMCBSCj4+IC9OIDw8Ci9PZmYgMTIgMCBSIC9ZZXMgMTEgMCBSCj4+IC9SIDw8Ci9PZmYgMTYgMCBSIC9ZZXMgMTUgMCBSCj4+Cj4+IC9BUyAvT2ZmIC9CUyA8PAovUyAvUyAvVyAuNgo+PiAvRiA0IC9GVCAvQnRuIC9GZiAyIAogIC9IIC9OIC9NSyA8PAovQkMgWyAuMSAuMSAuMSBdIC9DQSAoNSkKPj4gL1AgOTUgMCBSIC9SZWN0IFsgMTkwIDU3NC44ODk4IDIwMCA1ODQuODg5OCBdIC9TdWJ0eXBlIC9XaWRnZXQgL1QgKENoZWNrIEJveDU4KSAKICAvVHlwZSAvQW5ub3QgL1YgL09mZgo+PgplbmRvYmoKNDkgMCBvYmoKPDwgL0Jhc2VGb250IC9IZWx2ZXRpY2EgL1N1YnR5cGUgL1R5cGUxIC9OYW1lIC9IZWx2IC9UeXBlIC9Gb250IC9FbmNvZGluZyA0IDAgUiA+PgplbmRvYmoKNTAgMCBvYmoKPDwKL0JCb3ggWyAwIDAgMjY1IDE0IF0gL0ZpbHRlciBbIC9GbGF0ZURlY29kZSBdIC9Gb3JtVHlwZSAxIC9MZW5ndGggODUgL01hdHJpeCBbIDEgMCAwIDEgMCAwIF0gL1Jlc291cmNlcyA8PCAvUHJvY1NldCBbL1BERiAvVGV4dF0gL0ZvbnQgPDwvSGVsdiA0OSAwIFI+PiA+PiAKICAvU3VidHlwZSAvRm9ybSAvVHlwZSAvWE9iamVjdAo+PgpzdHJlYW0KeJzTM1TQA6Mgdy4DPTOFciBprADCRmYmeiYKhsZAoiiVq5hLP6RCwcnXWYGrkMtQz0gBhI3MjIBaDA2BBFBJOFcel4FCOhC7cwVyufo6cwEAWSwSaGVuZHN0cmVhbQplbmRvYmoKNTEgMCBvYmoKPDwKL0FQIDw8Ci9OIDUwIDAgUgo+PiAvQlMgPDwKL1MgL1MgL1cgLjYKPj4gL0RBICgvSGVsdiAxMiBUZiAuMSAuMSAuMSByZykgL0RWICgpIC9GIDQgL0ZUIC9UeCAKICAvRmYgMCAvTUsgPDwKL0JDIFsgLjEgLjEgLjEgXQo+PiAvTWF4TGVuIDEwMCAvUCA5NSAwIFIgL1JlY3QgWyA1NSA1MzEuODg5OCAzMjAgNTQ1Ljg4OTggXSAvU3VidHlwZSAvV2lkZ2V0IAogIC9UIChUZXh0MjgpIC9UeXBlIC9Bbm5vdCAvViAoKQo+PgplbmRvYmoKNTIgMCBvYmoKPDwgL0Jhc2VGb250IC9IZWx2ZXRpY2EgL1N1YnR5cGUgL1R5cGUxIC9OYW1lIC9IZWx2IC9UeXBlIC9Gb250IC9FbmNvZGluZyA0IDAgUiA+PgplbmRvYmoKNTMgMCBvYmoKPDwKL0JCb3ggWyAwIDAgMTMwIDE0IF0gL0ZpbHRlciBbIC9GbGF0ZURlY29kZSBdIC9Gb3JtVHlwZSAxIC9MZW5ndGggODQgL01hdHJpeCBbIDEgMCAwIDEgMCAwIF0gL1Jlc291cmNlcyA8PCAvUHJvY1NldCBbL1BERiAvVGV4dF0gL0ZvbnQgPDwvSGVsdiA1MiAwIFI+PiA+PiAKICAvU3VidHlwZSAvRm9ybSAvVHlwZSAvWE9iamVjdAo+PgpzdHJlYW0KeJzTM1TQA6Mgdy4DPTOFciBprADChkaWeiYKhsZAoiiVq5hLP6RCwcnXWYGrkMtQz0gBjI3MgVoMDYEEUEk4Vx6XgUI6ELtzBXK5+jpzAQBZIBJoZW5kc3RyZWFtCmVuZG9iago1NCAwIG9iago8PAovQVAgPDwKL04gNTMgMCBSCj4+IC9CUyA8PAovUyAvUyAvVyAuNgo+PiAvREEgKC9IZWx2IDEyIFRmIC4xIC4xIC4xIHJnKSAvRFYgKCkgL0YgNCAvRlQgL1R4IAogIC9GZiAwIC9NSyA8PAovQkMgWyAuMSAuMSAuMSBdCj4+IC9NYXhMZW4gMTAwIC9QIDk1IDAgUiAvUmVjdCBbIDMzMCA1MzEuODg5OCA0NjAgNTQ1Ljg4OTggXSAvU3VidHlwZSAvV2lkZ2V0IAogIC9UIChUZXh0NSkgL1R5cGUgL0Fubm90IC9WICgpCj4+CmVuZG9iago1NSAwIG9iago8PCAvQmFzZUZvbnQgL0hlbHZldGljYSAvU3VidHlwZSAvVHlwZTEgL05hbWUgL0hlbHYgL1R5cGUgL0ZvbnQgL0VuY29kaW5nIDQgMCBSID4+CmVuZG9iago1NiAwIG9iago8PAovQkJveCBbIDAgMCA2MCAxNCBdIC9GaWx0ZXIgWyAvRmxhdGVEZWNvZGUgXSAvRm9ybVR5cGUgMSAvTGVuZ3RoIDgzIC9NYXRyaXggWyAxIDAgMCAxIDAgMCBdIC9SZXNvdXJjZXMgPDwgL1Byb2NTZXQgWy9QREYgL1RleHRdIC9Gb250IDw8L0hlbHYgNTUgMCBSPj4gPj4gCiAgL1N1YnR5cGUgL0Zvcm0gL1R5cGUgL1hPYmplY3QKPj4Kc3RyZWFtCnic0zNU0AOjIHcuAz0zhXIgaawAwqaWeiYKhsZAoiiVq5hLP6RCwcnXWYGrkMtQz0gBhE3NgRoMDYEEUEU4Vx6XgUI6ELtzBXK5+jpzAQA2uBIMZW5kc3RyZWFtCmVuZG9iago1NyAwIG9iago8PAovQVAgPDwKL04gNTYgMCBSCj4+IC9CUyA8PAovUyAvUyAvVyAuNgo+PiAvREEgKC9IZWx2IDEyIFRmIC4xIC4xIC4xIHJnKSAvRFYgKCkgL0YgNCAvRlQgL1R4IAogIC9GZiAwIC9NSyA8PAovQkMgWyAuMSAuMSAuMSBdCj4+IC9NYXhMZW4gMTAwIC9QIDk1IDAgUiAvUmVjdCBbIDQ3MCA1MzEuODg5OCA1MzAgNTQ1Ljg4OTggXSAvU3VidHlwZSAvV2lkZ2V0IAogIC9UIChUZXh0MTIpIC9UeXBlIC9Bbm5vdCAvViAoKQo+PgplbmRvYmoKNTggMCBvYmoKPDwgL0Jhc2VGb250IC9IZWx2ZXRpY2EgL1N1YnR5cGUgL1R5cGUxIC9OYW1lIC9IZWx2IC9UeXBlIC9Gb250IC9FbmNvZGluZyA0IDAgUiA+PgplbmRvYmoKNTkgMCBvYmoKPDwKL0JCb3ggWyAwIDAgMjY1IDE0IF0gL0ZpbHRlciBbIC9GbGF0ZURlY29kZSBdIC9Gb3JtVHlwZSAxIC9MZW5ndGggODUgL01hdHJpeCBbIDEgMCAwIDEgMCAwIF0gL1Jlc291cmNlcyA8PCAvUHJvY1NldCBbL1BERiAvVGV4dF0gL0ZvbnQgPDwvSGVsdiA1OCAwIFI+PiA+PiAKICAvU3VidHlwZSAvRm9ybSAvVHlwZSAvWE9iamVjdAo+PgpzdHJlYW0KeJzTM1TQA6Mgdy4DPTOFciBprADCRmYmeiYKhsZAoiiVq5hLP6RCwcnXWYGrkMtQz0gBhI3MjIBaDA2BBFBJOFcel4FCOhC7cwVyufo6cwEAWSwSaGVuZHN0cmVhbQplbmRvYmoKNjAgMCBvYmoKPDwKL0FQIDw8Ci9OIDU5IDAgUgo+PiAvQlMgPDwKL1MgL1MgL1cgLjYKPj4gL0RBICgvSGVsdiAxMiBUZiAuMSAuMSAuMSByZykgL0RWICgpIC9GIDQgL0ZUIC9UeCAKICAvRmYgMCAvTUsgPDwKL0JDIFsgLjEgLjEgLjEgXQo+PiAvTWF4TGVuIDEwMCAvUCA5NSAwIFIgL1JlY3QgWyA1NSA1MTEuODg5OCAzMjAgNTI1Ljg4OTggXSAvU3VidHlwZSAvV2lkZ2V0IAogIC9UIChUZXh0NTYpIC9UeXBlIC9Bbm5vdCAvViAoKQo+PgplbmRvYmoKNjEgMCBvYmoKPDwgL0Jhc2VGb250IC9IZWx2ZXRpY2EgL1N1YnR5cGUgL1R5cGUxIC9OYW1lIC9IZWx2IC9UeXBlIC9Gb250IC9FbmNvZGluZyA0IDAgUiA+PgplbmRvYmoKNjIgMCBvYmoKPDwKL0JCb3ggWyAwIDAgMTMwIDE0IF0gL0ZpbHRlciBbIC9GbGF0ZURlY29kZSBdIC9Gb3JtVHlwZSAxIC9MZW5ndGggODQgL01hdHJpeCBbIDEgMCAwIDEgMCAwIF0gL1Jlc291cmNlcyA8PCAvUHJvY1NldCBbL1BERiAvVGV4dF0gL0ZvbnQgPDwvSGVsdiA2MSAwIFI+PiA+PiAKICAvU3VidHlwZSAvRm9ybSAvVHlwZSAvWE9iamVjdAo+PgpzdHJlYW0KeJzTM1TQA6Mgdy4DPTOFciBprADChkaWeiYKhsZAoiiVq5hLP6RCwcnXWYGrkMtQz0gBjI3MgVoMDYEEUEk4Vx6XgUI6ELtzBXK5+jpzAQBZIBJoZW5kc3RyZWFtCmVuZG9iago2MyAwIG9iago8PAovQVAgPDwKL04gNjIgMCBSCj4+IC9CUyA8PAovUyAvUyAvVyAuNgo+PiAvREEgKC9IZWx2IDEyIFRmIC4xIC4xIC4xIHJnKSAvRFYgKCkgL0YgNCAvRlQgL1R4IAogIC9GZiAwIC9NSyA8PAovQkMgWyAuMSAuMSAuMSBdCj4+IC9NYXhMZW4gMTAwIC9QIDk1IDAgUiAvUmVjdCBbIDMzMCA1MTEuODg5OCA0NjAgNTI1Ljg4OTggXSAvU3VidHlwZSAvV2lkZ2V0IAogIC9UIChUZXh0NTQpIC9UeXBlIC9Bbm5vdCAvViAoKQo+PgplbmRvYmoKNjQgMCBvYmoKPDwgL0Jhc2VGb250IC9IZWx2ZXRpY2EgL1N1YnR5cGUgL1R5cGUxIC9OYW1lIC9IZWx2IC9UeXBlIC9Gb250IC9FbmNvZGluZyA0IDAgUiA+PgplbmRvYmoKNjUgMCBvYmoKPDwKL0JCb3ggWyAwIDAgNjAgMTQgXSAvRmlsdGVyIFsgL0ZsYXRlRGVjb2RlIF0gL0Zvcm1UeXBlIDEgL0xlbmd0aCA4MyAvTWF0cml4IFsgMSAwIDAgMSAwIDAgXSAvUmVzb3VyY2VzIDw8IC9Qcm9jU2V0IFsvUERGIC9UZXh0XSAvRm9udCA8PC9IZWx2IDY0IDAgUj4+ID4+IAogIC9TdWJ0eXBlIC9Gb3JtIC9UeXBlIC9YT2JqZWN0Cj4+CnN0cmVhbQp4nNMzVNADoyB3LgM9M4VyIGmsAMKmlnomCobGQKIolauYSz+kQsHJ11mBq5DLUM9IAYRNzYEaDA2BBFBFOFcel4FCOhC7cwVyufo6cwEANrgSDGVuZHN0cmVhbQplbmRvYmoKNjYgMCBvYmoKPDwKL0FQIDw8Ci9OIDY1IDAgUgo+PiAvQlMgPDwKL1MgL1MgL1cgLjYKPj4gL0RBICgvSGVsdiAxMiBUZiAuMSAuMSAuMSByZykgL0RWICgpIC9GIDQgL0ZUIC9UeCAKICAvRmYgMCAvTUsgPDwKL0JDIFsgLjEgLjEgLjEgXQo+PiAvTWF4TGVuIDEwMCAvUCA5NSAwIFIgL1JlY3QgWyA0NzAgNTExLjg4OTggNTMwIDUyNS44ODk4IF0gL1N1YnR5cGUgL1dpZGdldCAKICAvVCAoVGV4dDkpIC9UeXBlIC9Bbm5vdCAvViAoKQo+PgplbmRvYmoKNjcgMCBvYmoKPDwgL0Jhc2VGb250IC9IZWx2ZXRpY2EgL1N1YnR5cGUgL1R5cGUxIC9OYW1lIC9IZWx2IC9UeXBlIC9Gb250IC9FbmNvZGluZyA0IDAgUiA+PgplbmRvYmoKNjggMCBvYmoKPDwKL0JCb3ggWyAwIDAgMjY1IDE0IF0gL0ZpbHRlciBbIC9GbGF0ZURlY29kZSBdIC9Gb3JtVHlwZSAxIC9MZW5ndGggODUgL01hdHJpeCBbIDEgMCAwIDEgMCAwIF0gL1Jlc291cmNlcyA8PCAvUHJvY1NldCBbL1BERiAvVGV4dF0gL0ZvbnQgPDwvSGVsdiA2NyAwIFI+PiA+PiAKICAvU3VidHlwZSAvRm9ybSAvVHlwZSAvWE9iamVjdAo+PgpzdHJlYW0KeJzTM1TQA6Mgdy4DPTOFciBprADCRmYmeiYKhsZAoiiVq5hLP6RCwcnXWYGrkMtQz0gBhI3MjIBaDA2BBFBJOFcel4FCOhC7cwVyufo6cwEAWSwSaGVuZHN0cmVhbQplbmRvYmoKNjkgMCBvYmoKPDwKL0FQIDw8Ci9OIDY4IDAgUgo+PiAvQlMgPDwKL1MgL1MgL1cgLjYKPj4gL0RBICgvSGVsdiAxMiBUZiAuMSAuMSAuMSByZykgL0RWICgpIC9GIDQgL0ZUIC9UeCAKICAvRmYgMCAvTUsgPDwKL0JDIFsgLjEgLjEgLjEgXQo+PiAvTWF4TGVuIDEwMCAvUCA5NSAwIFIgL1JlY3QgWyA1NSA0OTEuODg5OCAzMjAgNTA1Ljg4OTggXSAvU3VidHlwZSAvV2lkZ2V0IAogIC9UIChUZXh0MTYpIC9UeXBlIC9Bbm5vdCAvViAoKQo+PgplbmRvYmoKNzAgMCBvYmoKPDwgL0Jhc2VGb250IC9IZWx2ZXRpY2EgL1N1YnR5cGUgL1R5cGUxIC9OYW1lIC9IZWx2IC9UeXBlIC9Gb250IC9FbmNvZGluZyA0IDAgUiA+PgplbmRvYmoKNzEgMCBvYmoKPDwKL0JCb3ggWyAwIDAgMTMwIDE0IF0gL0ZpbHRlciBbIC9GbGF0ZURlY29kZSBdIC9Gb3JtVHlwZSAxIC9MZW5ndGggODQgL01hdHJpeCBbIDEgMCAwIDEgMCAwIF0gL1Jlc291cmNlcyA8PCAvUHJvY1NldCBbL1BERiAvVGV4dF0gL0ZvbnQgPDwvSGVsdiA3MCAwIFI+PiA+PiAKICAvU3VidHlwZSAvRm9ybSAvVHlwZSAvWE9iamVjdAo+PgpzdHJlYW0KeJzTM1TQA6Mgdy4DPTOFciBprADChkaWeiYKhsZAoiiVq5hLP6RCwcnXWYGrkMtQz0gBjI3MgVoMDYEEUEk4Vx6XgUI6ELtzBXK5+jpzAQBZIBJoZW5kc3RyZWFtCmVuZG9iago3MiAwIG9iago8PAovQVAgPDwKL04gNzEgMCBSCj4+IC9CUyA8PAovUyAvUyAvVyAuNgo+PiAvREEgKC9IZWx2IDEyIFRmIC4xIC4xIC4xIHJnKSAvRFYgKCkgL0YgNCAvRlQgL1R4IAogIC9GZiAwIC9NSyA8PAovQkMgWyAuMSAuMSAuMSBdCj4+IC9NYXhMZW4gMTAwIC9QIDk1IDAgUiAvUmVjdCBbIDMzMCA0OTEuODg5OCA0NjAgNTA1Ljg4OTggXSAvU3VidHlwZSAvV2lkZ2V0IAogIC9UIChUZXh0NikgL1R5cGUgL0Fubm90IC9WICgpCj4+CmVuZG9iago3MyAwIG9iago8PCAvQmFzZUZvbnQgL0hlbHZldGljYSAvU3VidHlwZSAvVHlwZTEgL05hbWUgL0hlbHYgL1R5cGUgL0ZvbnQgL0VuY29kaW5nIDQgMCBSID4+CmVuZG9iago3NCAwIG9iago8PAovQkJveCBbIDAgMCA2MCAxNCBdIC9GaWx0ZXIgWyAvRmxhdGVEZWNvZGUgXSAvRm9ybVR5cGUgMSAvTGVuZ3RoIDgzIC9NYXRyaXggWyAxIDAgMCAxIDAgMCBdIC9SZXNvdXJjZXMgPDwgL1Byb2NTZXQgWy9QREYgL1RleHRdIC9Gb250IDw8L0hlbHYgNzMgMCBSPj4gPj4gCiAgL1N1YnR5cGUgL0Zvcm0gL1R5cGUgL1hPYmplY3QKPj4Kc3RyZWFtCnic0zNU0AOjIHcuAz0zhXIgaawAwqaWeiYKhsZAoiiVq5hLP6RCwcnXWYGrkMtQz0gBhE3NgRoMDYEEUEU4Vx6XgUI6ELtzBXK5+jpzAQA2uBIMZW5kc3RyZWFtCmVuZG9iago3NSAwIG9iago8PAovQVAgPDwKL04gNzQgMCBSCj4+IC9CUyA8PAovUyAvUyAvVyAuNgo+PiAvREEgKC9IZWx2IDEyIFRmIC4xIC4xIC4xIHJnKSAvRFYgKCkgL0YgNCAvRlQgL1R4IAogIC9GZiAwIC9NSyA8PAovQkMgWyAuMSAuMSAuMSBdCj4+IC9NYXhMZW4gMTAwIC9QIDk1IDAgUiAvUmVjdCBbIDQ3MCA0OTEuODg5OCA1MzAgNTA1Ljg4OTggXSAvU3VidHlwZSAvV2lkZ2V0IAogIC9UIChUZXh0MzYpIC9UeXBlIC9Bbm5vdCAvViAoKQo+PgplbmRvYmoKNzYgMCBvYmoKPDwKL0FQIDw8Ci9EIDw8Ci9PZmYgMTQgMCBSIC9ZZXMgMTMgMCBSCj4+IC9OIDw8Ci9PZmYgMTIgMCBSIC9ZZXMgMTEgMCBSCj4+IC9SIDw8Ci9PZmYgMTYgMCBSIC9ZZXMgMTUgMCBSCj4+Cj4+IC9BUyAvT2ZmIC9CUyA8PAovUyAvUyAvVyAuNgo+PiAvRiA0IC9GVCAvQnRuIC9GZiAyIAogIC9IIC9OIC9NSyA8PAovQkMgWyAuMSAuMSAuMSBdIC9DQSAoNSkKPj4gL1AgOTUgMCBSIC9SZWN0IFsgMzQgNDM0Ljg4OTggNDQgNDQ0Ljg4OTggXSAvU3VidHlwZSAvV2lkZ2V0IC9UIChDaGVjayBCb3gzKSAKICAvVHlwZSAvQW5ub3QgL1YgL09mZgo+PgplbmRvYmoKNzcgMCBvYmoKPDwgL0Jhc2VGb250IC9IZWx2ZXRpY2EgL1N1YnR5cGUgL1R5cGUxIC9OYW1lIC9IZWx2IC9UeXBlIC9Gb250IC9FbmNvZGluZyA0IDAgUiA+PgplbmRvYmoKNzggMCBvYmoKPDwKL0JCb3ggWyAwIDAgMjQgMTQgXSAvRmlsdGVyIFsgL0ZsYXRlRGVjb2RlIF0gL0Zvcm1UeXBlIDEgL0xlbmd0aCA4MSAvTWF0cml4IFsgMSAwIDAgMSAwIDAgXSAvUmVzb3VyY2VzIDw8IC9Qcm9jU2V0IFsvUERGIC9UZXh0XSAvRm9udCA8PC9IZWx2IDc3IDAgUj4+ID4+IAogIC9TdWJ0eXBlIC9Gb3JtIC9UeXBlIC9YT2JqZWN0Cj4+CnN0cmVhbQp4nNMzVNADoyB3LgM9M4VyIGmsAMJGxnomCoYgoiiVq5hLP6RCwcnXWYGrkMtQz0gBhI0MgRoMQQRQRThXHpeBQjoQu3MFcrn6OnMBADNkEfplbmRzdHJlYW0KZW5kb2JqCjc5IDAgb2JqCjw8Ci9BUCA8PAovTiA3OCAwIFIKPj4gL0JTIDw8Ci9TIC9TIC9XIC42Cj4+IC9EQSAoL0hlbHYgMTIgVGYgLjEgLjEgLjEgcmcpIC9EViAoKSAvRiA0IC9GVCAvVHggCiAgL0ZmIDAgL01LIDw8Ci9CQyBbIC4xIC4xIC4xIF0KPj4gL01heExlbiAxMDAgL1AgOTUgMCBSIC9SZWN0IFsgNjUgNDA5Ljg4OTggODkgNDIzLjg4OTggXSAvU3VidHlwZSAvV2lkZ2V0IAogIC9UIChUZXh0NzQpIC9UeXBlIC9Bbm5vdCAvViAoKQo+PgplbmRvYmoKODAgMCBvYmoKPDwgL0Jhc2VGb250IC9IZWx2ZXRpY2EgL1N1YnR5cGUgL1R5cGUxIC9OYW1lIC9IZWx2IC9UeXBlIC9Gb250IC9FbmNvZGluZyA0IDAgUiA+PgplbmRvYmoKODEgMCBvYmoKPDwKL0JCb3ggWyAwIDAgMjQgMTQgXSAvRmlsdGVyIFsgL0ZsYXRlRGVjb2RlIF0gL0Zvcm1UeXBlIDEgL0xlbmd0aCA4MSAvTWF0cml4IFsgMSAwIDAgMSAwIDAgXSAvUmVzb3VyY2VzIDw8IC9Qcm9jU2V0IFsvUERGIC9UZXh0XSAvRm9udCA8PC9IZWx2IDgwIDAgUj4+ID4+IAogIC9TdWJ0eXBlIC9Gb3JtIC9UeXBlIC9YT2JqZWN0Cj4+CnN0cmVhbQp4nNMzVNADoyB3LgM9M4VyIGmsAMJGxnomCoYgoiiVq5hLP6RCwcnXWYGrkMtQz0gBhI0MgRoMQQRQRThXHpeBQjoQu3MFcrn6OnMBADNkEfplbmRzdHJlYW0KZW5kb2JqCjgyIDAgb2JqCjw8Ci9BUCA8PAovTiA4MSAwIFIKPj4gL0JTIDw8Ci9TIC9TIC9XIC42Cj4+IC9EQSAoL0hlbHYgMTIgVGYgLjEgLjEgLjEgcmcpIC9EViAoKSAvRiA0IC9GVCAvVHggCiAgL0ZmIDAgL01LIDw8Ci9CQyBbIC4xIC4xIC4xIF0KPj4gL01heExlbiAxMDAgL1AgOTUgMCBSIC9SZWN0IFsgOTggNDA5Ljg4OTggMTIyIDQyMy44ODk4IF0gL1N1YnR5cGUgL1dpZGdldCAKICAvVCAoVGV4dDQpIC9UeXBlIC9Bbm5vdCAvViAoKQo+PgplbmRvYmoKODMgMCBvYmoKPDwgL0Jhc2VGb250IC9IZWx2ZXRpY2EgL1N1YnR5cGUgL1R5cGUxIC9OYW1lIC9IZWx2IC9UeXBlIC9Gb250IC9FbmNvZGluZyA0IDAgUiA+PgplbmRvYmoKODQgMCBvYmoKPDwKL0JCb3ggWyAwIDAgNDAgMTQgXSAvRmlsdGVyIFsgL0ZsYXRlRGVjb2RlIF0gL0Zvcm1UeXBlIDEgL0xlbmd0aCA4MyAvTWF0cml4IFsgMSAwIDAgMSAwIDAgXSAvUmVzb3VyY2VzIDw8IC9Qcm9jU2V0IFsvUERGIC9UZXh0XSAvRm9udCA8PC9IZWx2IDgzIDAgUj4+ID4+IAogIC9TdWJ0eXBlIC9Gb3JtIC9UeXBlIC9YT2JqZWN0Cj4+CnN0cmVhbQp4nNMzVNADoyB3LgM9M4VyIGmsAMLGlnomCobGQKIolauYSz+kQsHJ11mBq5DLUM9IAYSNzYEaDA2BBFBFOFcel4FCOhC7cwVyufo6cwEANfgSCGVuZHN0cmVhbQplbmRvYmoKODUgMCBvYmoKPDwKL0FQIDw8Ci9OIDg0IDAgUgo+PiAvQlMgPDwKL1MgL1MgL1cgLjYKPj4gL0RBICgvSGVsdiAxMiBUZiAuMSAuMSAuMSByZykgL0RWICgpIC9GIDQgL0ZUIC9UeCAKICAvRmYgMCAvTUsgPDwKL0JDIFsgLjEgLjEgLjEgXQo+PiAvTWF4TGVuIDEwMCAvUCA5NSAwIFIgL1JlY3QgWyAxMzEgNDA5Ljg4OTggMTcxIDQyMy44ODk4IF0gL1N1YnR5cGUgL1dpZGdldCAKICAvVCAoVGV4dDUzKSAvVHlwZSAvQW5ub3QgL1YgKCkKPj4KZW5kb2JqCjg2IDAgb2JqCjw8IC9CYXNlRm9udCAvSGVsdmV0aWNhIC9TdWJ0eXBlIC9UeXBlMSAvTmFtZSAvSGVsdiAvVHlwZSAvRm9udCAvRW5jb2RpbmcgNCAwIFIgPj4KZW5kb2JqCjg3IDAgb2JqCjw8Ci9CQm94IFsgMCAwIDE1MCAxNCBdIC9GaWx0ZXIgWyAvRmxhdGVEZWNvZGUgXSAvRm9ybVR5cGUgMSAvTGVuZ3RoIDg0IC9NYXRyaXggWyAxIDAgMCAxIDAgMCBdIC9SZXNvdXJjZXMgPDwgL1Byb2NTZXQgWy9QREYgL1RleHRdIC9Gb250IDw8L0hlbHYgODYgMCBSPj4gPj4gCiAgL1N1YnR5cGUgL0Zvcm0gL1R5cGUgL1hPYmplY3QKPj4Kc3RyZWFtCnic0zNU0AOjIHcuAz0zhXIgaawAwoYmlnomCobGQKIolauYSz+kQsHJ11mBq5DLUM9IAYxNzIFaDA2BBFBJOFcel4FCOhC7cwVyufo6cwEAWeISbGVuZHN0cmVhbQplbmRvYmoKODggMCBvYmoKPDwKL0FQIDw8Ci9OIDg3IDAgUgo+PiAvQlMgPDwKL1MgL1MgL1cgLjYKPj4gL0RBICgvSGVsdiAxMiBUZiAuMSAuMSAuMSByZykgL0RWICgpIC9GIDQgL0ZUIC9UeCAKICAvRmYgMCAvTUsgPDwKL0JDIFsgLjEgLjEgLjEgXQo+PiAvTWF4TGVuIDEwMCAvUCA5NSAwIFIgL1JlY3QgWyAyNDUgNDA5Ljg4OTggMzk1IDQyMy44ODk4IF0gL1N1YnR5cGUgL1dpZGdldCAKICAvVCAoVGV4dDM3KSAvVHlwZSAvQW5ub3QgL1YgKCkKPj4KZW5kb2JqCjg5IDAgb2JqCjw8IC9CYXNlRm9udCAvSGVsdmV0aWNhIC9TdWJ0eXBlIC9UeXBlMSAvTmFtZSAvSGVsdiAvVHlwZSAvRm9udCAvRW5jb2RpbmcgNCAwIFIgPj4KZW5kb2JqCjkwIDAgb2JqCjw8Ci9CQm94IFsgMCAwIDIwNSAxNCBdIC9GaWx0ZXIgWyAvRmxhdGVEZWNvZGUgXSAvRm9ybVR5cGUgMSAvTGVuZ3RoIDg1IC9NYXRyaXggWyAxIDAgMCAxIDAgMCBdIC9SZXNvdXJjZXMgPDwgL1Byb2NTZXQgWy9QREYgL1RleHRdIC9Gb250IDw8L0hlbHYgODkgMCBSPj4gPj4gCiAgL1N1YnR5cGUgL0Zvcm0gL1R5cGUgL1hPYmplY3QKPj4Kc3RyZWFtCnic0zNU0AOjIHcuAz0zhXIgaawAwkYGJnomCobGQKIolauYSz+kQsHJ11mBq5DLUM9IAYSNDIyAWgwNgQRQSThXHpeBQjoQu3MFcrn6OnMBAFbmElxlbmRzdHJlYW0KZW5kb2JqCjkxIDAgb2JqCjw8Ci9BUCA8PAovTiA5MCAwIFIKPj4gL0JTIDw8Ci9TIC9TIC9XIC42Cj4+IC9EQSAoL0hlbHYgMTIgVGYgLjEgLjEgLjEgcmcpIC9EViAoKSAvRiA0IC9GVCAvVHggCiAgL0ZmIDAgL01LIDw8Ci9CQyBbIC4xIC4xIC4xIF0KPj4gL01heExlbiAxMDAgL1AgOTUgMCBSIC9SZWN0IFsgMzU1IDM3Ny44ODk4IDU2MCAzOTEuODg5OCBdIC9TdWJ0eXBlIC9XaWRnZXQgCiAgL1QgKFRleHQ3MSkgL1R5cGUgL0Fubm90IC9WICgpCj4+CmVuZG9iago5MiAwIG9iago8PCAvQmFzZUZvbnQgL0hlbHZldGljYSAvU3VidHlwZSAvVHlwZTEgL05hbWUgL0hlbHYgL1R5cGUgL0ZvbnQgL0VuY29kaW5nIDQgMCBSID4+CmVuZG9iago5MyAwIG9iago8PAovQkJveCBbIDAgMCAxNTAgMTQgXSAvRmlsdGVyIFsgL0ZsYXRlRGVjb2RlIF0gL0Zvcm1UeXBlIDEgL0xlbmd0aCA4NCAvTWF0cml4IFsgMSAwIDAgMSAwIDAgXSAvUmVzb3VyY2VzIDw8IC9Qcm9jU2V0IFsvUERGIC9UZXh0XSAvRm9udCA8PC9IZWx2IDkyIDAgUj4+ID4+IAogIC9TdWJ0eXBlIC9Gb3JtIC9UeXBlIC9YT2JqZWN0Cj4+CnN0cmVhbQp4nNMzVNADoyB3LgM9M4VyIGmsAMKGJpZ6JgqGxkCiKJWrmEs/pELByddZgauQy1DPSAGMTcyBWgwNgQRQSThXHpeBQjoQu3MFcrn6OnMBAFniEmxlbmRzdHJlYW0KZW5kb2JqCjk0IDAgb2JqCjw8Ci9BUCA8PAovTiA5MyAwIFIKPj4gL0JTIDw8Ci9TIC9TIC9XIC42Cj4+IC9EQSAoL0hlbHYgMTIgVGYgLjEgLjEgLjEgcmcpIC9EViAoKSAvRiA0IC9GVCAvVHggCiAgL0ZmIDAgL01LIDw8Ci9CQyBbIC4xIC4xIC4xIF0KPj4gL01heExlbiAxMDAgL1AgOTUgMCBSIC9SZWN0IFsgMTYwIDMzNS44ODk4IDMxMCAzNDkuODg5OCBdIC9TdWJ0eXBlIC9XaWRnZXQgCiAgL1QgKFRleHQxNSkgL1R5cGUgL0Fubm90IC9WICgpCj4+CmVuZG9iago5NSAwIG9iago8PAovQW5ub3RzIFsgNyAwIFIgMTAgMCBSIDE3IDAgUiAxOCAwIFIgMTkgMCBSIDIyIDAgUiAyNSAwIFIgMjggMCBSIDMxIDAgUiAzNCAwIFIgCiAgMzcgMCBSIDQwIDAgUiA0MSAwIFIgNDIgMCBSIDQzIDAgUiA0NiAwIFIgNDcgMCBSIDQ4IDAgUiA1MSAwIFIgNTQgMCBSIAogIDU3IDAgUiA2MCAwIFIgNjMgMCBSIDY2IDAgUiA2OSAwIFIgNzIgMCBSIDc1IDAgUiA3NiAwIFIgNzkgMCBSIDgyIDAgUiAKICA4NSAwIFIgODggMCBSIDkxIDAgUiA5NCAwIFIgXSAvQ29udGVudHMgOTkgMCBSIC9NZWRpYUJveCBbIDAgMCA1OTUuMjc1NiA4NDEuODg5OCBdIC9QYXJlbnQgOTggMCBSIC9SZXNvdXJjZXMgPDwKL0ZvbnQgMSAwIFIgL1Byb2NTZXQgWyAvUERGIC9UZXh0IC9JbWFnZUIgL0ltYWdlQyAvSW1hZ2VJIF0KPj4gL1JvdGF0ZSAwIAogIC9UcmFucyA8PAoKPj4gL1R5cGUgL1BhZ2UKPj4KZW5kb2JqCjk2IDAgb2JqCjw8Ci9BY3JvRm9ybSAxMDAgMCBSIC9QYWdlTW9kZSAvVXNlTm9uZSAvUGFnZXMgOTggMCBSIC9UeXBlIC9DYXRhbG9nCj4+CmVuZG9iago5NyAwIG9iago8PAovQXV0aG9yIChhbm9ueW1vdXMpIC9DcmVhdGlvbkRhdGUgKEQ6MjAyNjEwMDUxNDA3MzcrMDInMDAnKSAvQ3JlYXRvciAoYW5vbnltb3VzKSAvS2V5d29yZHMgKCkgL01vZERhdGUgKEQ6MjAyNjEwMDUxNDA3MzcrMDInMDAnKSAvUHJvZHVjZXIgKFJlcG9ydExhYiBQREYgTGlicmFyeSAtIFwob3BlbnNvdXJjZVwpKSAKICAvU3ViamVjdCAodW5zcGVjaWZpZWQpIC9UaXRsZSAodW50aXRsZWQpIC9UcmFwcGVkIC9GYWxzZQo+PgplbmRvYmoKOTggMCBvYmoKPDwKL0NvdW50IDEgL0tpZHMgWyA5NSAwIFIgXSAvVHlwZSAvUGFnZXMKPj4KZW5kb2JqCjk5IDAgb2JqCjw8Ci9GaWx0ZXIgWyAvQVNDSUk4NURlY29kZSAvRmxhdGVEZWNvZGUgXSAvTGVuZ3RoIDExOTIKPj4Kc3RyZWFtCkdhdG4nPyNTRmYnU2MpUCdoPjhSRDB0NmNwSUIuJi9zbUBkS2VCa09RKzFnblBQKilOZS4xPExoXGo9ZFonMjJIKkAybTpAWkkoK2tGP2JBITxZKUFcOiUnXiEkPl5cUnEnNTppZDhIbD9rPXQ3TUM3ZmciPkZdTWtDTC5XTyJWWlw2bSs+c1BnVG91IjhvRTAwLE4pK3IrLSk9I2Y6LW1nOnUrdSwkTXQ1NCxFb2pwcTcsRig7UmhgIkRYNVlGXkU/QiV1QjtgK0ApTDZyVkhtVlQ9STVOUTJxMFMzPE5oOFxVdVJEajdVdGNHNTkhcjAzZUJMMWxBSGA8bjYvNVNOLmstOk4vaD1NOihHIjhWI2R0XUQ5V2Q5Oy1sZixWJFNmTi1SLkhATilXTmcucVhdIUo7ZldqVHBvTTs8N1ZTbk8wJz88SlE4PmswNz9dNi9tYjdrSm1yJyk8Q1tySSpEJ04xZUk5Wid0IW5zYWJHKUEnQjNYX1gtMy9XX2tLWFo+OmhyTCNUQUlgRSJDb0tkTmxsNUllNj5QUFBPNihQalgtPlpHbXFeUk89XiZjYiIwdDQhTiUwYTZnRSlgbS5KZzkzI0MiV1xCaGgnWTFOb1poMG0uWkJeMS9PO2twVjJbLnQsJj5pal1qWyRTSllUUjVNNCdyLGFgWmYoWyVZNWJoLDEkQD5BVEZUISZGR1twMDgyaz8uO1hIUGpWMjMxclEnPTNFMEdkXDhcckBsO3JuU2o3VTs2bUllJFFuJycrWStKV2BpUWpdSkZZaiYhTUFYWG9cSFs7MlNNL0NFRVlBQkRRc28wIjBIOCE5ZWxhZUlSJ2EvbicjJGg4Q1gwYi9yWiptRkpjcEBOMT5dK0szU2IzPFYxKSh0cFw5dEFpTyJYVE0iSGZpYU9sYyhlJGg3QFNYWU06NHA8QVpaNUElNVtDXCVaXHVRX0xPcmJoUl5aQUhMYnAxLElOX1QlJiY5cSEpa2U7N0lVcFVORlNjNDNHKWVLSDpAYTpfLiM4cCFrQF1tIUFWLlFaJ2ljNDcibWlNYEw1WUliJT9xcnBfbnNnXnAqQWc9QnUlSEw2PSs/QzgzTikoJiVHNCNNYVVjXURAdGkobkpBcUwvLVVicmckIUArJF5SUywraGwkLFFyJi43T1syODNtR09KUjpiT3IjL0prOyxUKzg4M3IjJV89VDZLbkojTW0nTWgjZDhgQTtjajVZIUtFUUBjY2Q8JDdEX1diTiIkIWtBS1FuTEBpNkxUaVVvJGE5SmFjb3JwMytTQ2dhMlxPRVVrLG0uTkJzIjdBXytZTFxQKTRgYTtXc2pNO2VIaGlqbGg0YkAjU2lQYjpTYV9LU1B0QypXZCtIbE4wYWZMNlc0VkJGQVdmVWdNaWgnQFxtY2M4KUVKUVgpNmpzKlxZMzQpSUJbLkRcb15QMkwpOWhAXis7Xk0lSjUxajtRSkArUDdXT01NVSMhY1RVXzJHKjEzNktfJFtdJy0oOS1sRlk5LW0zJHE8MUlNNiNKU1xRUEprQ09LY2lVakdiI2VpKW5PZCc9SUtnOSNbdS8jOjtZOWlJPzMmfj5lbmRzdHJlYW0KZW5kb2JqCjEwMCAwIG9iago8PAovREEgKC9IZWx2IDAgVGYgMCBnKSAvRFIgPDwgL0VuY29kaW5nCjw8Ci9STEFGZW5jb2RpbmcKNCAwIFIKPj4KL0ZvbnQgPDwgL0hlbHYgNSAwIFIgPj4KPj4gL0ZpZWxkcyBbIDcgMCBSIDEwIDAgUiAxNyAwIFIgMTggMCBSIDE5IDAgUiAyMiAwIFIgMjUgMCBSIDI4IDAgUiAzMSAwIFIgMzQgMCBSIAogIDM3IDAgUiA0MCAwIFIgNDEgMCBSIDQyIDAgUiA0MyAwIFIgNDYgMCBSIDQ3IDAgUiA0OCAwIFIgNTEgMCBSIDU0IDAgUiAKICA1NyAwIFIgNjAgMCBSIDYzIDAgUiA2NiAwIFIgNjkgMCBSIDcyIDAgUiA3NSAwIFIgNzYgMCBSIDc5IDAgUiA4MiAwIFIgCiAgODUgMCBSIDg4IDAgUiA5MSAwIFIgOTQgMCBSIF0KPj4KZW5kb2JqCnhyZWYKMCAxMDEKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDYxIDAwMDAwIG4gCjAwMDAwMDAxMDIgMDAwMDAgbiAKMDAwMDAwMDIwOSAwMDAwMCBuIAowMDAwMDAwMzIxIDAwMDAwIG4gCjAwMDAwMDE2NDMgMDAwMDAgbiAKMDAwMDAwMTc0MSAwMDAwMCBuIAowMDAwMDAyMDUwIDAwMDAwIG4gCjAwMDAwMDIzMDYgMDAwMDAgbiAKMDAwMDAwMjQwNCAwMDAwMCBuIAowMDAwMDAyNzE0IDAwMDAwIG4gCjAwMDAwMDI5NzIgMDAwMDAgbiAKMDAwMDAwMzMwNyAwMDAwMCBuIAowMDAwMDAzNTQxIDAwMDAwIG4gCjAwMDAwMDM4NzUgMDAwMDAgbiAKMDAwMDAwNDExMCAwMDAwMCBuIAowMDAwMDA0NDQ0IDAwMDAwIG4gCjAwMDAwMDQ2NzkgMDAwMDAgbiAKMDAwMDAwNTAwOSAwMDAwMCBuIAowMDAwMDA1MzM5IDAwMDAwIG4gCjAwMDAwMDU2NjkgMDAwMDAgbiAKMDAwMDAwNTc2OCAwMDAwMCBuIAowMDAwMDA2MDc5IDAwMDAwIG4gCjAwMDAwMDYzMzggMDAwMDAgbiAKMDAwMDAwNjQzNyAwMDAwMCBuIAowMDAwMDA2NzQ0IDAwMDAwIG4gCjAwMDAwMDcwMDIgMDAwMDAgbiAKMDAwMDAwNzEwMSAwMDAwMCBuIAowMDAwMDA3NDA4IDAwMDAwIG4gCjAwMDAwMDc2NjcgMDAwMDAgbiAKMDAwMDAwNzc2NiAwMDAwMCBuIAowMDAwMDA4MDc1IDAwMDAwIG4gCjAwMDAwMDgzMzQgMDAwMDAgbiAKMDAwMDAwODQzMyAwMDAwMCBuIAowMDAwMDA4NzQyIDAwMDAwIG4gCjAwMDAwMDkwMDEgMDAwMDAgbiAKMDAwMDAwOTEwMCAwMDAwMCBuIAowMDAwMDA5NDExIDAwMDAwIG4gCjAwMDAwMDk2NjkgMDAwMDAgbiAKMDAwMDAwOTc2OCAwMDAwMCBuIAowMDAwMDEwMDgwIDAwMDAwIG4gCjAwMDAwMTAzMzggMDAwMDAgbiAKMDAwMDAxMDY2NyAwMDAwMCBuIAowMDAwMDEwOTk3IDAwMDAwIG4gCjAwMDAwMTEzMjcgMDAwMDAgbiAKMDAwMDAxMTQyNiAwMDAwMCBuIAowMDAwMDExNzM4IDAwMDAwIG4gCjAwMDAwMTE5OTcgMDAwMDAgbiAKMDAwMDAxMjMyNyAwMDAwMCBuIAowMDAwMDEyNjU3IDAwMDAwIG4gCjAwMDAwMTI3NTYgMDAwMDAgbiAKMDAwMDAxMzA2OCAwMDAwMCBuIAowMDAwMDEzMzI2IDAwMDAwIG4gCjAwMDAwMTM0MjUgMDAwMDAgbiAKMDAwMDAxMzczNiAwMDAwMCBuIAowMDAwMDEzOTk0IDAwMDAwIG4gCjAwMDAwMTQwOTMgMDAwMDAgbiAKMDAwMDAxNDQwMiAwMDAwMCBuIAowMDAwMDE0NjYxIDAwMDAwIG4gCjAwMDAwMTQ3NjAgMDAwMDAgbiAKMDAwMDAxNTA3MiAwMDAwMCBuIAowMDAwMDE1MzMwIDAwMDAwIG4gCjAwMDAwMTU0MjkgMDAwMDAgbiAKMDAwMDAxNTc0MCAwMDAwMCBuIAowMDAwMDE1OTk5IDAwMDAwIG4gCjAwMDAwMTYwOTggMDAwMDAgbiAKMDAwMDAxNjQwNyAwMDAwMCBuIAowMDAwMDE2NjY1IDAwMDAwIG4gCjAwMDAwMTY3NjQgMDAwMDAgbiAKMDAwMDAxNzA3NiAwMDAwMCBuIAowMDAwMDE3MzM0IDAwMDAwIG4gCjAwMDAwMTc0MzMgMDAwMDAgbiAKMDAwMDAxNzc0NCAwMDAwMCBuIAowMDAwMDE4MDAyIDAwMDAwIG4gCjAwMDAwMTgxMDEgMDAwMDAgbiAKMDAwMDAxODQxMCAwMDAwMCBuIAowMDAwMDE4NjY5IDAwMDAwIG4gCjAwMDAwMTg5OTYgMDAwMDAgbiAKMDAwMDAxOTA5NSAwMDAwMCBuIAowMDAwMDE5NDAyIDAwMDAwIG4gCjAwMDAwMTk2NTkgMDAwMDAgbiAKMDAwMDAxOTc1OCAwMDAwMCBuIAowMDAwMDIwMDY1IDAwMDAwIG4gCjAwMDAwMjAzMjIgMDAwMDAgbiAKMDAwMDAyMDQyMSAwMDAwMCBuIAowMDAwMDIwNzMwIDAwMDAwIG4gCjAwMDAwMjA5ODkgMDAwMDAgbiAKMDAwMDAyMTA4OCAwMDAwMCBuIAowMDAwMDIxMzk5IDAwMDAwIG4gCjAwMDAwMjE2NTggMDAwMDAgbiAKMDAwMDAyMTc1NyAwMDAwMCBuIAowMDAwMDIyMDY5IDAwMDAwIG4gCjAwMDAwMjIzMjggMDAwMDAgbiAKMDAwMDAyMjQyNyAwMDAwMCBuIAowMDAwMDIyNzM4IDAwMDAwIG4gCjAwMDAwMjI5OTcgMDAwMDAgbiAKMDAwMDAyMzQ2MSAwMDAwMCBuIAowMDAwMDIzNTQ5IDAwMDAwIG4gCjAwMDAwMjM4MTEgMDAwMDAgbiAKMDAwMDAyMzg3MiAwMDAwMCBuIAowMDAwMDI1MTU2IDAwMDAwIG4gCnRyYWlsZXIKPDwKL0lEIApbPGQ2MmRkN2E4ZDk4NDMxMzVkMWY1YmU0OGFkNzc1M2VkPjxkNjJkZDdhOGQ5ODQzMTM1ZDFmNWJlNDhhZDc3NTNlZD5dCiUgUmVwb3J0TGFiIGdlbmVyYXRlZCBQREYgZG9jdW1lbnQgLS0gZGlnZXN0IChvcGVuc291cmNlKQoKL0luZm8gOTcgMCBSCi9Sb290IDk2IDAgUgovU2l6ZSAxMDEKPj4Kc3RhcnR4cmVmCjI1NTI4CiUlRU9GCg==";
+const rn={bytes:null,pdf:null,rows:[],sel:-1,file:"",scale:1,data:null,multi:new Set(),multiMode:false};
+function rnB64(b){const s=atob(b);const u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return u}
+async function rnLoad(bytes,file){
+  const m=$("#rn-msg");
+  if(!window.pdfjsLib){m.textContent="No se pudo cargar el lector de PDF. Recargá la página.";return}
+  m.textContent="Leyendo el PDF…";
+  try{
+    rn.bytes=bytes;rn.file=file;
+    rn.pdf=await pdfjsLib.getDocument({data:bytes.slice(),isEvalSupported:false}).promise;
+    rn.data=await rnExtract(rn.pdf);
+    rn.rows=rnSuggest(rn.data);
+    if(!rn.rows.length){m.textContent="Este PDF no tiene casilleros (AcroForms). Hay que agregarlos antes de renombrar.";$("#rn-list").innerHTML="";await rnRender();rnStats();return}
+    $("#rn-file").textContent=file;
+    rn.sel=0;rn.multi.clear();if(typeof TP!=="undefined"){TP.vals={};TP.count={};TP.codes={};TP.slots={};TP.first=false}if(typeof ST!=="undefined"){ST.Q=[];ST.S=[];ST.coll=new Set();ST.selQ=null;ST.open=null;ST.pdfDone=false;const fp=document.getElementById("fb-pdf");if(fp)fp.innerHTML=""}await rnRender();rnList();rnSelect(0,false);rnStats();
+    m.textContent="";
+  }catch(e){m.textContent="No se pudo leer ese PDF. Si tiene contraseña, quitala y probá de nuevo."}
+}
+async function rnRender(){
+  const box=$("#rn-pdf");box.innerHTML="";
+  if(!rn.pdf)return;
+  const avail=box.clientWidth-20;
+  for(let p=1;p<=rn.pdf.numPages;p++){
+    const page=await rn.pdf.getPage(p);
+    const base=page.getViewport({scale:1});
+    const scale=Math.max(0.5,avail/base.width);const vp=page.getViewport({scale});
+    const dpr=Math.min(2,window.devicePixelRatio||1);
+    const wrap=document.createElement("div");wrap.className="rn-page";wrap.style.width=vp.width+"px";
+    const c=document.createElement("canvas");c.width=vp.width*dpr;c.height=vp.height*dpr;c.style.width=vp.width+"px";
+    wrap.appendChild(c);box.appendChild(wrap);
+    await page.render({canvasContext:c.getContext("2d"),viewport:page.getViewport({scale:scale*dpr})}).promise;
+    rnLasso(wrap);
+    rn.rows.filter(r=>r.page===p).forEach(r=>{
+      [r.rect,...r.extra.map(e=>[e.x0,e.y0,e.x1,e.y1])].forEach(rc=>{
+        const [x0,y0,x1,y1]=vp.convertToViewportRectangle(rc);
+        const b=document.createElement("button");
+        b.className="rn-box";b.dataset.i=r.i;
+        b.style.left=Math.min(x0,x1)+"px";b.style.top=Math.min(y0,y1)+"px";b.style.width=Math.abs(x1-x0)+"px";b.style.height=Math.abs(y1-y0)+"px";
+        b.addEventListener("click",e=>{if(rn.dragged)return;rnReveal(r.i);if(rn.multiMode||e.shiftKey||e.ctrlKey||e.metaKey){rnToggle(r.i)}else{if(rn.multi.size)rnClearMulti();rnSelect(r.i,true,true)}});
+        wrap.appendChild(b);
+      });
+    });
+  }
+  rnPaint();
+}
+function rnPaint(){
+  document.querySelectorAll(".rn-box").forEach(b=>{
+    const r=rn.rows[+b.dataset.i];
+    b.className="rn-box "+(r.ok?"ok":r.err?"err":r.conf)+(rn.multi.has(r.i)?" multi":"")+(r.i===rn.sel?" sel":"");
+    b.title=r.nuevo+" (antes: "+r.old+")";b.setAttribute("aria-label",r.nuevo);
+  });
+}
+function rnList(){
+  const f=$("#rn-filter").value;
+  rnValidate(rn.rows);
+  const vis=rn.rows.filter(r=>f==="all"||(f==="todo"&&!r.ok)||(f==="ok"&&r.ok)||(f==="err"&&r.err));
+  $("#rn-list").innerHTML=vis.length?vis.map(r=>`<div class="rn-row${r.ok?" ok":""}${r.i===rn.sel?" sel":""}${rn.multi.has(r.i)?" multi":""}" data-i="${r.i}" role="listitem">
+    <input type="checkbox" class="ck" ${rn.multi.has(r.i)?"checked":""} aria-label="Elegir ${esc(r.old)}">
+    <div class="st ${r.err?"err":r.conf}" title="${r.ok?"Aceptado":r.err?"Con error":"Sin aceptar · confianza "+r.conf}">${r.ok?"✓":""}</div>
+    <div><input id="rn-n-${r.i}" value="${esc(r.nuevo)}" class="${r.err?"bad":""}" spellcheck="false" aria-label="Nombre nuevo de ${esc(r.old)}">
+    <div class="rn-meta"><span class="mono">${esc(r.old)}</span><span>pág. ${r.page}</span><span>${esc(r.why)}</span>${r.err?`<span class="err">${esc(r.err)}</span>`:""}</div></div></div>`).join(""):'<p class="msg" style="padding:14px">No hay casilleros en este filtro.</p>';
+}
+function rnStats(){
+  const n=rn.rows.length;const ok=rn.rows.filter(r=>r.ok).length;
+  const c={alta:0,media:0,baja:0};rn.rows.forEach(r=>c[r.conf]++);
+  const e=rnValidate(rn.rows);
+  $("#rn-stats").innerHTML=n?`<div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="${n}" aria-valuenow="${ok}"><b style="width:${Math.round(ok/n*100)}%"></b></div><span><b style="color:var(--ink)">${ok} de ${n}</b> aceptados</span>`:"";
+  const d=$("#rn-done");
+  if(!n){d.className="rn-done todo";d.textContent="";return}
+  if(e){d.className="rn-done bad";d.innerHTML=`Hay <b>${e}</b> nombres con error (repetidos o con caracteres no válidos). <button class="btn" id="rn-goerr">Ver los errores</button>`;$("#rn-goerr").onclick=()=>{$("#rn-filter").value="err";rnList()}}
+  else if(ok===n){d.className="rn-done ok";d.innerHTML="<b>✓ Todo aceptado.</b> Ya podés bajar el PDF renombrado."}
+  else{const pend=rn.rows.filter(r=>!r.ok);const cm={alta:0,media:0,baja:0};pend.forEach(r=>cm[r.conf]++);
+    d.className="rn-done todo";d.innerHTML=`Faltan <b>${n-ok}</b> por aceptar: ${cm.alta} azules, ${cm.media} amarillos, ${cm.baja} rojos. <button class="btn" id="rn-gotodo">Ver solo los que faltan</button>`;$("#rn-gotodo").onclick=()=>{$("#rn-filter").value="todo";rnList()}}
+}
+/* si el filtro esconde ese casillero (p. ej. ya aceptado), mostrar todos para poder revisarlo */
+function rnReveal(i){if(document.querySelector(`.rn-row[data-i="${i}"]`))return;$("#rn-filter").value="all";rnList();$("#rn-msg").textContent="Se muestran todos los casilleros para que veas el que tocaste."}
+function rnSelect(i,scrollPdf,focus){
+  rn.sel=i;
+  document.querySelectorAll(".rn-row").forEach(el=>el.classList.toggle("sel",+el.dataset.i===i));
+  rnPaint();
+  const row=document.querySelector(`.rn-row[data-i="${i}"]`);
+  if(row){const L=$("#rn-list");const top=row.offsetTop-L.offsetTop;if(top<L.scrollTop||top>L.scrollTop+L.clientHeight-60)L.scrollTop=top-L.clientHeight/3}
+  if(scrollPdf!==false){const b=document.querySelector(`.rn-box[data-i="${i}"]`);if(b){const P=$("#rn-pdf");const pr=P.getBoundingClientRect(),br=b.getBoundingClientRect();if(br.top<pr.top+20||br.bottom>pr.bottom-20)P.scrollTop+=br.top-pr.top-P.clientHeight/3}}
+  if(focus){const inp=$("#rn-n-"+i);if(inp)inp.focus({preventScroll:true})}
+}
+function rnRefreshRow(i){
+  const r=rn.rows[i];rnValidate(rn.rows);
+  document.querySelectorAll(".rn-row").forEach(el=>{const rr=rn.rows[+el.dataset.i];el.classList.toggle("ok",rr.ok);const st=el.querySelector(".st");st.textContent=rr.ok?"✓":"";st.className="st "+(rr.err?"err":rr.conf);const inp=el.querySelector("input");inp.classList.toggle("bad",!!rr.err);const meta=el.querySelector(".rn-meta");const er=meta.querySelector(".err");if(rr.err){if(er)er.textContent=rr.err;else meta.insertAdjacentHTML("beforeend",`<span class="err">${esc(rr.err)}</span>`)}else if(er)er.remove()});
+  rnPaint();rnStats();
+}
+const rnVisible=()=>[...document.querySelectorAll(".rn-row")].map(el=>+el.dataset.i);
+$("#rn-list").addEventListener("change",e=>{if(!e.target.classList.contains("ck"))return;const el=e.target.closest(".rn-row");rnToggle(+el.dataset.i)});
+$("#rn-list").addEventListener("input",e=>{if(e.target.classList.contains("ck"))return;const el=e.target.closest(".rn-row");if(!el)return;const r=rn.rows[+el.dataset.i];r.nuevo=e.target.value.trim();r.ok=false;rnRefreshRow(r.i)});
+$("#rn-list").addEventListener("focusin",e=>{const el=e.target.closest(".rn-row");if(el&&+el.dataset.i!==rn.sel)rnSelect(+el.dataset.i,true,false)});
+$("#rn-list").addEventListener("click",e=>{const el=e.target.closest(".rn-row");if(el&&(e.shiftKey||e.ctrlKey||e.metaKey)&&e.target.tagName!=="INPUT"){rnToggle(+el.dataset.i);return}if(el&&e.target.tagName!=="INPUT")rnSelect(+el.dataset.i,true,true)});
+$("#rn-list").addEventListener("keydown",e=>{
+  const el=e.target.closest(".rn-row");if(!el||e.target.classList.contains("ck"))return;const i=+el.dataset.i;const vis=rnVisible();const k=vis.indexOf(i);
+  if(e.key==="Enter"){e.preventDefault();const r=rn.rows[i];if(!r.err){r.ok=true;rnRefreshRow(i)}const nx=vis.slice(k+1).find(j=>!rn.rows[j].ok)??vis[k+1];if(nx!=null)rnSelect(nx,true,true)}
+  else if(e.key==="ArrowDown"&&vis[k+1]!=null){e.preventDefault();rnSelect(vis[k+1],true,true)}
+  else if(e.key==="ArrowUp"&&k>0){e.preventDefault();rnSelect(vis[k-1],true,true)}
+});
+
+function rnBulkUI(){
+  const n=rn.multi.size;$("#rn-bulk").hidden=!n;$("#rn-bn").textContent=n;rnPreview();
+  document.querySelectorAll(".rn-row").forEach(el=>{const on=rn.multi.has(+el.dataset.i);el.classList.toggle("multi",on);const c=el.querySelector(".ck");if(c)c.checked=on});
+  rnPaint();
+}
+function rnToggle(i){if(rn.multi.has(i))rn.multi.delete(i);else rn.multi.add(i);rnBulkUI()}
+function rnClearMulti(){rn.multi.clear();rnBulkUI()}
+function rnCleanBase(v){return v.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9_]+/g,"_").replace(/_+/g,"_").replace(/^_|_$/g,"")}
+function rnPreview(){
+  const ids=[...rn.multi].sort((a,b)=>a-b);const base=rnCleanBase($("#rn-base").value);const st=+$("#rn-start").value;
+  if(!ids.length||!base){$("#rn-bpv").textContent=ids.length?"Escribí el nombre común.":"";return}
+  $("#rn-bpv").textContent=ids.length===1?`→ ${base}`:`→ ${base}_${st}, ${base}_${st+1}${ids.length>2?" … "+base+"_"+(st+ids.length-1):""}`;
+}
+function rnLasso(wrap){
+  let o=null,div=null;
+  wrap.addEventListener("pointerdown",e=>{
+    if(e.button!==0||e.target.classList.contains("rn-box"))return;
+    const r=wrap.getBoundingClientRect();o={x:e.clientX-r.left,y:e.clientY-r.top,add:e.shiftKey||e.ctrlKey||e.metaKey||rn.multiMode};
+    div=document.createElement("div");div.className="rn-lasso";wrap.appendChild(div);wrap.setPointerCapture(e.pointerId);rn.dragged=false;
+  });
+  wrap.addEventListener("pointermove",e=>{
+    if(!o)return;const r=wrap.getBoundingClientRect();const x=e.clientX-r.left,y=e.clientY-r.top;
+    if(Math.abs(x-o.x)+Math.abs(y-o.y)>6)rn.dragged=true;
+    Object.assign(div.style,{left:Math.min(x,o.x)+"px",top:Math.min(y,o.y)+"px",width:Math.abs(x-o.x)+"px",height:Math.abs(y-o.y)+"px"});
+  });
+  const end=()=>{
+    if(!o)return;
+    if(rn.dragged){
+      const L=div.offsetLeft,T=div.offsetTop,R=L+div.offsetWidth,B=T+div.offsetHeight;
+      if(!o.add)rn.multi.clear();
+      wrap.querySelectorAll(".rn-box").forEach(b=>{const bl=b.offsetLeft,bt=b.offsetTop,br=bl+b.offsetWidth,bb=bt+b.offsetHeight;if(bl<R&&br>L&&bt<B&&bb>T)rn.multi.add(+b.dataset.i)});
+      rnBulkUI();if(rn.multi.size){$("#rn-bulk").scrollIntoView({block:"nearest"});$("#rn-base").focus({preventScroll:true})}
+    }
+    div.remove();o=null;setTimeout(()=>{rn.dragged=false},0);
+  };
+  wrap.addEventListener("pointerup",end);wrap.addEventListener("pointercancel",end);
+}
+$("#rn-multi").addEventListener("click",()=>{rn.multiMode=!rn.multiMode;$("#rn-multi").classList.toggle("on",rn.multiMode);$("#rn-multi").setAttribute("aria-pressed",rn.multiMode);$("#rn-multi").textContent=rn.multiMode?"Seleccionar varios: activado":"Seleccionar varios"});
+$("#rn-base").addEventListener("input",rnPreview);
+$("#rn-start").addEventListener("change",rnPreview);
+$("#rn-base").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();$("#rn-bapply").click()}});
+$("#rn-bapply").addEventListener("click",()=>{
+  const m=$("#rn-msg");const base=rnCleanBase($("#rn-base").value);
+  if(!base){m.textContent="Escribí el nombre común antes de aplicar.";$("#rn-base").focus();return}
+  const ids=[...rn.multi].sort((a,b)=>a-b);const st=+$("#rn-start").value;
+  ids.forEach((i,k)=>{const r=rn.rows[i];r.nuevo=ids.length===1?base:`${base}_${st+k}`;r.ok=true});
+  m.textContent=ids.length===1?`Listo: ${base}.`:`Listo: ${ids.length} casilleros, de ${base}_${st} a ${base}_${st+ids.length-1}, en orden de arriba hacia abajo.`;
+  rn.multi.clear();$("#rn-base").value="";rnList();rnBulkUI();rnStats();
+});
+$("#rn-bok").addEventListener("click",()=>{rnValidate(rn.rows);let n=0;rn.multi.forEach(i=>{const r=rn.rows[i];if(!r.err){r.ok=true;n++}});$("#rn-msg").textContent=`${n} aceptados.`;rn.multi.clear();rnList();rnBulkUI();rnStats()});
+$("#rn-bclear").addEventListener("click",rnClearMulti);
+$("#rn-filter").addEventListener("change",()=>{rnList();rnSelect(rn.sel,false)});
+$("#rn-okall").addEventListener("click",()=>{rnValidate(rn.rows);rn.rows.forEach(r=>{if(r.conf==="alta"&&!r.err)r.ok=true});rnList();rnSelect(rn.sel,false);rnStats()});
+$("#rn-pref").addEventListener("click",()=>{
+  const a=$("#rn-from").value.trim(),b=$("#rn-to").value.trim();const m=$("#rn-msg");
+  if(!a){m.textContent="Escribí el prefijo que querés cambiar.";return}
+  let n=0;rn.rows.forEach(r=>{if(r.nuevo.startsWith(a)){r.nuevo=b+r.nuevo.slice(a.length);r.ok=false;n++}});
+  m.textContent=n?`Prefijo cambiado en ${n} casilleros.`:`Ningún nombre empieza con «${a}».`;
+  rnList();rnSelect(rn.sel,false);rnStats();
+});
+$("#rn-in").addEventListener("change",async e=>{const f=e.target.files[0];if(f)rnLoad(new Uint8Array(await f.arrayBuffer()),f.name);e.target.value=""});
+$("#rn-sample").addEventListener("click",()=>rnLoad(rnB64(RN_SAMPLE),"prueba_original.pdf (ejemplo)"));
+const rnPdfBox=$("#rn-pdf");
+rnPdfBox.addEventListener("dragover",e=>{e.preventDefault();rnPdfBox.classList.add("drag")});
+rnPdfBox.addEventListener("dragleave",()=>rnPdfBox.classList.remove("drag"));
+rnPdfBox.addEventListener("drop",async e=>{e.preventDefault();rnPdfBox.classList.remove("drag");const f=e.dataTransfer.files[0];if(f&&/pdf$/i.test(f.name))rnLoad(new Uint8Array(await f.arrayBuffer()),f.name)});
+let rnRT;window.addEventListener("resize",()=>{clearTimeout(rnRT);rnRT=setTimeout(()=>{if(rn.pdf)rnRender()},250)});
+async function rnSave(filename,data){
+  const m=$("#rn-msg");
+  const dl=window.claude?.use?await window.claude.use("downloads"):null;
+  if(!dl){
+    try{const blob=data instanceof Blob?data:new Blob([data]);const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),4000);m.textContent=`Listo: ${filename}.`}
+    catch(e){m.textContent="No se pudo descargar el archivo en este navegador."}
+    return}
+  try{await dl.save({filename,data});m.textContent=`Listo: ${filename}.`}
+  catch(e){m.textContent=e&&e.code==="declined"?"Descarga cancelada.":"No se pudo descargar. Probá de nuevo en un momento."}
+}
+const rnBase=()=>(rn.file||"formulario").replace(/ \(ejemplo\)$/,"").replace(/\.pdf$/i,"");
+$("#rn-dl").addEventListener("click",async()=>{
+  const m=$("#rn-msg");if(!rn.bytes){m.textContent="Primero subí un PDF.";return}
+  const e=rnValidate(rn.rows);if(e){$("#rn-filter").value="err";rnList();m.textContent=`Hay ${e} nombres con error (repetidos o con caracteres no válidos). Corregilos antes de bajar el PDF.`;return}
+  if(!window.PDFLib){m.textContent="No se pudo cargar el editor de PDF. Recargá la página.";return}
+  m.textContent="Renombrando…";
+  try{const map={};rn.rows.forEach(r=>map[r.old]=r.nuevo);const out=await rnRename(rn.bytes,map);const pend=rn.rows.filter(r=>!r.ok).length;await rnSave(rnBase()+"_renombrado.pdf",out.bytes);if(pend&&/^Listo/.test(m.textContent))m.textContent+=` Ojo: ${pend} casilleros salieron con el nombre sugerido sin que los aceptaras.`}
+  catch(err){m.textContent="No se pudo renombrar este PDF. Pasámelo y lo reviso."}
+});
+$("#rn-csv").addEventListener("click",()=>{
+  if(!rn.rows.length){$("#rn-msg").textContent="Primero subí un PDF.";return}
+  const q=v=>'"'+String(v).replace(/"/g,'""')+'"';
+  const csv=["pagina,nombre_actual,nombre_nuevo,tipo,confianza,motivo,revisado",...rn.rows.map(r=>[r.page,r.old,r.nuevo,r.kind,r.conf,r.why,r.ok?"si":"no"].map(q).join(","))].join("\n");
+  rnSave(rnBase()+"_nombres.csv","\ufeff"+csv);
+});
+
+/* ── Pasos ── */
+const ST={cur:0,json:null,paths:[],Q:[],S:[],selQ:null,open:null,activeS:null,nid:1,pdfDone:false,view2:"all",coll:new Set()};
+/* orden de los pasos: 0 PDF · 1 JSON · m Matriz del INS (opcional) · 2 Armar · 3 Probar */
+const STEPS=[0,1,"m",2,3];const stKey=v=>v==="m"?"m":+v;
+function goStep(n){
+  ST.cur=n;
+  [0,1,2,3].forEach(k=>{$("#st"+k).hidden=k!==n});$("#stm").hidden=n!=="m";
+  document.querySelectorAll(".steps button").forEach(b=>{const k=stKey(b.dataset.st);b.classList.toggle("on",k===n);b.classList.toggle("done",STEPS.indexOf(k)<STEPS.indexOf(n));b.setAttribute("aria-current",k===n?"step":"false")});
+  if(n==="m")gmEnter();
+  if(n===1&&!ST.paths.length)jsRead();
+  if(n===2){f2ActiveSid();ST.Q.forEach(f2AutoJson);f2Form();f2Json();f2Stats();f2View(ST.view2||"all")}
+  if(n===3){f2ActiveSid();tpForm();tpView(ST.view3||"all");if(!TP.first&&ST.json){TP.first=true;tpPrefill()}}
+  $("#paso0").scrollIntoView({block:"start"});
+}
+document.querySelectorAll(".steps button").forEach(b=>b.addEventListener("click",()=>goStep(stKey(b.dataset.st))));
+$("#go1").addEventListener("click",()=>{
+  const pend=rn.rows.filter(r=>!r.ok).length,err=rnValidate(rn.rows);
+  if(err){$("#rn-msg").textContent=`Antes de seguir, corregí los ${err} nombres con error.`;return}
+  goStep(1);
+  if(pend)$("#js-msg").textContent=`Ojo: quedaron ${pend} casilleros sin aceptar en el paso anterior. Se usan con el nombre sugerido.`;
+});
+$("#back0").addEventListener("click",()=>goStep(0));
+$("#go2").addEventListener("click",()=>{if(!ST.paths.length&&$("#js-in").value.trim()){jsRead();if(!ST.paths.length)return}goStep("m")});
+$("#go2b").addEventListener("click",()=>{ST.paths=[];ST.json=null;jsList();goStep("m")});
+
+/* ── Paso «Matriz del INS» (opcional): cruza la ficha del INS con el PDF renombrado y el JSON (mapear.html, dentro de un marco) ── */
+const GM={key:null,ready:false};
+function gmFrame(){return $("#gm-frame")}
+function gmEnter(){
+  const fr=gmFrame();
+  if(!fr.getAttribute("src")){fr.addEventListener("load",()=>gmSend(true),{once:true});fr.setAttribute("src",__PSTOOLS_BASE__+"apps/ficha-formulario/mapear.html?embed=1");return}
+  gmSend(false);
+}
+async function gmSend(first){
+  const m=$("#gm-msg");const fr=gmFrame();const w=fr.contentWindow;if(!w||!w.mpFromFlow)return;
+  if(!rn.bytes||!rn.rows.length){m.textContent="Primero subí el PDF en el paso 0.";return}
+  const jsonText=ST.paths.length?$("#js-in").value:"";
+  const key=rn.file+"|"+rn.rows.map(r=>r.old+"="+r.nuevo).join(",")+"|"+jsonText;
+  if(!first&&key===GM.key)return;GM.key=key;
+  try{
+    const map={};rn.rows.forEach(r=>{map[r.old]=r.nuevo});
+    const {bytes}=await rnRename(rn.bytes,map);
+    m.textContent=jsonText?"":"Sin el JSON del cliente (paso 1) no se puede cruzar la matriz.";
+    await w.mpFromFlow({pdfBytes:bytes,pdfName:rnBase()+"_renombrado.pdf",jsonText,jsonName:"cliente.json"});
+  }catch(e){console.warn(e);m.textContent="No se pudo preparar el PDF para cruzar la matriz."}
+}
+window.gmHeight=h=>{gmFrame().style.height=Math.max(220,h+4)+"px"};
+window.gmReady=info=>{GM.ready=!!info;$("#gm-go").disabled=!info;$("#gm-msg").textContent=info?`Matriz cruzada: ${info.preguntas} preguntas · ${info.revisar} cosas para revisar. Cuando esté, pasala al formulario.`:"No se pudo cruzar la matriz: revisá el archivo."};
+/* pasa la matriz cruzada al paso «Armar el formulario» */
+function gmImport(model){
+  const byName=new Map(rn.rows.map(r=>[r.nuevo,r.i]));
+  const realPath=j=>{if(!j)return null;const p=ST.paths.find(x=>x.path===j||x.path.replace(/\[\d+\]/g,"[]")===j);return p?p.path:j};
+  ST.Q=[];ST.S=[];ST.selQ=null;ST.open=null;ST.coll=new Set();ST.pdfDone=false;let n=0;
+  model.forEach(sec=>{
+    const s={id:ST.nid++,title:sec.title,hidden:!!sec.hidden,cond:null,condTxt:"",notes:"",subs:[]};ST.S.push(s);
+    sec.questions.forEach(x=>{
+      if(x.sub&&!s.subs.some(u=>u.title===x.sub))s.subs.push(fbNewSub(x.sub));
+      const q=fbNewQ(x.label,s.id,{type:TIPOS.includes(x.type)?x.type:"Texto corto",req:!!x.req,origin:x.origin||"La completa la persona",inPdf:x.inPdf!==false,
+        boxes:x.boxes.map(b=>byName.get(b)).filter(i=>i!=null),opts:x.opts.map(o=>({label:o.label,code:o.code||"",box:o.box!=null&&byName.has(o.box)?byName.get(o.box):null})),
+        json:realPath(x.json),jsonOk:!!x.jsonOk,repeat:!!x.repeat,sub:x.sub||"",rule:x.rule||"",notes:x.notes||"",fromMatriz:true});
+      if(x.rep)q.repMax=x.rep;
+      if(x.oculto){q.oculto=true;q.hiddenSrc="Viene del sistema"}
+      n++;
+    });
+  });
+  ST.activeS=(ST.S.find(s=>!s.hidden)||ST.S[0]||{}).id;fbNorm();
+  return n;
+}
+$("#gm-go").addEventListener("click",()=>{
+  const w=gmFrame().contentWindow;if(!GM.ready||!w||!w.mpExport)return;
+  if(ST.Q.length&&!confirm(`Ya hay ${ST.Q.length} preguntas armadas. ¿Reemplazarlas por las de la matriz del INS?`))return;
+  const n=gmImport(w.mpExport());goStep(2);
+  $("#f2-msg").textContent=`Se armó el formulario desde la matriz del INS: ${n} preguntas, con sus casilleros y sus rutas. Revisalo y seguí a «Probar».`;
+});
+$("#gm-skip").addEventListener("click",()=>goStep(2));
+$("#back1m").addEventListener("click",()=>goStep(1));
+$("#back1").addEventListener("click",()=>goStep("m"));
+
+/* ── Paso 1 · JSON ── */
+const JS_SAMPLE=`{
+  "cliente": {
+    "primerNombre": "Ana",
+    "segundoNombre": "María",
+    "apellidos": "Pérez Gómez",
+    "tipoIdentificacion": "PAS",
+    "numeroIdentificacion": "AB123456",
+    "fechaNacimiento": "1988-03-14",
+    "edad": 38,
+    "domicilio": { "provincia": "N", "ciudad": "PA" },
+    "ocupacion": "OTR",
+    "ocupacionDetalle": "Músico"
+  },
+  "beneficiarios": {
+    "designa": true,
+    "lista": [
+      { "nombre": "Juan Pérez", "parentesco": "HIJO", "porcentaje": 60 },
+      { "nombre": "Lucía Pérez", "parentesco": "HIJO", "porcentaje": 40 }
+    ]
+  },
+  "declaracion": {
+    "aceptaCondiciones": true,
+    "fecha": "2026-10-05",
+    "sucursal": "CENTRAL-01",
+    "aclaracion": "Ana Pérez Gómez"
+  },
+  "sistema": { "idSolicitud": "SOL-0001", "canal": "web" }
+}`;
+function jsFlat(o,p,acc,inArr){
+  if(Array.isArray(o)){
+    if(o.length===1){jsFlat(o[0],p+"[0]",acc,inArr);return acc}
+    const base=p+"[]";const seen=new Set(acc.map(a=>a.path));
+    if(!o.length){acc.push({path:base,ex:"[]",arr:true});return acc}
+    o.forEach(el=>{const sub=[];jsFlat(el,base,sub,true);sub.forEach(s=>{if(!seen.has(s.path)){seen.add(s.path);acc.push(s)}})});
+    return acc;
+  }
+  if(o&&typeof o==="object"){const ks=Object.keys(o);if(!ks.length)acc.push({path:p,ex:"{}",arr:inArr});ks.forEach(k=>jsFlat(o[k],p?p+"."+k:k,acc,inArr));return acc}
+  acc.push({path:p,ex:o,arr:!!inArr||/\[\]/.test(p)});return acc;
+}
+function jsRead(){
+  const t=$("#js-in").value.trim();const m=$("#js-msg");
+  if(!t){ST.paths=[];ST.json=null;jsList();m.textContent="";return}
+  try{ST.json=JSON.parse(t);ST.paths=jsFlat(ST.json,"",[]);const has=x=>ST.paths.some(p=>p.path===x);ST.Q.forEach(q=>{if(q.json&&!has(q.json)&&q.json.includes("[]")){const alt=q.json.replace("[]","[0]");if(has(alt)){q.json=alt;if(!q._subRep&&!q.parentId)q.repeat=false}}});m.textContent="";m.style.color="";jsList();if(ST.Q.length)ST.Q.forEach(f2AutoJson)}
+  catch(e){m.textContent="No es un JSON válido: revisá comas, comillas y llaves.";m.style.color="var(--warn)";ST.paths=[];jsList()}
+}
+function jsList(){
+  const dst=ST.paths.map(p=>dicPathSt(p.path));const nd=dst.filter(x=>x.st==="ok").length;
+  $("#js-count").textContent=ST.paths.length?`${ST.paths.length} datos encontrados${DIC.length?` · ${nd} coinciden con el Diccionario INS`:""}`:"";
+  $("#js-list").innerHTML=ST.paths.length?`<table class="jt"><thead><tr><th>Dato (ruta)</th><th>Valor de ejemplo</th>${DIC.length?"<th>Diccionario INS</th>":""}</tr></thead><tbody>${ST.paths.map((p,k)=>`<tr><td class="mono">${esc(tplPath(p.path))}${p.arr?' <span class="tag">se repite</span>':""}</td><td>${esc(typeof p.ex==="string"?p.ex:JSON.stringify(p.ex))}</td>${DIC.length?`<td>${dst[k].st==="ok"?`✓ ${esc(DIC[dst[k].i][0])}`:dst[k].st==="est"?`<span style="color:var(--warn)">≠ ${esc(DIC[dst[k].i][0])} (lista / objeto)</span>`:'<span style="color:var(--muted)">—</span>'}</td>`:""}</tr>`).join("")}</tbody></table>`:'<p class="msg" style="padding:12px">Todavía no hay datos. Pegá un JSON o usá el de ejemplo.</p>';
+}
+$("#js-in").addEventListener("input",()=>{clearTimeout(ST.jt);ST.jt=setTimeout(jsRead,350)});
+$("#js-file").addEventListener("change",async e=>{const f=e.target.files[0];if(!f)return;$("#js-in").value=await f.text();jsRead();e.target.value=""});
+$("#js-sample").addEventListener("click",()=>{$("#js-in").value=JS_SAMPLE;jsRead()});
+
+/* ── Diccionario General INS–Namirial (tools/build_dic.mjs lo regenera desde docs/diccionario_v10.xlsx) ── */
+/*DIC:start*/
+/* Generado con tools/build_dic.mjs desde diccionario_v10.xlsx (182 campos, 730 nombres de PDF). No editar a mano. */
+/* [nombre web, sinónimos y nombre en el PDF, paso, sección, ruta JSON, visible (1) u oculto (0), nombre AcroForm (regla)] */
+const DIC=[
+["Número de Póliza Madre",["Número de póliza"],"Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.numeroPoliza",1,"numero_poliza"],
+["Vigencia desde",["Inicio de vigencia","Fecha de inicio"],"Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.vigenciaDesde",1,"vigencia_desde_poliza_dia / _mes / _ano"],
+["Vigencia hasta",["Fin de vigencia","Fecha de vencimiento"],"Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.vigenciaHasta",1,"vigencia_hasta_poliza_dia / _mes / _ano"],
+["Seleccione la moneda de la póliza",["Moneda","Moneda de la póliza","Moneda: Colones"],"Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.codigoMoneda",1,"cv_moneda_poliza_<valor>"],
+["Tipo de identificación",["Tipo de identificación del tomador","Tipo de identificación: Jurídica Nacional"],"Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.codigoTipoIdentificacionTomador",1,"cv_tipo_identificacion_poliza_<valor>"],
+["Cédula jurídica",["Identificación del tomador","No Identificación"],"Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.identificacionTomador",1,"identificacion_tomador_poliza"],
+["Nombre o razón social",["Tomador","Nombre del tomador","Razón social"],"Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.nombreTomador",1,"nombre_tomador_poliza"],
+["Seleccione la forma de pago",["Forma de Pago: Mensual"],"Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.codigoFormaPago",1,"cv_forma_pago_poliza_<valor>"],
+["Código Intermediario",["Código del asesor","Código"],"Datos Generales","Datos del Asesor","datosFormulario.datosGenerales.intermediario.codigoIntermediario",1,"codigo_intermediario"],
+["Identificación",["Identificación del intermediario","Identificación del asesor"],"Datos Generales","Datos del Asesor","datosFormulario.datosGenerales.intermediario.identificacion",1,"identificacion_intermediario"],
+["Código tipo de identificación",["Tipo de identificación del intermediario"],"Datos Generales","Datos del Asesor","datosFormulario.datosGenerales.intermediario.codigoTipoIdentificacion",1,"cv_tipo_identificacion_intermediario_<valor>"],
+["Nombre",["Nombre del intermediario","Nombre del asesor","Nombre completo intermediario"],"Datos Generales","Datos del Asesor","datosFormulario.datosGenerales.intermediario.nombre",1,"nombre_intermediario"],
+["Correo electrónico",["Correo del intermediario","Correo del asesor"],"Datos Generales","Datos del Asesor","datosFormulario.datosGenerales.intermediario.correoElectronico",1,"correo_electronico_intermediario"],
+["Lugar",["Ciudad de emisión","Lugar de creación"],"Datos Generales","Información de la Solicitud","datosFormulario.datosGenerales.lugar",1,"lugar_solicitud"],
+["Fecha",["Fecha de creación","Fecha: día/mes/año"],"Datos Generales","Información de la Solicitud","datosFormulario.datosGenerales.fechaCreacion",1,"fecha_solicitud_dia / _mes / _ano"],
+["¿Tiene otro seguro médico?",["¿Tiene otro seguro médico?","¿Esta solicitud va a sustituir otro seguro?"],"Datos Generales","Información adicional","datosFormulario.datosGenerales.datosAdicionales.indicadorSubstituyeSeguro",1,"cv_substituye_seguro_si / _no"],
+["¿Qué tipo de seguro tiene actualmente?",["Seguro del INS","Tipo de seguro actual"],"Datos Generales","Información adicional","datosFormulario.datosGenerales.datosAdicionales.indicadorSubstituyeSeguroINS",1,"cv_substituye_seguro_i_n_s_si / _no"],
+["Nombre de la aseguradora actual",["Nombre de la compañía","Nombre de la aseguradora actual"],"Datos Generales","Información adicional","datosFormulario.datosGenerales.datosAdicionales.nombreAseguradoraSubstituye",1,"nombre_aseguradora_substituye"],
+["Número de póliza actual",["N.º de póliza","Número de póliza actual"],"Datos Generales","Información adicional","datosFormulario.datosGenerales.datosAdicionales.numeroPolizaSubstituye",1,"numero_poliza_substituye"],
+["Observaciones",["Observaciones","Comentarios"],"Datos Generales","Información adicional","datosFormulario.datosGenerales.datosAdicionales.observaciones",1,"observaciones"],
+["Tipo de Formulario",["Código de formulario"],"Datos Generales","Datos del Sistema (oculto)","encabezado.codigoTipoFormulario",0,""],
+["Descripción Tipo Formulario",["Descripción del tipo de formulario","Nombre del formulario"],"Datos Generales","Datos del Sistema (oculto)","encabezado.descripcionTipoFormulario",0,""],
+["Tipo Trámite",["Tipo de trámite","Código de trámite"],"Datos Generales","Datos del Sistema (oculto)","encabezado.codigoTipoTramite",0,""],
+["Descripción Tipo Trámite",["Descripción del trámite","Nombre del trámite"],"Datos Generales","Datos del Sistema (oculto)","encabezado.descripcionTipoTramite",0,""],
+["Identificador Transacción Interno",["Identificador de transacción","Referencia INS"],"Datos Generales","Datos del Sistema (oculto)","encabezado.identificadorTransaccionInterno",0,""],
+["Correo electrónico",["Correo de envío","Email de envío"],"Datos Generales","Datos del Sistema (oculto)","encabezado.correoElectronico",0,""],
+["Código de Producto",["Producto","Código del producto"],"Datos Generales","Datos del Sistema (oculto)","encabezado.codigoProducto",0,""],
+["Descripción Producto",["Nombre del producto","Descripción del producto"],"Datos Generales","Datos del Sistema (oculto)","encabezado.descripcionProducto",0,""],
+["Nombre Completo Cliente",["Nombre del cliente","Cliente"],"Datos Generales","Datos del Sistema (oculto)","encabezado.nombreCompletoCliente",0,""],
+["Identificador Archivo",["ID Namirial","Identificador Namirial"],"Datos Generales","Datos del Sistema (oculto)","encabezado.identificadorArchivo",0,""],
+["Conozca a su cliente actualizado",["KYC actualizado","Conozca a su cliente"],"Datos Generales","Datos del Sistema (oculto)","encabezado.conozcaClienteActualizado",0,""],
+["Sede Administradora",["Código de sede","Sede"],"Datos Generales","Datos del Sistema (oculto)","encabezado.sedeAdministradora",0,""],
+["Descripción Sede Administradora",["Nombre de sede","Descripción de sede"],"Datos Generales","Datos del Sistema (oculto)","encabezado.descripcionSedeAdministradora",0,""],
+["Método de envío del formulario",["Medio de envío","Canal de envío"],"Datos Generales","Datos del Sistema (oculto)","encabezado.metodoEnvioFormulario",0,""],
+["Seleccione la forma de pago",["Forma de pago","Método de pago","Forma de Pago: Mensual"],"Datos Generales","Datos del Sistema (oculto)","datosFormulario.datosGenerales.polizaMadre.descripcionFormaPago",0,""],
+["Tipo de identificación",["Descripción del tipo de identificación del tomador","Tipo de identificación: Jurídica Nacional"],"Datos Generales","Datos del Sistema (oculto)","datosFormulario.datosGenerales.polizaMadre.descripcionTipoIdentificacionTomador",0,""],
+["Tipo de Persona",["Código de tipo de persona","Asegurado","Tomador","Beneficiario","Dependiente"],"Datos Generales","Datos del Sistema (oculto)","datosFormulario.personas[].codigoTipo",0,""],
+["Descripción Tipo de Persona",["Descripción de tipo de persona","Rol de persona"],"Datos Generales","Datos del Sistema (oculto)","datosFormulario.personas[].descripcionTipo",0,""],
+["Descripción Tipo de Identificación de Persona",["Descripción del tipo de identificación"],"Datos Generales","Datos del Sistema (oculto)","datosFormulario.personas[].descripcionTipoIdentificacion",0,""],
+["Descripción de estado civil",[],"Datos Generales","Datos del Sistema (oculto)","datosFormulario.personas[].descripcionEstadoCivil",0,""],
+["Descripción del género",["Descripción de género"],"Datos Generales","Datos del Sistema (oculto)","datosFormulario.personas[].descripcionGenero",0,""],
+["Método asistido",["Descripción del método asistido"],"Datos Generales","Datos del Sistema (oculto)","datosFormulario.personas[].riesgo[].embarazo[].descripcionMetodoAsistido",0,""],
+["Tipo de atención",["Descripción de atención"],"Datos Generales","Datos del Sistema (oculto)","datosFormulario.personas[].riesgo[].covid.descripcionTipoAtencion",0,""],
+["Descripción parentesco",[],"Datos Generales","Datos del Sistema (oculto)","datosFormulario.personas[].descripcionParentesco",0,""],
+["Tipo de Identificación Persona",["Tipo de indentificación","Tipo de Identificación"],"Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoTipoIdentificacion",1,"cv_tipo_identificacion_<persona>_<valor>"],
+["Identificación de Persona",["No. de identificación","Número de Identificación"],"Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].numeroIdentificacion",1,"numero_identificacion_<persona>"],
+["Correo electrónico",["Email","Correo electrónico de la persona"],"Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].correoElectronico",1,"correo_electronico_<persona>"],
+["Nombre Completo",["Nombre completo del asegurado","Nombre completo de la persona","Nombre completo"],"Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].nombreCompleto",1,"nombre_completo_<persona>"],
+["Primer Apellido",["Apellido 1"],"Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].primerApellido",1,"primer_apellido_<persona>"],
+["Segundo Apellido",["Apellido 2"],"Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].segundoApellido",1,"segundo_apellido_<persona>"],
+["Primer Nombre",["Nombre 1"],"Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].primerNombre",1,"primer_nombre_<persona>"],
+["Segundo Nombre",["Nombre 2"],"Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].segundoNombre",1,"segundo_nombre_<persona>"],
+["Fecha de Nacimiento",["Nacimiento","Fecha nacimiento"],"Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].fechaNacimiento",1,"fecha_nacimiento_<persona>_dia / _mes / _ano"],
+["Edad",["Edad calculada"],"Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].edad",1,"edad_<persona>"],
+["Estado civil",[],"Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoEstadoCivil",1,"cv_estado_civil_<persona>_<valor>"],
+["Sexo",["Sexo","Género masculino/femenino","Género"],"Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoGenero",1,"cv_sexo_<persona>_<valor>"],
+["Teléfono",["Teléfono móvil","Celular"],"Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].telefonoMovil",1,"telefono_movil_<persona>"],
+["Teléfono movil",["Teléfono móvil","Celular","Teléfono Celular"],"Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].telefonoCelular",1,"telefono_celular_<persona>"],
+["Teléfono de la Oficina",["Teléfono Oficina","Oficina","Teléfono oficina Asegurado"],"Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].telefonoOficina",1,"telefono_oficina_<persona>"],
+["Teléfono del trabajo",["Teléfono Trabajo","Trabajo","Teléfono domicilio Asegurado"],"Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].telefonoTrabajo",1,"telefono_trabajo_<persona>"],
+["País",["País de residencia"],"Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].codigoPais",1,"pais_<persona>"],
+["Provincia",["Provincia de residencia"],"Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].codigoProvincia",1,"provincia_<persona>"],
+["Descripción Provincia",["Descripción de provincia","Nombre de provincia"],"Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].descripcionProvincia",0,""],
+["Cantón",["Cantón de residencia"],"Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].codigoCanton",1,"canton_<persona>"],
+["Descripción Cantón",["Descripción de cantón","Nombre de cantón"],"Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].descripcionCanton",0,""],
+["Distrito",["Distrito de residencia"],"Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].codigoDistrito",1,"distrito_<persona>"],
+["Descripción Distrito",["Descripción de distrito","Nombre de distrito"],"Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].descripcionDistrito",0,""],
+["Dirección exacta",["Dirección del domicilio","Dirección exacta del domicilio actual"],"Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].direccionExacta",1,"direccion_exacta_<persona>"],
+["Medio de notificación",["Canal de notificación","Medio por el cual desea ser notificado"],"Datos del Asegurado / Datos del Tomador","Preferencias de Notificación","datosFormulario.personas[].mediosNotificacion[].codigoMedioNotificacion",1,"cv_medio_notificacion_<persona>_<valor>"],
+["Medio de notificación",["Nombre del medio","Descripción del medio"],"Datos del Asegurado / Datos del Tomador","Preferencias de Notificación","datosFormulario.personas[].mediosNotificacion[].medioNotificacion",1,"medio_notificacion_<persona>"],
+["Datos de notificación",["Destino de notificación","Dato de notificación","Campos de texto para notificación"],"Datos del Asegurado / Datos del Tomador","Preferencias de Notificación","datosFormulario.personas[].mediosNotificacion[].datosNotificacion",1,"datos_notificacion_<persona>"],
+["Nombre Completo Asegurado Directo",["Nombre completo del asegurado directo"],"Datos del Asegurado","Datos del Asegurado","datosFormulario.personas[].nombreCompletoAseguradoDirecto",1,"nombre_completo_asegurado_directo_asegurado"],
+["¿Cuál es su ingreso mensual bruto?",["Ingreso bruto mensual","Ingreso mensual","Ingreso Mensual Bruto"],"Datos del Asegurado","Datos del Asegurado","datosFormulario.personas[].ingresoMensualBruto",1,"ingreso_mensual_bruto_asegurado"],
+["¿Su residencia habitual y permanente será en Costa Rica?",["Residencia permanente en Costa Rica"],"Datos del Asegurado","Datos del Asegurado","datosFormulario.personas[].residiraEnCostaRica",1,"residira_en_costa_rica_asegurado"],
+["¿Cuál es su profesión u ocupación?",["Profesión","Ocupación","Profesión u Ocupación:"],"Datos del Asegurado","Datos del Asegurado","datosFormulario.personas[].profesionOcupacion",1,"profesion_ocupacion_asegurado"],
+["¿Practica algún deporte o realiza alguna ocupación adicional?",["Actividad deportiva","Ocupación adicional","¿Practica algún deporte u ocupación adicional?"],"Datos del Asegurado","Datos del Asegurado","datosFormulario.personas[].indicadorPracticaDeporteORealizaOcupacionAdicional",1,"cv_practica_deporte_o_realiza_ocupacion_adicional_asegurado_si / _no"],
+["Tipo y frecuencia de práctica",["Detalle del deporte","Frecuencia de práctica","Tipo y frencuencia de práctica:","Indique el tipo de deporte u ocupación adicional y la frecuencia con que lo practica"],"Datos del Asegurado","Datos del Asegurado","datosFormulario.personas[].detalleDeporteOcupacionAdicional",1,"detalle_deporte_ocupacion_adicional_asegurado"],
+["¿Cómo ha variado su peso en los últimos 6 meses?",["En los últimos 6 meses su peso ha"],"Datos del Asegurado","Datos del Asegurado","datosFormulario.personas[].codigoVariacionPesoUltimosSeisMeses",1,"variacion_peso_ultimos_seis_meses_asegurado"],
+["¿Cuántos kilogramos aumentó o disminuyó su peso?",["¿Cuántos kilos?"],"Datos del Asegurado","Datos del Asegurado","datosFormulario.personas[].cantidadKilogramosVariacionPeso",1,"cantidad_kilogramos_variacion_peso_asegurado"],
+["¿Cuál fue el motivo de la variación de peso?",["Motivo"],"Datos del Asegurado","Datos del Asegurado","datosFormulario.personas[].motivoVariacionPeso",1,"motivo_variacion_peso_asegurado"],
+["¿Desea agregar un dependiente menor de edad?",["Agregar dependiente menor"],"Dependientes","Dependientes","datosFormulario.personas[].indicadorAgregarDependienteMenor",1,"cv_agregar_dependiente_menor_dependiente_N_si / _no"],
+["Peso",["Peso corporal","Kgs"],"Información del Riesgo","Antecedentes personales","datosFormulario.personas[].peso",1,"peso_<persona>"],
+["Estatura",["Altura","Mts"],"Información del Riesgo","Antecedentes personales","datosFormulario.personas[].estatura",1,"estatura_<persona>"],
+["Cambio de peso",["Variación de peso","Cantidad de kilos","Variación en kilos","¿Cuántos kilos?","Motivo del cambio de peso","Motivo","Detalle de cambio","Detalle del cambio de salud","Detalle","En los últimos 6 meses su peso ha"],"Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].detalle",1,"detalle_cambios_importantes_salud_<persona>_N"],
+["Cambio importante de salud",["Cambios importantes de salud","Variación de peso"],"Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].indicador",1,"cv_cambios_importantes_salud_<persona>_N_si / _no"],
+["Nombre de quien padece",["Persona afectada","Quién padece"],"Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].quienPadece",1,"quien_padece_<persona>_N"],
+["¿Es o ha sido alcohólico?",["Antecedente de alcoholismo","¿Es usted o ha sido alcohólico?"],"Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.indicadorAlcoholismo",1,"cv_alcoholismo_bebidas_alcoholicas_<persona>_si / _no"],
+["Detalles sobre el consumo o antecedentes de alcoholismo",["Detalle de alcoholismo","Patrón de consumo","Detalles:"],"Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.detalleAlcoholismo",1,"detalle_alcoholismo_<persona>"],
+["Usa bebidas alcohólicas",["Consumo de alcohol","Bebidas alcohólicas","¿Consume bebidas alcohólicas?","¿Usa bebidas alcohólicas?"],"Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.indicador",1,"cv_bebidas_alcoholicas_<persona>_si / _no"],
+["Clase",["Tipo de bebida","Clase de bebida","a) Clase:","Tipo de bebida alcohólica"],"Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.detalleTipo",1,"detalle_tipo_<persona>"],
+["Cantidad",["Cantidad consumida","Unidades","c) Cantidad","Cantidad de bebidas alcohólicas consumidas"],"Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.detalleCantidad",1,"detalle_cantidad_bebidas_alcoholicas_<persona>"],
+["Frecuencia",["Frecuencia de consumo","b) Frecuencia:","Frecuencia de consumo de bebidas alcohólicas"],"Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.detalleFrecuencia",1,"detalle_frecuencia_<persona>"],
+["Tiempo que lleva consumiendo bebidas alcohólicas",["¿Indique desde hace cuanto?"],"Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.tiempoConsumoBebidasAlcoholicas",1,"tiempo_consumo_bebidas_alcoholicas_<persona>"],
+["¿Tiene alguna intervención quirúrgica pendiente?",["Cirugías pendientes","¿Intervenciones quirúrgicas pendientes?"],"Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicadorIntervencionQuirurgicaPendiente",1,"cv_intervencion_quirurgica_pendiente_<persona>_N_si / _no"],
+["Intervenciones quirúrgicas realizadas",["Cirugías realizadas","Indicador de intervención","¿Intervenciones quirúrgicas realizadas?"],"Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].indicadorIntervencionQuirurgica",1,"cv_intervencion_quirurgica_<persona>_si / _no"],
+["Nombre de quien fue intervenido",["Persona intervenida","Paciente"],"Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].nombreQuienFueIntervenido",1,"nombre_quien_fue_intervenido_<persona>_N"],
+["Causa de la intervención",["Causa de cirugía","Motivo de intervención","En caso afirmativo detalle cuáles, motivo, fecha y estado actual"],"Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].declaracionCausas",1,"declaracion_causas_<persona>_N"],
+["Fecha del procedimiento",["Fecha de cirugía","Fecha de intervención"],"Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].fechaProcedimiento",1,"fecha_procedimiento_<persona>_N_dia / _mes / _ano"],
+["Hospital del procedimiento",["Centro hospitalario","Hospital o clínica"],"Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].hospitalProcedimiento",1,"hospital_procedimiento_<persona>_N"],
+["Nombre del cirujano",["Cirujano","Médico tratante"],"Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].nombreCirujano",1,"nombre_cirujano_<persona>_N"],
+["¿Se ha sometido a alguna intervención quirúrgica?",["¿Intervenciones quirúrgicas realizadas?"],"Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicador",1,"cv_intervencion_quirurgica_<persona>_N_si / _no"],
+["Detalles de las intervenciones quirúrgicas realizadas",["En caso afirmativo detalle cuáles, motivo, fecha y estado actual"],"Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].detalleIntervencionesQuirurgicasRealizadas",1,"detalle_intervenciones_quirurgicas_realizadas_<persona>_N"],
+["Detalles de las intervenciones quirúrgicas pendientes",["En caso afirmativo detalle cuáles, motivo y su fecha de realización:"],"Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].detalleIntervencionesQuirurgicasPendientes",1,"detalle_intervenciones_quirurgicas_pendientes_<persona>_N"],
+["Incapacidad por invalidez",["¿Está usted tramitando o tiene pensado tramitar en el corto plazo una incapacidad por invalidez?","¿Está tramitando o planea tramitar próximamente una incapacidad por invalidez?","¿Está tramitando una incapacidad por invalidez?"],"Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].indicadorTramitaIncapacidadInvalidez",1,"cv_tramita_incapacidad_invalidez_<persona>_si / _no"],
+["Complicaciones durante el embarazo",["Complicaciones del embarazo","¿Ha tenido alguna complicación?"],"Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].complicacionesEmbarazo",1,"complicaciones_embarazo_<persona>_N"],
+["Se encuentra embarazada",["Embarazo actual","Indicador de embarazo","¿Está embarazada actualmente?","¿Se encuentra actualmente embarazada?"],"Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].indicador",1,"cv_embarazo_<persona>_N_si / _no"],
+["Nombre de quien está embarazada",["Persona embarazada"],"Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].nombreQuienEstaEmbarazada",1,"nombre_quien_esta_embarazada_<persona>_N"],
+["Semanas de gestación",["Tiempo de embarazo","¿Cuánto tiempo tiene de embarazo?"],"Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].numeroSemanasGestacion",1,"numero_semanas_gestacion_<persona>_N"],
+["Tipo de reproducción",["Método de reproducción","Reproducción natural o asistida"],"Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].codigoTipoReproduccion",1,"tipo_reproduccion_<persona>_N"],
+["Condición de salud",["Condición de salud","Enfermedad","Padecimiento","¿Padece o ha padecido alguna condición?"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].condicionSalud.indicador",1,"cv_condicion_salud_<persona>_si / _no"],
+["Detalle de condición",["Detalle de condición","Detalle de salud","Nombre de la condición, enfermedad o traumatismo"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].condicionSalud.detalle",1,"detalle_condicion_salud_<persona>"],
+["Enfermedad de alto impacto",["Condición de alto impacto","Enfermedad grave"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedadAltoImpacto[].indicador",1,"cv_enfermedad_alto_impacto_<persona>_N_si / _no"],
+["Detalle",["Descripción","Detalle de condición","Detalle de enfermedad de alto impacto"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedadAltoImpacto[].detalle",1,"detalle_enfermedad_alto_impacto_<persona>_N"],
+["Nombre de quien padece",["Persona enferma","Paciente"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].nombreQuienPadece",1,"nombre_quien_padece_<persona>_N"],
+["Categoría",["Tipo de padecimiento","Categoría","Categoría de la enfermedad"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].detalleCategoria",1,"detalle_categoria_<persona>_N"],
+["Detalle de enfermedad",["Detalle de enfermedad","Padecimiento","Nombre de la condición, enfermedad o traumatismo"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].detalle",1,"detalle_enfermedades_<persona>_N"],
+["Médico, clínica u hospital",["Médico","Clínica","Hospital","Nombre y dirección de médicos que le atendieron, clínica u hospital"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].nombreMedicoClinicaHospital",1,"nombre_medico_clinica_hospital_enfermedades_<persona>_N"],
+["Fecha de inicio",["Fecha de inicio","Inicio del padecimiento","Fecha de diagnóstico"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].fechaInicio",1,"fecha_inicio_<persona>_N_dia / _mes / _ano"],
+["Duración",["Tiempo de evolución","Antigüedad"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].duracion",1,"duracion_<persona>_N"],
+["Resultado / estado actual",["Resultado","Evolución","Activa","Controlada","Resuelta","En estudio","Estado actual"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultado",1,"resultado_enfermedades_<persona>_N"],
+["Tratamiento",["Indicador de tratamiento","Recibe tratamiento","Tratamiento recibido"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorTratamiento",1,"cv_tratamiento_enfermedades_<persona>_N_si / _no"],
+["Nombre del medicamento",["Medicamento","Tratamiento farmacológico"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].nombreMedicamento",1,"nombre_medicamento_<persona>_N"],
+["Complicaciones",["Detalle de complicaciones"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].detalleComplicaciones",1,"detalle_complicaciones_<persona>_N"],
+["Pruebas de azúcar",["Control de glucosa","Indicador de pruebas"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPruebasAzucar",1,"cv_pruebas_azucar_enfermedades_<persona>_N_si / _no"],
+["Tipo de control",["Clase de prueba","Hemoglobina glicosilada"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].tipoControl",1,"tipo_control_<persona>_N"],
+["Resultados de pruebas",["Resultados de azúcar","Valores de laboratorio"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultadosPruebas",1,"resultados_pruebas_<persona>_N"],
+["Presión arterial",["Control de presión","Indicador de presión arterial"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPresionArterial",1,"cv_presion_arterial_enfermedades_<persona>_N_si / _no"],
+["Resultados de presión arterial",["Lecturas de presión","Valores de presión"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultadosPresionArterial",1,"resultados_presion_arterial_<persona>_N"],
+["Antígeno prostático",["PSA","Indicador de antígeno prostático"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorAntigenoProstatico",1,"cv_antigeno_prostatico_enfermedades_<persona>_N_si / _no"],
+["Resultados de antígeno prostático",["Resultados PSA","Valores de antígeno"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultadosAntigenoProstatico",1,"resultados_antigeno_prostatico_<persona>_N"],
+["¿Padece o ha padecido alguna condición, enfermedad o traumatismo que haya requerido atención, tratamiento, estudios o seguimiento médico?",["¿Padece o ha padecido alguna condición, estado, enfermedad o traumatismo agudo o crónico por la cual ha recibido consulta, tratamiento médico, servicios, chequeos, hospitalizaciones, controles y/o medicamentos o se encuentran en estudio?"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].indicadorCondicionEnfermedadOTraumatismo",1,"cv_condicion_enfermedad_o_traumatismo_<persona>_si / _no"],
+["Nombre de la condición, enfermedad o traumatismo",[],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].nombreCondicionEnfermedadOTraumatismo",1,"nombre_condicion_enfermedad_o_traumatismo_<persona>_N"],
+["Fecha de diagnóstico",[],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaDiagnostico",1,"fecha_diagnostico_<persona>_N_dia / _mes / _ano"],
+["Tratamientos recibidos",["Tratamiento(s) recibido(s)"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].tratamientosRecibidos",1,"tratamientos_recibidos_<persona>_N"],
+["Estado actual de la condición, enfermedad o traumatismo",["Estado actual"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].codigoEstadoActualCondicion",1,"estado_actual_condicion_<persona>_N"],
+["Fecha de alta médica",["Si fue dado de alta ¿En qué fecha?"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaAltaMedica",1,"fecha_alta_medica_<persona>_N_dia / _mes / _ano"],
+["Nombre y dirección de los médicos, clínicas u hospitales que le atendieron",["Nombre y dirección de médicos que le atendieron, clínica u hospital"],"Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].nombreMedicoClinicaHospital",1,"nombre_medico_clinica_hospital_padecimientos_<persona>_N"],
+["¿Consume o ha consumido drogas o sustancias psicoactivas?",["¿Consume o ha consumido alguna droga o sustancia psicoactiva?, Drogas","Sustancias psicoactivas","Medicamentos","¿Consume o ha consumido alguna droga o sustancia psicoactiva con fines recreativos o por indicación médica?"],"Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.indicadorUso",1,"cv_uso_droga_medicamento_<persona>_si / _no"],
+["Nombre de quien usa",["Persona que usa","Quién consume"],"Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.nombreQuienUsa",1,"nombre_quien_usa_<persona>"],
+["Frecuencia",["Frecuencia de uso o consumo"],"Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.frecuencia",1,"frecuencia_<persona>"],
+["Cantidad",["Cantidad de uso o consumo","Dosis"],"Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.cantidad",1,"cantidad_<persona>"],
+["Motivo",["Motivo de uso","Razón del tratamiento"],"Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.motivo",1,"motivo_<persona>"],
+["Nombre",["Sustancia","Medicamento","Tratamiento","Nombre de la sustancia, medicamento o tratamiento"],"Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.nombre",1,"nombre_<persona>"],
+["Detalles sobre el uso de drogas o sustancias psicoactivas",["En caso afirmativo, detalle: nombre de la sustancia, motivo de uso, frecuencia, cantidad y fecha del último consumo."],"Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.detalleUso",1,"detalle_uso_droga_medicamento_<persona>"],
+["¿Utiliza medicamentos o tratamientos médicos actualmente, o ha recibido medicina nuclear, isótopos radioactivos o quimioterapia?",["Uso actual de medicamentos","Tratamiento médico actual","¿Utiliza actualmente algún medicamento o tratamiento médico, o ha recibido medicina nuclear, isótopos radioactivos o quimioterapia?"],"Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.indicadorUsoMedicamentos",1,"cv_uso_medicamentos_droga_medicamento_<persona>_si / _no"],
+["Detalles de medicamentos o tratamientos médicos",["En caso afirmativo, indique: nombre del medicamento o tratamiento, motivo de uso, frecuencia, fecha de inicio y dosis."],"Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.detalleUsoMedicamentos",1,"detalle_uso_medicamentos_<persona>"],
+["Alguna vez ha fumado",["Fumador","Tabaquismo","¿Ha fumado alguna vez?","¿Alguna vez ha fumado?"],"Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorFumador",1,"cv_fumador_tabaquismo_<persona>_si / _no"],
+["Cantidad fumada diaria",["Consumo diario","Cantididad diaria de cigarrillo, puro o ml:","Cantidad diaria de cigarrillos, puros o líquido de vapeo","Cantidad diaria de cigarrillo, puro o ml"],"Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.cantidadFumadoDiario",1,"cantidad_fumado_diario_<persona>"],
+["Hace cuánto tiempo fuma",["Tiempo fumando","Antigüedad de fumado","¿Hace cuánto tiempo?","Tiempo que lleva fumando o vapeando","¿Hace cuánto tiempo fuma?"],"Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.haceCuantoTiempoFuma",1,"hace_cuanto_tiempo_fuma_<persona>"],
+["Vapea actualmente",["Vapeo actual","Usa vaporizador","¿Vapea actualmente?"],"Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorVapea",1,"cv_vapea_tabaquismo_<persona>_si / _no"],
+["Cantidad de vapeo diario",["Cantidad de vapeo diario","ml diarios","Cantidad diaria de vapeo"],"Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.cantidadVapeoDiario",1,"cantidad_vapeo_diario_<persona>"],
+["Hace cuánto tiempo vapea",["Tiempo vapeando","Antigüedad de vapeo","¿Hace cuánto tiempo vapea?"],"Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.haceCuantoTiempoVapea",1,"hace_cuanto_tiempo_vapea_<persona>"],
+["Dejó de fumar",["Exfumador","¿Dejó de consumir?"],"Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorDejoDeFumar",1,"cv_dejo_de_fumar_tabaquismo_<persona>_si / _no"],
+["Hace cuánto dejó de fumar",["Tiempo desde que dejó de fumar","¿Hace cuánto?","Tiempo transcurrido desde que dejó de fumar o vapear","¿Hace cuánto dejó de fumar?"],"Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.haceCuantoTiempoDejoDeFumar",1,"hace_cuanto_tiempo_dejo_de_fumar_<persona>"],
+["¿Fuma actualmente?",["Fumador actual"],"Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorFumaActualmente",1,"cv_fuma_actualmente_tabaquismo_<persona>_si / _no"],
+["¿Dejó de vapear?",["Exvapeador"],"Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorDejoVapear",1,"cv_dejo_vapear_tabaquismo_<persona>_si / _no"],
+["Consulta médica",["Indicador de consulta médica","Recibió consulta"],"Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].indicadorConsultaMedica",1,"cv_consulta_medica_<persona>_si / _no"],
+["Quién consulta",["Persona que consulta","Paciente"],"Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].quienConsulta",1,"quien_consulta_consulta_medica_<persona>_N"],
+["Motivo de consulta",["Detalle del motivo","Razón de consulta"],"Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].detalleMotivo",1,"detalle_motivo_<persona>_N"],
+["Diagnóstico médico",["Diagnóstico de consulta"],"Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].diagnosticoMedico",1,"diagnostico_medico_<persona>_N"],
+["Nombre del médico tratante",["Médico","Profesional tratante"],"Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].nombreMedicoTratante",1,"nombre_medico_tratante_consulta_medica_<persona>_N"],
+["Diagnóstico especial",["Indicador de diagnóstico especial","Examen especial"],"Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].indicadorDiagnosticoEspecial",1,"cv_diagnostico_especial_<persona>_si / _no"],
+["Quién consulta",["Persona evaluada","Paciente"],"Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].quienConsulta",1,"quien_consulta_diagnostico_especial_<persona>_N"],
+["Motivo",["Motivo del diagnóstico o examen"],"Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].motivo",1,"motivo_<persona>_N"],
+["Resultado",["Resultado del examen","Hallazgos"],"Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].resultado",1,"resultado_diagnostico_especial_<persona>_N"],
+["Nombre del médico tratante",["Médico","Profesional tratante"],"Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].nombreMedicoTratante",1,"nombre_medico_tratante_diagnostico_especial_<persona>_N"],
+["Diagnóstico COVID-19",["COVID","SARS-CoV-2","Resultado positivo","¿Ha sido diagnosticado con COVID-19?"],"Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.indicadorPositivo",1,"cv_positivo_covid_<persona>_si / _no"],
+["Fecha de diagnóstico",["Fecha de diagnóstico COVID"],"Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.fechaDiagnostico",1,"fecha_diagnostico_<persona>_dia / _mes / _ano"],
+["Fecha de alta",["Alta COVID","Fecha de recuperación"],"Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.fechaAlta",1,"fecha_alta_<persona>_dia / _mes / _ano"],
+["Requirió hospitalización",["Hospitalización por COVID","¿Requirió hospitalización?"],"Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.indicadorHospitalizacion",1,"cv_hospitalizacion_covid_<persona>_si / _no"],
+["Centro hospitalario",["Hospital","Clínica de atención"],"Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.centroHospitalario",1,"centro_hospitalario_<persona>"],
+["Síntomas o secuelas",["Detalle de síntomas","Secuelas COVID"],"Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.detalleSintomasSecuelas",1,"detalle_sintomas_secuelas_<persona>"],
+["Vacunación completa SARS-CoV-2",["Vacunación completa COVID","¿Tiene vacunación completa contra SARS-CoV-2?"],"Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.indicadorVacunacionCompletaSarsCov2",1,"cv_vacunacion_completa_sars_cov2_covid_<persona>_si / _no"],
+["Fecha de última dosis SARS-CoV-2",["Última dosis COVID","Fecha de vacunación","Fecha de última dosis"],"Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.fechaUltimaDosisSarsCov2",1,"fecha_ultima_dosis_sars_cov2_<persona>_dia / _mes / _ano"],
+["Detalle otro beneficiario",["Otro parentesco"],"Beneficiarios","Beneficiarios","datosFormulario.personas[].detalleOtroBeneficiario",1,"detalle_otro_beneficiario_beneficiario_N"],
+["Interés asegurable",["Relación con el beneficiario","Interés asegurable o la relación existente con el otro beneficiario"],"Beneficiarios","Beneficiarios","datosFormulario.personas[].interesAsegurableOtroBeneficiario",1,"interes_asegurable_otro_beneficiario_beneficiario_N"],
+["¿Desea agregar beneficiarios?",["Agregar beneficiario"],"Beneficiarios","Beneficiarios","datosFormulario.personas[].indicadorAgregarBeneficiario",1,"cv_agregar_beneficiario_beneficiario_N_si / _no"],
+["Parentesco",[],"Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco",1,"cv_parentesco_beneficiario_N_<valor>"],
+["Porcentaje",[],"Beneficiarios","Beneficiarios","datosFormulario.personas[].porcentaje",1,"porcentaje_beneficiario_N"],
+["Autorización",["Consentimiento del cliente","Autorización para revisar expedientes","Adicionalmente, autorizo la revisión de los expedientes de los solicitantes o los asegurados suscrito en este formulario cuando tenga la condición de menor de edad.","Adicionalmente, autorizo la revisión de los expedientes..."],"Declaraciones y Autorización","Autorizaciones","datosFormulario.datosGenerales.indicadorClienteDaConsentimiento",1,"cv_cliente_da_consentimiento_solicitud_si / _no"],
+["Consentimiento",["Consentimiento de la persona"],"Declaraciones y Autorización","Autorizaciones","datosFormulario.personas[].indicadorClienteDaConsentimiento",1,"cv_cliente_da_consentimiento_<persona>_si / _no"],
+["Acepta términos",["Aceptación de términos","He leído y comprendo el texto anterior, y declaro que la información es verídica y acepto las condiciones y autorizaciones descritas. ¿Acepta usted estos términos?","He leído y comprendo el texto anterior... ¿Acepta usted estos términos?"],"Declaraciones y Autorización","Declaraciones Legales","datosFormulario.datosGenerales.indicadorAceptaTerminos",1,"cv_acepta_terminos_solicitud_si / _no"]
+];
+/* [nombre AcroForm, qué es, tipo, paso, sección, ruta JSON] */
+const DIC_PDF=[
+["numero_poliza","Número de Póliza Madre","Texto","Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.numeroPoliza"],
+["vigencia_desde_poliza_dia","Vigencia desde (día)","Fecha (parte)","Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.vigenciaDesde"],
+["vigencia_desde_poliza_mes","Vigencia desde (mes)","Fecha (parte)","Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.vigenciaDesde"],
+["vigencia_desde_poliza_ano","Vigencia desde (año)","Fecha (parte)","Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.vigenciaDesde"],
+["vigencia_hasta_poliza_dia","Vigencia hasta (día)","Fecha (parte)","Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.vigenciaHasta"],
+["vigencia_hasta_poliza_mes","Vigencia hasta (mes)","Fecha (parte)","Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.vigenciaHasta"],
+["vigencia_hasta_poliza_ano","Vigencia hasta (año)","Fecha (parte)","Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.vigenciaHasta"],
+["cv_moneda_poliza_colones","Seleccione la moneda de la póliza: colones","Casilla","Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.codigoMoneda"],
+["cv_moneda_poliza_dolares","Seleccione la moneda de la póliza: dolares","Casilla","Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.codigoMoneda"],
+["cv_tipo_identificacion_poliza_juridica_nacional","Tipo de identificación: juridica nacional","Casilla","Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.codigoTipoIdentificacionTomador"],
+["cv_tipo_identificacion_poliza_gobierno","Tipo de identificación: gobierno","Casilla","Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.codigoTipoIdentificacionTomador"],
+["cv_tipo_identificacion_poliza_institucion_autonoma","Tipo de identificación: institucion autonoma","Casilla","Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.codigoTipoIdentificacionTomador"],
+["cv_tipo_identificacion_poliza_juridica_extranjera","Tipo de identificación: juridica extranjera","Casilla","Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.codigoTipoIdentificacionTomador"],
+["identificacion_tomador_poliza","Cédula jurídica","Texto","Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.identificacionTomador"],
+["nombre_tomador_poliza","Nombre o razón social","Texto","Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.nombreTomador"],
+["cv_forma_pago_poliza_mensual","Seleccione la forma de pago: mensual","Casilla","Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.codigoFormaPago"],
+["cv_forma_pago_poliza_trimestral","Seleccione la forma de pago: trimestral","Casilla","Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.codigoFormaPago"],
+["cv_forma_pago_poliza_semestral","Seleccione la forma de pago: semestral","Casilla","Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.codigoFormaPago"],
+["cv_forma_pago_poliza_anual","Seleccione la forma de pago: anual","Casilla","Datos Generales","Datos de la Póliza Madre","datosFormulario.datosGenerales.polizaMadre.codigoFormaPago"],
+["codigo_intermediario","Código Intermediario","Texto","Datos Generales","Datos del Asesor","datosFormulario.datosGenerales.intermediario.codigoIntermediario"],
+["identificacion_intermediario","Identificación","Texto","Datos Generales","Datos del Asesor","datosFormulario.datosGenerales.intermediario.identificacion"],
+["cv_tipo_identificacion_intermediario_cedula","Código tipo de identificación: cedula","Casilla","Datos Generales","Datos del Asesor","datosFormulario.datosGenerales.intermediario.codigoTipoIdentificacion"],
+["cv_tipo_identificacion_intermediario_dimex","Código tipo de identificación: dimex","Casilla","Datos Generales","Datos del Asesor","datosFormulario.datosGenerales.intermediario.codigoTipoIdentificacion"],
+["cv_tipo_identificacion_intermediario_didi","Código tipo de identificación: didi","Casilla","Datos Generales","Datos del Asesor","datosFormulario.datosGenerales.intermediario.codigoTipoIdentificacion"],
+["cv_tipo_identificacion_intermediario_pasaporte","Código tipo de identificación: pasaporte","Casilla","Datos Generales","Datos del Asesor","datosFormulario.datosGenerales.intermediario.codigoTipoIdentificacion"],
+["cv_tipo_identificacion_intermediario_otro","Código tipo de identificación: otro","Casilla","Datos Generales","Datos del Asesor","datosFormulario.datosGenerales.intermediario.codigoTipoIdentificacion"],
+["nombre_intermediario","Nombre","Texto","Datos Generales","Datos del Asesor","datosFormulario.datosGenerales.intermediario.nombre"],
+["correo_electronico_intermediario","Correo electrónico","Texto","Datos Generales","Datos del Asesor","datosFormulario.datosGenerales.intermediario.correoElectronico"],
+["lugar_solicitud","Lugar","Texto","Datos Generales","Información de la Solicitud","datosFormulario.datosGenerales.lugar"],
+["fecha_solicitud_dia","Fecha (día)","Fecha (parte)","Datos Generales","Información de la Solicitud","datosFormulario.datosGenerales.fechaCreacion"],
+["fecha_solicitud_mes","Fecha (mes)","Fecha (parte)","Datos Generales","Información de la Solicitud","datosFormulario.datosGenerales.fechaCreacion"],
+["fecha_solicitud_ano","Fecha (año)","Fecha (parte)","Datos Generales","Información de la Solicitud","datosFormulario.datosGenerales.fechaCreacion"],
+["cv_substituye_seguro_si","¿Tiene otro seguro médico?: Sí","Casilla","Datos Generales","Información adicional","datosFormulario.datosGenerales.datosAdicionales.indicadorSubstituyeSeguro"],
+["cv_substituye_seguro_no","¿Tiene otro seguro médico?: No","Casilla","Datos Generales","Información adicional","datosFormulario.datosGenerales.datosAdicionales.indicadorSubstituyeSeguro"],
+["cv_substituye_seguro_i_n_s_si","¿Qué tipo de seguro tiene actualmente?: Sí","Casilla","Datos Generales","Información adicional","datosFormulario.datosGenerales.datosAdicionales.indicadorSubstituyeSeguroINS"],
+["cv_substituye_seguro_i_n_s_no","¿Qué tipo de seguro tiene actualmente?: No","Casilla","Datos Generales","Información adicional","datosFormulario.datosGenerales.datosAdicionales.indicadorSubstituyeSeguroINS"],
+["nombre_aseguradora_substituye","Nombre de la aseguradora actual","Texto","Datos Generales","Información adicional","datosFormulario.datosGenerales.datosAdicionales.nombreAseguradoraSubstituye"],
+["numero_poliza_substituye","Número de póliza actual","Texto","Datos Generales","Información adicional","datosFormulario.datosGenerales.datosAdicionales.numeroPolizaSubstituye"],
+["observaciones","Observaciones","Texto","Datos Generales","Información adicional","datosFormulario.datosGenerales.datosAdicionales.observaciones"],
+["cv_tipo_identificacion_asegurado_cedula","Tipo de Identificación Persona: cedula","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoTipoIdentificacion"],
+["cv_tipo_identificacion_asegurado_dimex","Tipo de Identificación Persona: dimex","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoTipoIdentificacion"],
+["cv_tipo_identificacion_asegurado_didi","Tipo de Identificación Persona: didi","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoTipoIdentificacion"],
+["cv_tipo_identificacion_asegurado_pasaporte","Tipo de Identificación Persona: pasaporte","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoTipoIdentificacion"],
+["cv_tipo_identificacion_asegurado_otro","Tipo de Identificación Persona: otro","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoTipoIdentificacion"],
+["cv_tipo_identificacion_tomador_cedula","Tipo de Identificación Persona: cedula","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoTipoIdentificacion"],
+["cv_tipo_identificacion_tomador_dimex","Tipo de Identificación Persona: dimex","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoTipoIdentificacion"],
+["cv_tipo_identificacion_tomador_didi","Tipo de Identificación Persona: didi","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoTipoIdentificacion"],
+["cv_tipo_identificacion_tomador_pasaporte","Tipo de Identificación Persona: pasaporte","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoTipoIdentificacion"],
+["cv_tipo_identificacion_tomador_otro","Tipo de Identificación Persona: otro","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoTipoIdentificacion"],
+["numero_identificacion_asegurado","Identificación de Persona","Texto","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].numeroIdentificacion"],
+["numero_identificacion_tomador","Identificación de Persona","Texto","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].numeroIdentificacion"],
+["correo_electronico_asegurado","Correo electrónico","Texto","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].correoElectronico"],
+["correo_electronico_tomador","Correo electrónico","Texto","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].correoElectronico"],
+["nombre_completo_asegurado","Nombre Completo","Texto","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].nombreCompleto"],
+["nombre_completo_tomador","Nombre Completo","Texto","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].nombreCompleto"],
+["primer_apellido_asegurado","Primer Apellido","Texto","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].primerApellido"],
+["primer_apellido_tomador","Primer Apellido","Texto","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].primerApellido"],
+["segundo_apellido_asegurado","Segundo Apellido","Texto","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].segundoApellido"],
+["segundo_apellido_tomador","Segundo Apellido","Texto","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].segundoApellido"],
+["primer_nombre_asegurado","Primer Nombre","Texto","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].primerNombre"],
+["primer_nombre_tomador","Primer Nombre","Texto","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].primerNombre"],
+["segundo_nombre_asegurado","Segundo Nombre","Texto","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].segundoNombre"],
+["segundo_nombre_tomador","Segundo Nombre","Texto","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].segundoNombre"],
+["fecha_nacimiento_asegurado_dia","Fecha de Nacimiento (día)","Fecha (parte)","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].fechaNacimiento"],
+["fecha_nacimiento_asegurado_mes","Fecha de Nacimiento (mes)","Fecha (parte)","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].fechaNacimiento"],
+["fecha_nacimiento_asegurado_ano","Fecha de Nacimiento (año)","Fecha (parte)","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].fechaNacimiento"],
+["fecha_nacimiento_tomador_dia","Fecha de Nacimiento (día)","Fecha (parte)","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].fechaNacimiento"],
+["fecha_nacimiento_tomador_mes","Fecha de Nacimiento (mes)","Fecha (parte)","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].fechaNacimiento"],
+["fecha_nacimiento_tomador_ano","Fecha de Nacimiento (año)","Fecha (parte)","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].fechaNacimiento"],
+["edad_asegurado","Edad","Texto","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].edad"],
+["edad_tomador","Edad","Texto","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].edad"],
+["cv_estado_civil_asegurado_soltero","Estado civil: soltero","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoEstadoCivil"],
+["cv_estado_civil_asegurado_casado","Estado civil: casado","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoEstadoCivil"],
+["cv_estado_civil_asegurado_divorciado","Estado civil: divorciado","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoEstadoCivil"],
+["cv_estado_civil_asegurado_viudo","Estado civil: viudo","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoEstadoCivil"],
+["cv_estado_civil_asegurado_union_libre","Estado civil: union libre","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoEstadoCivil"],
+["cv_estado_civil_asegurado_separado","Estado civil: separado","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoEstadoCivil"],
+["cv_estado_civil_tomador_soltero","Estado civil: soltero","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoEstadoCivil"],
+["cv_estado_civil_tomador_casado","Estado civil: casado","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoEstadoCivil"],
+["cv_estado_civil_tomador_divorciado","Estado civil: divorciado","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoEstadoCivil"],
+["cv_estado_civil_tomador_viudo","Estado civil: viudo","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoEstadoCivil"],
+["cv_estado_civil_tomador_union_libre","Estado civil: union libre","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoEstadoCivil"],
+["cv_estado_civil_tomador_separado","Estado civil: separado","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoEstadoCivil"],
+["cv_sexo_asegurado_masculino","Sexo: masculino","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoGenero"],
+["cv_sexo_asegurado_femenino","Sexo: femenino","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoGenero"],
+["cv_sexo_tomador_masculino","Sexo: masculino","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoGenero"],
+["cv_sexo_tomador_femenino","Sexo: femenino","Casilla","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].codigoGenero"],
+["telefono_movil_asegurado","Teléfono","Texto","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].telefonoMovil"],
+["telefono_movil_tomador","Teléfono","Texto","Datos del Asegurado / Datos del Tomador","Datos del Asegurado / Datos del Tomador","datosFormulario.personas[].telefonoMovil"],
+["telefono_celular_asegurado","Teléfono movil","Texto","Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].telefonoCelular"],
+["telefono_celular_tomador","Teléfono movil","Texto","Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].telefonoCelular"],
+["telefono_oficina_asegurado","Teléfono de la Oficina","Texto","Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].telefonoOficina"],
+["telefono_oficina_tomador","Teléfono de la Oficina","Texto","Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].telefonoOficina"],
+["telefono_trabajo_asegurado","Teléfono del trabajo","Texto","Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].telefonoTrabajo"],
+["telefono_trabajo_tomador","Teléfono del trabajo","Texto","Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].telefonoTrabajo"],
+["pais_asegurado","País","Texto","Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].codigoPais"],
+["pais_tomador","País","Texto","Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].codigoPais"],
+["provincia_asegurado","Provincia","Texto","Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].codigoProvincia"],
+["provincia_tomador","Provincia","Texto","Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].codigoProvincia"],
+["canton_asegurado","Cantón","Texto","Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].codigoCanton"],
+["canton_tomador","Cantón","Texto","Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].codigoCanton"],
+["distrito_asegurado","Distrito","Texto","Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].codigoDistrito"],
+["distrito_tomador","Distrito","Texto","Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].codigoDistrito"],
+["direccion_exacta_asegurado","Dirección exacta","Texto","Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].direccionExacta"],
+["direccion_exacta_tomador","Dirección exacta","Texto","Datos del Asegurado / Datos del Tomador","Contacto y Ubicación","datosFormulario.personas[].direccion[].direccionExacta"],
+["cv_medio_notificacion_asegurado_correo_electronico","Medio de notificación: correo electronico","Casilla","Datos del Asegurado / Datos del Tomador","Preferencias de Notificación","datosFormulario.personas[].mediosNotificacion[].codigoMedioNotificacion"],
+["cv_medio_notificacion_asegurado_domicilio_fisico","Medio de notificación: domicilio fisico","Casilla","Datos del Asegurado / Datos del Tomador","Preferencias de Notificación","datosFormulario.personas[].mediosNotificacion[].codigoMedioNotificacion"],
+["cv_medio_notificacion_asegurado_otro","Medio de notificación: otro","Casilla","Datos del Asegurado / Datos del Tomador","Preferencias de Notificación","datosFormulario.personas[].mediosNotificacion[].codigoMedioNotificacion"],
+["cv_medio_notificacion_tomador_correo_electronico","Medio de notificación: correo electronico","Casilla","Datos del Asegurado / Datos del Tomador","Preferencias de Notificación","datosFormulario.personas[].mediosNotificacion[].codigoMedioNotificacion"],
+["cv_medio_notificacion_tomador_domicilio_fisico","Medio de notificación: domicilio fisico","Casilla","Datos del Asegurado / Datos del Tomador","Preferencias de Notificación","datosFormulario.personas[].mediosNotificacion[].codigoMedioNotificacion"],
+["cv_medio_notificacion_tomador_otro","Medio de notificación: otro","Casilla","Datos del Asegurado / Datos del Tomador","Preferencias de Notificación","datosFormulario.personas[].mediosNotificacion[].codigoMedioNotificacion"],
+["medio_notificacion_asegurado","Medio de notificación","Texto","Datos del Asegurado / Datos del Tomador","Preferencias de Notificación","datosFormulario.personas[].mediosNotificacion[].medioNotificacion"],
+["medio_notificacion_tomador","Medio de notificación","Texto","Datos del Asegurado / Datos del Tomador","Preferencias de Notificación","datosFormulario.personas[].mediosNotificacion[].medioNotificacion"],
+["datos_notificacion_asegurado","Datos de notificación","Texto","Datos del Asegurado / Datos del Tomador","Preferencias de Notificación","datosFormulario.personas[].mediosNotificacion[].datosNotificacion"],
+["datos_notificacion_tomador","Datos de notificación","Texto","Datos del Asegurado / Datos del Tomador","Preferencias de Notificación","datosFormulario.personas[].mediosNotificacion[].datosNotificacion"],
+["nombre_completo_asegurado_directo_asegurado","Nombre Completo Asegurado Directo","Texto","Datos del Asegurado","Datos del Asegurado","datosFormulario.personas[].nombreCompletoAseguradoDirecto"],
+["ingreso_mensual_bruto_asegurado","¿Cuál es su ingreso mensual bruto?","Texto","Datos del Asegurado","Datos del Asegurado","datosFormulario.personas[].ingresoMensualBruto"],
+["residira_en_costa_rica_asegurado","¿Su residencia habitual y permanente será en Costa Rica?","Texto","Datos del Asegurado","Datos del Asegurado","datosFormulario.personas[].residiraEnCostaRica"],
+["profesion_ocupacion_asegurado","¿Cuál es su profesión u ocupación?","Texto","Datos del Asegurado","Datos del Asegurado","datosFormulario.personas[].profesionOcupacion"],
+["cv_practica_deporte_o_realiza_ocupacion_adicional_asegurado_si","¿Practica algún deporte o realiza alguna ocupación adicional?: Sí","Casilla","Datos del Asegurado","Datos del Asegurado","datosFormulario.personas[].indicadorPracticaDeporteORealizaOcupacionAdicional"],
+["cv_practica_deporte_o_realiza_ocupacion_adicional_asegurado_no","¿Practica algún deporte o realiza alguna ocupación adicional?: No","Casilla","Datos del Asegurado","Datos del Asegurado","datosFormulario.personas[].indicadorPracticaDeporteORealizaOcupacionAdicional"],
+["detalle_deporte_ocupacion_adicional_asegurado","Tipo y frecuencia de práctica","Texto","Datos del Asegurado","Datos del Asegurado","datosFormulario.personas[].detalleDeporteOcupacionAdicional"],
+["variacion_peso_ultimos_seis_meses_asegurado","¿Cómo ha variado su peso en los últimos 6 meses?","Texto","Datos del Asegurado","Datos del Asegurado","datosFormulario.personas[].codigoVariacionPesoUltimosSeisMeses"],
+["cantidad_kilogramos_variacion_peso_asegurado","¿Cuántos kilogramos aumentó o disminuyó su peso?","Texto","Datos del Asegurado","Datos del Asegurado","datosFormulario.personas[].cantidadKilogramosVariacionPeso"],
+["motivo_variacion_peso_asegurado","¿Cuál fue el motivo de la variación de peso?","Texto","Datos del Asegurado","Datos del Asegurado","datosFormulario.personas[].motivoVariacionPeso"],
+["cv_agregar_dependiente_menor_dependiente_1_si","¿Desea agregar un dependiente menor de edad?: Sí","Casilla","Dependientes","Dependientes","datosFormulario.personas[].indicadorAgregarDependienteMenor"],
+["cv_agregar_dependiente_menor_dependiente_1_no","¿Desea agregar un dependiente menor de edad?: No","Casilla","Dependientes","Dependientes","datosFormulario.personas[].indicadorAgregarDependienteMenor"],
+["cv_agregar_dependiente_menor_dependiente_2_si","¿Desea agregar un dependiente menor de edad?: Sí","Casilla","Dependientes","Dependientes","datosFormulario.personas[].indicadorAgregarDependienteMenor"],
+["cv_agregar_dependiente_menor_dependiente_2_no","¿Desea agregar un dependiente menor de edad?: No","Casilla","Dependientes","Dependientes","datosFormulario.personas[].indicadorAgregarDependienteMenor"],
+["cv_agregar_dependiente_menor_dependiente_3_si","¿Desea agregar un dependiente menor de edad?: Sí","Casilla","Dependientes","Dependientes","datosFormulario.personas[].indicadorAgregarDependienteMenor"],
+["cv_agregar_dependiente_menor_dependiente_3_no","¿Desea agregar un dependiente menor de edad?: No","Casilla","Dependientes","Dependientes","datosFormulario.personas[].indicadorAgregarDependienteMenor"],
+["peso_asegurado","Peso","Texto","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].peso"],
+["peso_tomador","Peso","Texto","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].peso"],
+["estatura_asegurado","Estatura","Texto","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].estatura"],
+["estatura_tomador","Estatura","Texto","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].estatura"],
+["detalle_cambios_importantes_salud_asegurado_1","Cambio de peso","Texto","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].detalle"],
+["detalle_cambios_importantes_salud_asegurado_2","Cambio de peso","Texto","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].detalle"],
+["detalle_cambios_importantes_salud_asegurado_3","Cambio de peso","Texto","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].detalle"],
+["detalle_cambios_importantes_salud_tomador_1","Cambio de peso","Texto","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].detalle"],
+["detalle_cambios_importantes_salud_tomador_2","Cambio de peso","Texto","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].detalle"],
+["detalle_cambios_importantes_salud_tomador_3","Cambio de peso","Texto","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].detalle"],
+["cv_cambios_importantes_salud_asegurado_1_si","Cambio importante de salud: Sí","Casilla","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].indicador"],
+["cv_cambios_importantes_salud_asegurado_1_no","Cambio importante de salud: No","Casilla","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].indicador"],
+["cv_cambios_importantes_salud_asegurado_2_si","Cambio importante de salud: Sí","Casilla","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].indicador"],
+["cv_cambios_importantes_salud_asegurado_2_no","Cambio importante de salud: No","Casilla","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].indicador"],
+["cv_cambios_importantes_salud_asegurado_3_si","Cambio importante de salud: Sí","Casilla","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].indicador"],
+["cv_cambios_importantes_salud_asegurado_3_no","Cambio importante de salud: No","Casilla","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].indicador"],
+["cv_cambios_importantes_salud_tomador_1_si","Cambio importante de salud: Sí","Casilla","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].indicador"],
+["cv_cambios_importantes_salud_tomador_1_no","Cambio importante de salud: No","Casilla","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].indicador"],
+["cv_cambios_importantes_salud_tomador_2_si","Cambio importante de salud: Sí","Casilla","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].indicador"],
+["cv_cambios_importantes_salud_tomador_2_no","Cambio importante de salud: No","Casilla","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].indicador"],
+["cv_cambios_importantes_salud_tomador_3_si","Cambio importante de salud: Sí","Casilla","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].indicador"],
+["cv_cambios_importantes_salud_tomador_3_no","Cambio importante de salud: No","Casilla","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].indicador"],
+["quien_padece_asegurado_1","Nombre de quien padece","Texto","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].quienPadece"],
+["quien_padece_asegurado_2","Nombre de quien padece","Texto","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].quienPadece"],
+["quien_padece_asegurado_3","Nombre de quien padece","Texto","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].quienPadece"],
+["quien_padece_tomador_1","Nombre de quien padece","Texto","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].quienPadece"],
+["quien_padece_tomador_2","Nombre de quien padece","Texto","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].quienPadece"],
+["quien_padece_tomador_3","Nombre de quien padece","Texto","Información del Riesgo","Antecedentes personales","datosFormulario.personas[].riesgo[].cambiosImportantesSalud[].quienPadece"],
+["cv_alcoholismo_bebidas_alcoholicas_asegurado_si","¿Es o ha sido alcohólico?: Sí","Casilla","Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.indicadorAlcoholismo"],
+["cv_alcoholismo_bebidas_alcoholicas_asegurado_no","¿Es o ha sido alcohólico?: No","Casilla","Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.indicadorAlcoholismo"],
+["cv_alcoholismo_bebidas_alcoholicas_tomador_si","¿Es o ha sido alcohólico?: Sí","Casilla","Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.indicadorAlcoholismo"],
+["cv_alcoholismo_bebidas_alcoholicas_tomador_no","¿Es o ha sido alcohólico?: No","Casilla","Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.indicadorAlcoholismo"],
+["detalle_alcoholismo_asegurado","Detalles sobre el consumo o antecedentes de alcoholismo","Texto","Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.detalleAlcoholismo"],
+["detalle_alcoholismo_tomador","Detalles sobre el consumo o antecedentes de alcoholismo","Texto","Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.detalleAlcoholismo"],
+["cv_bebidas_alcoholicas_asegurado_si","Usa bebidas alcohólicas: Sí","Casilla","Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.indicador"],
+["cv_bebidas_alcoholicas_asegurado_no","Usa bebidas alcohólicas: No","Casilla","Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.indicador"],
+["cv_bebidas_alcoholicas_tomador_si","Usa bebidas alcohólicas: Sí","Casilla","Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.indicador"],
+["cv_bebidas_alcoholicas_tomador_no","Usa bebidas alcohólicas: No","Casilla","Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.indicador"],
+["detalle_tipo_asegurado","Clase","Texto","Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.detalleTipo"],
+["detalle_tipo_tomador","Clase","Texto","Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.detalleTipo"],
+["detalle_cantidad_bebidas_alcoholicas_asegurado","Cantidad","Texto","Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.detalleCantidad"],
+["detalle_cantidad_bebidas_alcoholicas_tomador","Cantidad","Texto","Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.detalleCantidad"],
+["detalle_frecuencia_asegurado","Frecuencia","Texto","Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.detalleFrecuencia"],
+["detalle_frecuencia_tomador","Frecuencia","Texto","Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.detalleFrecuencia"],
+["tiempo_consumo_bebidas_alcoholicas_asegurado","Tiempo que lleva consumiendo bebidas alcohólicas","Texto","Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.tiempoConsumoBebidasAlcoholicas"],
+["tiempo_consumo_bebidas_alcoholicas_tomador","Tiempo que lleva consumiendo bebidas alcohólicas","Texto","Información del Riesgo","Alcohol","datosFormulario.personas[].riesgo[].bebidasAlcoholicas.tiempoConsumoBebidasAlcoholicas"],
+["cv_intervencion_quirurgica_pendiente_asegurado_1_si","¿Tiene alguna intervención quirúrgica pendiente?: Sí","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicadorIntervencionQuirurgicaPendiente"],
+["cv_intervencion_quirurgica_pendiente_asegurado_1_no","¿Tiene alguna intervención quirúrgica pendiente?: No","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicadorIntervencionQuirurgicaPendiente"],
+["cv_intervencion_quirurgica_pendiente_asegurado_2_si","¿Tiene alguna intervención quirúrgica pendiente?: Sí","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicadorIntervencionQuirurgicaPendiente"],
+["cv_intervencion_quirurgica_pendiente_asegurado_2_no","¿Tiene alguna intervención quirúrgica pendiente?: No","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicadorIntervencionQuirurgicaPendiente"],
+["cv_intervencion_quirurgica_pendiente_asegurado_3_si","¿Tiene alguna intervención quirúrgica pendiente?: Sí","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicadorIntervencionQuirurgicaPendiente"],
+["cv_intervencion_quirurgica_pendiente_asegurado_3_no","¿Tiene alguna intervención quirúrgica pendiente?: No","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicadorIntervencionQuirurgicaPendiente"],
+["cv_intervencion_quirurgica_pendiente_tomador_1_si","¿Tiene alguna intervención quirúrgica pendiente?: Sí","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicadorIntervencionQuirurgicaPendiente"],
+["cv_intervencion_quirurgica_pendiente_tomador_1_no","¿Tiene alguna intervención quirúrgica pendiente?: No","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicadorIntervencionQuirurgicaPendiente"],
+["cv_intervencion_quirurgica_pendiente_tomador_2_si","¿Tiene alguna intervención quirúrgica pendiente?: Sí","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicadorIntervencionQuirurgicaPendiente"],
+["cv_intervencion_quirurgica_pendiente_tomador_2_no","¿Tiene alguna intervención quirúrgica pendiente?: No","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicadorIntervencionQuirurgicaPendiente"],
+["cv_intervencion_quirurgica_pendiente_tomador_3_si","¿Tiene alguna intervención quirúrgica pendiente?: Sí","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicadorIntervencionQuirurgicaPendiente"],
+["cv_intervencion_quirurgica_pendiente_tomador_3_no","¿Tiene alguna intervención quirúrgica pendiente?: No","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicadorIntervencionQuirurgicaPendiente"],
+["cv_intervencion_quirurgica_asegurado_si","Intervenciones quirúrgicas realizadas: Sí","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].indicadorIntervencionQuirurgica"],
+["cv_intervencion_quirurgica_asegurado_no","Intervenciones quirúrgicas realizadas: No","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].indicadorIntervencionQuirurgica"],
+["cv_intervencion_quirurgica_tomador_si","Intervenciones quirúrgicas realizadas: Sí","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].indicadorIntervencionQuirurgica"],
+["cv_intervencion_quirurgica_tomador_no","Intervenciones quirúrgicas realizadas: No","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].indicadorIntervencionQuirurgica"],
+["nombre_quien_fue_intervenido_asegurado_1","Nombre de quien fue intervenido","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].nombreQuienFueIntervenido"],
+["nombre_quien_fue_intervenido_asegurado_2","Nombre de quien fue intervenido","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].nombreQuienFueIntervenido"],
+["nombre_quien_fue_intervenido_asegurado_3","Nombre de quien fue intervenido","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].nombreQuienFueIntervenido"],
+["nombre_quien_fue_intervenido_tomador_1","Nombre de quien fue intervenido","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].nombreQuienFueIntervenido"],
+["nombre_quien_fue_intervenido_tomador_2","Nombre de quien fue intervenido","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].nombreQuienFueIntervenido"],
+["nombre_quien_fue_intervenido_tomador_3","Nombre de quien fue intervenido","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].nombreQuienFueIntervenido"],
+["declaracion_causas_asegurado_1","Causa de la intervención","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].declaracionCausas"],
+["declaracion_causas_asegurado_2","Causa de la intervención","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].declaracionCausas"],
+["declaracion_causas_asegurado_3","Causa de la intervención","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].declaracionCausas"],
+["declaracion_causas_tomador_1","Causa de la intervención","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].declaracionCausas"],
+["declaracion_causas_tomador_2","Causa de la intervención","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].declaracionCausas"],
+["declaracion_causas_tomador_3","Causa de la intervención","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].declaracionCausas"],
+["fecha_procedimiento_asegurado_1_dia","Fecha del procedimiento (día)","Fecha (parte)","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].fechaProcedimiento"],
+["fecha_procedimiento_asegurado_1_mes","Fecha del procedimiento (mes)","Fecha (parte)","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].fechaProcedimiento"],
+["fecha_procedimiento_asegurado_1_ano","Fecha del procedimiento (año)","Fecha (parte)","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].fechaProcedimiento"],
+["fecha_procedimiento_asegurado_2_dia","Fecha del procedimiento (día)","Fecha (parte)","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].fechaProcedimiento"],
+["fecha_procedimiento_asegurado_2_mes","Fecha del procedimiento (mes)","Fecha (parte)","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].fechaProcedimiento"],
+["fecha_procedimiento_asegurado_2_ano","Fecha del procedimiento (año)","Fecha (parte)","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].fechaProcedimiento"],
+["fecha_procedimiento_asegurado_3_dia","Fecha del procedimiento (día)","Fecha (parte)","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].fechaProcedimiento"],
+["fecha_procedimiento_asegurado_3_mes","Fecha del procedimiento (mes)","Fecha (parte)","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].fechaProcedimiento"],
+["fecha_procedimiento_asegurado_3_ano","Fecha del procedimiento (año)","Fecha (parte)","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].fechaProcedimiento"],
+["fecha_procedimiento_tomador_1_dia","Fecha del procedimiento (día)","Fecha (parte)","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].fechaProcedimiento"],
+["fecha_procedimiento_tomador_1_mes","Fecha del procedimiento (mes)","Fecha (parte)","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].fechaProcedimiento"],
+["fecha_procedimiento_tomador_1_ano","Fecha del procedimiento (año)","Fecha (parte)","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].fechaProcedimiento"],
+["fecha_procedimiento_tomador_2_dia","Fecha del procedimiento (día)","Fecha (parte)","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].fechaProcedimiento"],
+["fecha_procedimiento_tomador_2_mes","Fecha del procedimiento (mes)","Fecha (parte)","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].fechaProcedimiento"],
+["fecha_procedimiento_tomador_2_ano","Fecha del procedimiento (año)","Fecha (parte)","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].fechaProcedimiento"],
+["fecha_procedimiento_tomador_3_dia","Fecha del procedimiento (día)","Fecha (parte)","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].fechaProcedimiento"],
+["fecha_procedimiento_tomador_3_mes","Fecha del procedimiento (mes)","Fecha (parte)","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].fechaProcedimiento"],
+["fecha_procedimiento_tomador_3_ano","Fecha del procedimiento (año)","Fecha (parte)","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].fechaProcedimiento"],
+["hospital_procedimiento_asegurado_1","Hospital del procedimiento","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].hospitalProcedimiento"],
+["hospital_procedimiento_asegurado_2","Hospital del procedimiento","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].hospitalProcedimiento"],
+["hospital_procedimiento_asegurado_3","Hospital del procedimiento","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].hospitalProcedimiento"],
+["hospital_procedimiento_tomador_1","Hospital del procedimiento","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].hospitalProcedimiento"],
+["hospital_procedimiento_tomador_2","Hospital del procedimiento","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].hospitalProcedimiento"],
+["hospital_procedimiento_tomador_3","Hospital del procedimiento","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].hospitalProcedimiento"],
+["nombre_cirujano_asegurado_1","Nombre del cirujano","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].nombreCirujano"],
+["nombre_cirujano_asegurado_2","Nombre del cirujano","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].nombreCirujano"],
+["nombre_cirujano_asegurado_3","Nombre del cirujano","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].nombreCirujano"],
+["nombre_cirujano_tomador_1","Nombre del cirujano","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].nombreCirujano"],
+["nombre_cirujano_tomador_2","Nombre del cirujano","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].nombreCirujano"],
+["nombre_cirujano_tomador_3","Nombre del cirujano","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].nombreCirujano"],
+["cv_intervencion_quirurgica_asegurado_1_si","¿Se ha sometido a alguna intervención quirúrgica?: Sí","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicador"],
+["cv_intervencion_quirurgica_asegurado_1_no","¿Se ha sometido a alguna intervención quirúrgica?: No","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicador"],
+["cv_intervencion_quirurgica_asegurado_2_si","¿Se ha sometido a alguna intervención quirúrgica?: Sí","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicador"],
+["cv_intervencion_quirurgica_asegurado_2_no","¿Se ha sometido a alguna intervención quirúrgica?: No","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicador"],
+["cv_intervencion_quirurgica_asegurado_3_si","¿Se ha sometido a alguna intervención quirúrgica?: Sí","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicador"],
+["cv_intervencion_quirurgica_asegurado_3_no","¿Se ha sometido a alguna intervención quirúrgica?: No","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicador"],
+["cv_intervencion_quirurgica_tomador_1_si","¿Se ha sometido a alguna intervención quirúrgica?: Sí","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicador"],
+["cv_intervencion_quirurgica_tomador_1_no","¿Se ha sometido a alguna intervención quirúrgica?: No","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicador"],
+["cv_intervencion_quirurgica_tomador_2_si","¿Se ha sometido a alguna intervención quirúrgica?: Sí","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicador"],
+["cv_intervencion_quirurgica_tomador_2_no","¿Se ha sometido a alguna intervención quirúrgica?: No","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicador"],
+["cv_intervencion_quirurgica_tomador_3_si","¿Se ha sometido a alguna intervención quirúrgica?: Sí","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicador"],
+["cv_intervencion_quirurgica_tomador_3_no","¿Se ha sometido a alguna intervención quirúrgica?: No","Casilla","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].indicador"],
+["detalle_intervenciones_quirurgicas_realizadas_asegurado_1","Detalles de las intervenciones quirúrgicas realizadas","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].detalleIntervencionesQuirurgicasRealizadas"],
+["detalle_intervenciones_quirurgicas_realizadas_asegurado_2","Detalles de las intervenciones quirúrgicas realizadas","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].detalleIntervencionesQuirurgicasRealizadas"],
+["detalle_intervenciones_quirurgicas_realizadas_asegurado_3","Detalles de las intervenciones quirúrgicas realizadas","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].detalleIntervencionesQuirurgicasRealizadas"],
+["detalle_intervenciones_quirurgicas_realizadas_tomador_1","Detalles de las intervenciones quirúrgicas realizadas","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].detalleIntervencionesQuirurgicasRealizadas"],
+["detalle_intervenciones_quirurgicas_realizadas_tomador_2","Detalles de las intervenciones quirúrgicas realizadas","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].detalleIntervencionesQuirurgicasRealizadas"],
+["detalle_intervenciones_quirurgicas_realizadas_tomador_3","Detalles de las intervenciones quirúrgicas realizadas","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].detalleIntervencionesQuirurgicasRealizadas"],
+["detalle_intervenciones_quirurgicas_pendientes_asegurado_1","Detalles de las intervenciones quirúrgicas pendientes","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].detalleIntervencionesQuirurgicasPendientes"],
+["detalle_intervenciones_quirurgicas_pendientes_asegurado_2","Detalles de las intervenciones quirúrgicas pendientes","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].detalleIntervencionesQuirurgicasPendientes"],
+["detalle_intervenciones_quirurgicas_pendientes_asegurado_3","Detalles de las intervenciones quirúrgicas pendientes","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].detalleIntervencionesQuirurgicasPendientes"],
+["detalle_intervenciones_quirurgicas_pendientes_tomador_1","Detalles de las intervenciones quirúrgicas pendientes","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].detalleIntervencionesQuirurgicasPendientes"],
+["detalle_intervenciones_quirurgicas_pendientes_tomador_2","Detalles de las intervenciones quirúrgicas pendientes","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].detalleIntervencionesQuirurgicasPendientes"],
+["detalle_intervenciones_quirurgicas_pendientes_tomador_3","Detalles de las intervenciones quirúrgicas pendientes","Texto","Información del Riesgo","Intervenciones Quirúrgicas","datosFormulario.personas[].riesgo[].intervencionQuirurgica[].detalleIntervencionesQuirurgicasPendientes"],
+["cv_tramita_incapacidad_invalidez_asegurado_si","Incapacidad por invalidez: Sí","Casilla","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].indicadorTramitaIncapacidadInvalidez"],
+["cv_tramita_incapacidad_invalidez_asegurado_no","Incapacidad por invalidez: No","Casilla","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].indicadorTramitaIncapacidadInvalidez"],
+["cv_tramita_incapacidad_invalidez_tomador_si","Incapacidad por invalidez: Sí","Casilla","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].indicadorTramitaIncapacidadInvalidez"],
+["cv_tramita_incapacidad_invalidez_tomador_no","Incapacidad por invalidez: No","Casilla","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].indicadorTramitaIncapacidadInvalidez"],
+["complicaciones_embarazo_asegurado_1","Complicaciones durante el embarazo","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].complicacionesEmbarazo"],
+["complicaciones_embarazo_asegurado_2","Complicaciones durante el embarazo","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].complicacionesEmbarazo"],
+["complicaciones_embarazo_asegurado_3","Complicaciones durante el embarazo","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].complicacionesEmbarazo"],
+["complicaciones_embarazo_tomador_1","Complicaciones durante el embarazo","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].complicacionesEmbarazo"],
+["complicaciones_embarazo_tomador_2","Complicaciones durante el embarazo","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].complicacionesEmbarazo"],
+["complicaciones_embarazo_tomador_3","Complicaciones durante el embarazo","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].complicacionesEmbarazo"],
+["cv_embarazo_asegurado_1_si","Se encuentra embarazada: Sí","Casilla","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].indicador"],
+["cv_embarazo_asegurado_1_no","Se encuentra embarazada: No","Casilla","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].indicador"],
+["cv_embarazo_asegurado_2_si","Se encuentra embarazada: Sí","Casilla","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].indicador"],
+["cv_embarazo_asegurado_2_no","Se encuentra embarazada: No","Casilla","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].indicador"],
+["cv_embarazo_asegurado_3_si","Se encuentra embarazada: Sí","Casilla","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].indicador"],
+["cv_embarazo_asegurado_3_no","Se encuentra embarazada: No","Casilla","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].indicador"],
+["cv_embarazo_tomador_1_si","Se encuentra embarazada: Sí","Casilla","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].indicador"],
+["cv_embarazo_tomador_1_no","Se encuentra embarazada: No","Casilla","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].indicador"],
+["cv_embarazo_tomador_2_si","Se encuentra embarazada: Sí","Casilla","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].indicador"],
+["cv_embarazo_tomador_2_no","Se encuentra embarazada: No","Casilla","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].indicador"],
+["cv_embarazo_tomador_3_si","Se encuentra embarazada: Sí","Casilla","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].indicador"],
+["cv_embarazo_tomador_3_no","Se encuentra embarazada: No","Casilla","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].indicador"],
+["nombre_quien_esta_embarazada_asegurado_1","Nombre de quien está embarazada","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].nombreQuienEstaEmbarazada"],
+["nombre_quien_esta_embarazada_asegurado_2","Nombre de quien está embarazada","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].nombreQuienEstaEmbarazada"],
+["nombre_quien_esta_embarazada_asegurado_3","Nombre de quien está embarazada","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].nombreQuienEstaEmbarazada"],
+["nombre_quien_esta_embarazada_tomador_1","Nombre de quien está embarazada","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].nombreQuienEstaEmbarazada"],
+["nombre_quien_esta_embarazada_tomador_2","Nombre de quien está embarazada","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].nombreQuienEstaEmbarazada"],
+["nombre_quien_esta_embarazada_tomador_3","Nombre de quien está embarazada","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].nombreQuienEstaEmbarazada"],
+["numero_semanas_gestacion_asegurado_1","Semanas de gestación","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].numeroSemanasGestacion"],
+["numero_semanas_gestacion_asegurado_2","Semanas de gestación","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].numeroSemanasGestacion"],
+["numero_semanas_gestacion_asegurado_3","Semanas de gestación","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].numeroSemanasGestacion"],
+["numero_semanas_gestacion_tomador_1","Semanas de gestación","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].numeroSemanasGestacion"],
+["numero_semanas_gestacion_tomador_2","Semanas de gestación","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].numeroSemanasGestacion"],
+["numero_semanas_gestacion_tomador_3","Semanas de gestación","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].numeroSemanasGestacion"],
+["tipo_reproduccion_asegurado_1","Tipo de reproducción","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].codigoTipoReproduccion"],
+["tipo_reproduccion_asegurado_2","Tipo de reproducción","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].codigoTipoReproduccion"],
+["tipo_reproduccion_asegurado_3","Tipo de reproducción","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].codigoTipoReproduccion"],
+["tipo_reproduccion_tomador_1","Tipo de reproducción","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].codigoTipoReproduccion"],
+["tipo_reproduccion_tomador_2","Tipo de reproducción","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].codigoTipoReproduccion"],
+["tipo_reproduccion_tomador_3","Tipo de reproducción","Texto","Información del Riesgo","Preguntas Adicionales","datosFormulario.personas[].riesgo[].embarazo[].codigoTipoReproduccion"],
+["cv_condicion_salud_asegurado_si","Condición de salud: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].condicionSalud.indicador"],
+["cv_condicion_salud_asegurado_no","Condición de salud: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].condicionSalud.indicador"],
+["cv_condicion_salud_tomador_si","Condición de salud: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].condicionSalud.indicador"],
+["cv_condicion_salud_tomador_no","Condición de salud: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].condicionSalud.indicador"],
+["detalle_condicion_salud_asegurado","Detalle de condición","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].condicionSalud.detalle"],
+["detalle_condicion_salud_tomador","Detalle de condición","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].condicionSalud.detalle"],
+["cv_enfermedad_alto_impacto_asegurado_1_si","Enfermedad de alto impacto: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedadAltoImpacto[].indicador"],
+["cv_enfermedad_alto_impacto_asegurado_1_no","Enfermedad de alto impacto: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedadAltoImpacto[].indicador"],
+["cv_enfermedad_alto_impacto_asegurado_2_si","Enfermedad de alto impacto: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedadAltoImpacto[].indicador"],
+["cv_enfermedad_alto_impacto_asegurado_2_no","Enfermedad de alto impacto: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedadAltoImpacto[].indicador"],
+["cv_enfermedad_alto_impacto_asegurado_3_si","Enfermedad de alto impacto: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedadAltoImpacto[].indicador"],
+["cv_enfermedad_alto_impacto_asegurado_3_no","Enfermedad de alto impacto: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedadAltoImpacto[].indicador"],
+["cv_enfermedad_alto_impacto_tomador_1_si","Enfermedad de alto impacto: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedadAltoImpacto[].indicador"],
+["cv_enfermedad_alto_impacto_tomador_1_no","Enfermedad de alto impacto: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedadAltoImpacto[].indicador"],
+["cv_enfermedad_alto_impacto_tomador_2_si","Enfermedad de alto impacto: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedadAltoImpacto[].indicador"],
+["cv_enfermedad_alto_impacto_tomador_2_no","Enfermedad de alto impacto: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedadAltoImpacto[].indicador"],
+["cv_enfermedad_alto_impacto_tomador_3_si","Enfermedad de alto impacto: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedadAltoImpacto[].indicador"],
+["cv_enfermedad_alto_impacto_tomador_3_no","Enfermedad de alto impacto: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedadAltoImpacto[].indicador"],
+["detalle_enfermedad_alto_impacto_asegurado_1","Detalle","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedadAltoImpacto[].detalle"],
+["detalle_enfermedad_alto_impacto_asegurado_2","Detalle","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedadAltoImpacto[].detalle"],
+["detalle_enfermedad_alto_impacto_asegurado_3","Detalle","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedadAltoImpacto[].detalle"],
+["detalle_enfermedad_alto_impacto_tomador_1","Detalle","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedadAltoImpacto[].detalle"],
+["detalle_enfermedad_alto_impacto_tomador_2","Detalle","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedadAltoImpacto[].detalle"],
+["detalle_enfermedad_alto_impacto_tomador_3","Detalle","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedadAltoImpacto[].detalle"],
+["nombre_quien_padece_asegurado_1","Nombre de quien padece","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].nombreQuienPadece"],
+["nombre_quien_padece_asegurado_2","Nombre de quien padece","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].nombreQuienPadece"],
+["nombre_quien_padece_asegurado_3","Nombre de quien padece","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].nombreQuienPadece"],
+["nombre_quien_padece_tomador_1","Nombre de quien padece","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].nombreQuienPadece"],
+["nombre_quien_padece_tomador_2","Nombre de quien padece","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].nombreQuienPadece"],
+["nombre_quien_padece_tomador_3","Nombre de quien padece","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].nombreQuienPadece"],
+["detalle_categoria_asegurado_1","Categoría","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].detalleCategoria"],
+["detalle_categoria_asegurado_2","Categoría","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].detalleCategoria"],
+["detalle_categoria_asegurado_3","Categoría","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].detalleCategoria"],
+["detalle_categoria_tomador_1","Categoría","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].detalleCategoria"],
+["detalle_categoria_tomador_2","Categoría","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].detalleCategoria"],
+["detalle_categoria_tomador_3","Categoría","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].detalleCategoria"],
+["detalle_enfermedades_asegurado_1","Detalle de enfermedad","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].detalle"],
+["detalle_enfermedades_asegurado_2","Detalle de enfermedad","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].detalle"],
+["detalle_enfermedades_asegurado_3","Detalle de enfermedad","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].detalle"],
+["detalle_enfermedades_tomador_1","Detalle de enfermedad","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].detalle"],
+["detalle_enfermedades_tomador_2","Detalle de enfermedad","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].detalle"],
+["detalle_enfermedades_tomador_3","Detalle de enfermedad","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].detalle"],
+["nombre_medico_clinica_hospital_enfermedades_asegurado_1","Médico, clínica u hospital","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].nombreMedicoClinicaHospital"],
+["nombre_medico_clinica_hospital_enfermedades_asegurado_2","Médico, clínica u hospital","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].nombreMedicoClinicaHospital"],
+["nombre_medico_clinica_hospital_enfermedades_asegurado_3","Médico, clínica u hospital","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].nombreMedicoClinicaHospital"],
+["nombre_medico_clinica_hospital_enfermedades_tomador_1","Médico, clínica u hospital","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].nombreMedicoClinicaHospital"],
+["nombre_medico_clinica_hospital_enfermedades_tomador_2","Médico, clínica u hospital","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].nombreMedicoClinicaHospital"],
+["nombre_medico_clinica_hospital_enfermedades_tomador_3","Médico, clínica u hospital","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].nombreMedicoClinicaHospital"],
+["fecha_inicio_asegurado_1_dia","Fecha de inicio (día)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].fechaInicio"],
+["fecha_inicio_asegurado_1_mes","Fecha de inicio (mes)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].fechaInicio"],
+["fecha_inicio_asegurado_1_ano","Fecha de inicio (año)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].fechaInicio"],
+["fecha_inicio_asegurado_2_dia","Fecha de inicio (día)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].fechaInicio"],
+["fecha_inicio_asegurado_2_mes","Fecha de inicio (mes)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].fechaInicio"],
+["fecha_inicio_asegurado_2_ano","Fecha de inicio (año)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].fechaInicio"],
+["fecha_inicio_asegurado_3_dia","Fecha de inicio (día)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].fechaInicio"],
+["fecha_inicio_asegurado_3_mes","Fecha de inicio (mes)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].fechaInicio"],
+["fecha_inicio_asegurado_3_ano","Fecha de inicio (año)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].fechaInicio"],
+["fecha_inicio_tomador_1_dia","Fecha de inicio (día)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].fechaInicio"],
+["fecha_inicio_tomador_1_mes","Fecha de inicio (mes)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].fechaInicio"],
+["fecha_inicio_tomador_1_ano","Fecha de inicio (año)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].fechaInicio"],
+["fecha_inicio_tomador_2_dia","Fecha de inicio (día)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].fechaInicio"],
+["fecha_inicio_tomador_2_mes","Fecha de inicio (mes)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].fechaInicio"],
+["fecha_inicio_tomador_2_ano","Fecha de inicio (año)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].fechaInicio"],
+["fecha_inicio_tomador_3_dia","Fecha de inicio (día)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].fechaInicio"],
+["fecha_inicio_tomador_3_mes","Fecha de inicio (mes)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].fechaInicio"],
+["fecha_inicio_tomador_3_ano","Fecha de inicio (año)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].fechaInicio"],
+["duracion_asegurado_1","Duración","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].duracion"],
+["duracion_asegurado_2","Duración","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].duracion"],
+["duracion_asegurado_3","Duración","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].duracion"],
+["duracion_tomador_1","Duración","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].duracion"],
+["duracion_tomador_2","Duración","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].duracion"],
+["duracion_tomador_3","Duración","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].duracion"],
+["resultado_enfermedades_asegurado_1","Resultado / estado actual","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultado"],
+["resultado_enfermedades_asegurado_2","Resultado / estado actual","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultado"],
+["resultado_enfermedades_asegurado_3","Resultado / estado actual","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultado"],
+["resultado_enfermedades_tomador_1","Resultado / estado actual","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultado"],
+["resultado_enfermedades_tomador_2","Resultado / estado actual","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultado"],
+["resultado_enfermedades_tomador_3","Resultado / estado actual","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultado"],
+["cv_tratamiento_enfermedades_asegurado_1_si","Tratamiento: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorTratamiento"],
+["cv_tratamiento_enfermedades_asegurado_1_no","Tratamiento: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorTratamiento"],
+["cv_tratamiento_enfermedades_asegurado_2_si","Tratamiento: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorTratamiento"],
+["cv_tratamiento_enfermedades_asegurado_2_no","Tratamiento: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorTratamiento"],
+["cv_tratamiento_enfermedades_asegurado_3_si","Tratamiento: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorTratamiento"],
+["cv_tratamiento_enfermedades_asegurado_3_no","Tratamiento: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorTratamiento"],
+["cv_tratamiento_enfermedades_tomador_1_si","Tratamiento: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorTratamiento"],
+["cv_tratamiento_enfermedades_tomador_1_no","Tratamiento: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorTratamiento"],
+["cv_tratamiento_enfermedades_tomador_2_si","Tratamiento: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorTratamiento"],
+["cv_tratamiento_enfermedades_tomador_2_no","Tratamiento: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorTratamiento"],
+["cv_tratamiento_enfermedades_tomador_3_si","Tratamiento: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorTratamiento"],
+["cv_tratamiento_enfermedades_tomador_3_no","Tratamiento: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorTratamiento"],
+["nombre_medicamento_asegurado_1","Nombre del medicamento","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].nombreMedicamento"],
+["nombre_medicamento_asegurado_2","Nombre del medicamento","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].nombreMedicamento"],
+["nombre_medicamento_asegurado_3","Nombre del medicamento","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].nombreMedicamento"],
+["nombre_medicamento_tomador_1","Nombre del medicamento","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].nombreMedicamento"],
+["nombre_medicamento_tomador_2","Nombre del medicamento","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].nombreMedicamento"],
+["nombre_medicamento_tomador_3","Nombre del medicamento","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].nombreMedicamento"],
+["detalle_complicaciones_asegurado_1","Complicaciones","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].detalleComplicaciones"],
+["detalle_complicaciones_asegurado_2","Complicaciones","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].detalleComplicaciones"],
+["detalle_complicaciones_asegurado_3","Complicaciones","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].detalleComplicaciones"],
+["detalle_complicaciones_tomador_1","Complicaciones","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].detalleComplicaciones"],
+["detalle_complicaciones_tomador_2","Complicaciones","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].detalleComplicaciones"],
+["detalle_complicaciones_tomador_3","Complicaciones","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].detalleComplicaciones"],
+["cv_pruebas_azucar_enfermedades_asegurado_1_si","Pruebas de azúcar: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPruebasAzucar"],
+["cv_pruebas_azucar_enfermedades_asegurado_1_no","Pruebas de azúcar: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPruebasAzucar"],
+["cv_pruebas_azucar_enfermedades_asegurado_2_si","Pruebas de azúcar: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPruebasAzucar"],
+["cv_pruebas_azucar_enfermedades_asegurado_2_no","Pruebas de azúcar: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPruebasAzucar"],
+["cv_pruebas_azucar_enfermedades_asegurado_3_si","Pruebas de azúcar: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPruebasAzucar"],
+["cv_pruebas_azucar_enfermedades_asegurado_3_no","Pruebas de azúcar: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPruebasAzucar"],
+["cv_pruebas_azucar_enfermedades_tomador_1_si","Pruebas de azúcar: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPruebasAzucar"],
+["cv_pruebas_azucar_enfermedades_tomador_1_no","Pruebas de azúcar: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPruebasAzucar"],
+["cv_pruebas_azucar_enfermedades_tomador_2_si","Pruebas de azúcar: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPruebasAzucar"],
+["cv_pruebas_azucar_enfermedades_tomador_2_no","Pruebas de azúcar: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPruebasAzucar"],
+["cv_pruebas_azucar_enfermedades_tomador_3_si","Pruebas de azúcar: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPruebasAzucar"],
+["cv_pruebas_azucar_enfermedades_tomador_3_no","Pruebas de azúcar: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPruebasAzucar"],
+["tipo_control_asegurado_1","Tipo de control","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].tipoControl"],
+["tipo_control_asegurado_2","Tipo de control","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].tipoControl"],
+["tipo_control_asegurado_3","Tipo de control","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].tipoControl"],
+["tipo_control_tomador_1","Tipo de control","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].tipoControl"],
+["tipo_control_tomador_2","Tipo de control","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].tipoControl"],
+["tipo_control_tomador_3","Tipo de control","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].tipoControl"],
+["resultados_pruebas_asegurado_1","Resultados de pruebas","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultadosPruebas"],
+["resultados_pruebas_asegurado_2","Resultados de pruebas","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultadosPruebas"],
+["resultados_pruebas_asegurado_3","Resultados de pruebas","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultadosPruebas"],
+["resultados_pruebas_tomador_1","Resultados de pruebas","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultadosPruebas"],
+["resultados_pruebas_tomador_2","Resultados de pruebas","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultadosPruebas"],
+["resultados_pruebas_tomador_3","Resultados de pruebas","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultadosPruebas"],
+["cv_presion_arterial_enfermedades_asegurado_1_si","Presión arterial: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPresionArterial"],
+["cv_presion_arterial_enfermedades_asegurado_1_no","Presión arterial: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPresionArterial"],
+["cv_presion_arterial_enfermedades_asegurado_2_si","Presión arterial: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPresionArterial"],
+["cv_presion_arterial_enfermedades_asegurado_2_no","Presión arterial: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPresionArterial"],
+["cv_presion_arterial_enfermedades_asegurado_3_si","Presión arterial: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPresionArterial"],
+["cv_presion_arterial_enfermedades_asegurado_3_no","Presión arterial: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPresionArterial"],
+["cv_presion_arterial_enfermedades_tomador_1_si","Presión arterial: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPresionArterial"],
+["cv_presion_arterial_enfermedades_tomador_1_no","Presión arterial: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPresionArterial"],
+["cv_presion_arterial_enfermedades_tomador_2_si","Presión arterial: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPresionArterial"],
+["cv_presion_arterial_enfermedades_tomador_2_no","Presión arterial: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPresionArterial"],
+["cv_presion_arterial_enfermedades_tomador_3_si","Presión arterial: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPresionArterial"],
+["cv_presion_arterial_enfermedades_tomador_3_no","Presión arterial: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorPresionArterial"],
+["resultados_presion_arterial_asegurado_1","Resultados de presión arterial","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultadosPresionArterial"],
+["resultados_presion_arterial_asegurado_2","Resultados de presión arterial","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultadosPresionArterial"],
+["resultados_presion_arterial_asegurado_3","Resultados de presión arterial","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultadosPresionArterial"],
+["resultados_presion_arterial_tomador_1","Resultados de presión arterial","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultadosPresionArterial"],
+["resultados_presion_arterial_tomador_2","Resultados de presión arterial","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultadosPresionArterial"],
+["resultados_presion_arterial_tomador_3","Resultados de presión arterial","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultadosPresionArterial"],
+["cv_antigeno_prostatico_enfermedades_asegurado_1_si","Antígeno prostático: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorAntigenoProstatico"],
+["cv_antigeno_prostatico_enfermedades_asegurado_1_no","Antígeno prostático: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorAntigenoProstatico"],
+["cv_antigeno_prostatico_enfermedades_asegurado_2_si","Antígeno prostático: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorAntigenoProstatico"],
+["cv_antigeno_prostatico_enfermedades_asegurado_2_no","Antígeno prostático: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorAntigenoProstatico"],
+["cv_antigeno_prostatico_enfermedades_asegurado_3_si","Antígeno prostático: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorAntigenoProstatico"],
+["cv_antigeno_prostatico_enfermedades_asegurado_3_no","Antígeno prostático: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorAntigenoProstatico"],
+["cv_antigeno_prostatico_enfermedades_tomador_1_si","Antígeno prostático: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorAntigenoProstatico"],
+["cv_antigeno_prostatico_enfermedades_tomador_1_no","Antígeno prostático: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorAntigenoProstatico"],
+["cv_antigeno_prostatico_enfermedades_tomador_2_si","Antígeno prostático: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorAntigenoProstatico"],
+["cv_antigeno_prostatico_enfermedades_tomador_2_no","Antígeno prostático: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorAntigenoProstatico"],
+["cv_antigeno_prostatico_enfermedades_tomador_3_si","Antígeno prostático: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorAntigenoProstatico"],
+["cv_antigeno_prostatico_enfermedades_tomador_3_no","Antígeno prostático: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].indicadorAntigenoProstatico"],
+["resultados_antigeno_prostatico_asegurado_1","Resultados de antígeno prostático","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultadosAntigenoProstatico"],
+["resultados_antigeno_prostatico_asegurado_2","Resultados de antígeno prostático","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultadosAntigenoProstatico"],
+["resultados_antigeno_prostatico_asegurado_3","Resultados de antígeno prostático","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultadosAntigenoProstatico"],
+["resultados_antigeno_prostatico_tomador_1","Resultados de antígeno prostático","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultadosAntigenoProstatico"],
+["resultados_antigeno_prostatico_tomador_2","Resultados de antígeno prostático","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultadosAntigenoProstatico"],
+["resultados_antigeno_prostatico_tomador_3","Resultados de antígeno prostático","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].enfermedades[].resultadosAntigenoProstatico"],
+["cv_condicion_enfermedad_o_traumatismo_asegurado_si","¿Padece o ha padecido alguna condición, enfermedad o traumatismo que haya requerido atención, tratamiento, estudios o seguimiento médico?: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].indicadorCondicionEnfermedadOTraumatismo"],
+["cv_condicion_enfermedad_o_traumatismo_asegurado_no","¿Padece o ha padecido alguna condición, enfermedad o traumatismo que haya requerido atención, tratamiento, estudios o seguimiento médico?: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].indicadorCondicionEnfermedadOTraumatismo"],
+["cv_condicion_enfermedad_o_traumatismo_tomador_si","¿Padece o ha padecido alguna condición, enfermedad o traumatismo que haya requerido atención, tratamiento, estudios o seguimiento médico?: Sí","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].indicadorCondicionEnfermedadOTraumatismo"],
+["cv_condicion_enfermedad_o_traumatismo_tomador_no","¿Padece o ha padecido alguna condición, enfermedad o traumatismo que haya requerido atención, tratamiento, estudios o seguimiento médico?: No","Casilla","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].indicadorCondicionEnfermedadOTraumatismo"],
+["nombre_condicion_enfermedad_o_traumatismo_asegurado_1","Nombre de la condición, enfermedad o traumatismo","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].nombreCondicionEnfermedadOTraumatismo"],
+["nombre_condicion_enfermedad_o_traumatismo_asegurado_2","Nombre de la condición, enfermedad o traumatismo","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].nombreCondicionEnfermedadOTraumatismo"],
+["nombre_condicion_enfermedad_o_traumatismo_asegurado_3","Nombre de la condición, enfermedad o traumatismo","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].nombreCondicionEnfermedadOTraumatismo"],
+["nombre_condicion_enfermedad_o_traumatismo_tomador_1","Nombre de la condición, enfermedad o traumatismo","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].nombreCondicionEnfermedadOTraumatismo"],
+["nombre_condicion_enfermedad_o_traumatismo_tomador_2","Nombre de la condición, enfermedad o traumatismo","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].nombreCondicionEnfermedadOTraumatismo"],
+["nombre_condicion_enfermedad_o_traumatismo_tomador_3","Nombre de la condición, enfermedad o traumatismo","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].nombreCondicionEnfermedadOTraumatismo"],
+["fecha_diagnostico_asegurado_1_dia","Fecha de diagnóstico (día)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaDiagnostico"],
+["fecha_diagnostico_asegurado_1_mes","Fecha de diagnóstico (mes)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaDiagnostico"],
+["fecha_diagnostico_asegurado_1_ano","Fecha de diagnóstico (año)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaDiagnostico"],
+["fecha_diagnostico_asegurado_2_dia","Fecha de diagnóstico (día)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaDiagnostico"],
+["fecha_diagnostico_asegurado_2_mes","Fecha de diagnóstico (mes)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaDiagnostico"],
+["fecha_diagnostico_asegurado_2_ano","Fecha de diagnóstico (año)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaDiagnostico"],
+["fecha_diagnostico_asegurado_3_dia","Fecha de diagnóstico (día)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaDiagnostico"],
+["fecha_diagnostico_asegurado_3_mes","Fecha de diagnóstico (mes)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaDiagnostico"],
+["fecha_diagnostico_asegurado_3_ano","Fecha de diagnóstico (año)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaDiagnostico"],
+["fecha_diagnostico_tomador_1_dia","Fecha de diagnóstico (día)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaDiagnostico"],
+["fecha_diagnostico_tomador_1_mes","Fecha de diagnóstico (mes)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaDiagnostico"],
+["fecha_diagnostico_tomador_1_ano","Fecha de diagnóstico (año)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaDiagnostico"],
+["fecha_diagnostico_tomador_2_dia","Fecha de diagnóstico (día)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaDiagnostico"],
+["fecha_diagnostico_tomador_2_mes","Fecha de diagnóstico (mes)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaDiagnostico"],
+["fecha_diagnostico_tomador_2_ano","Fecha de diagnóstico (año)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaDiagnostico"],
+["fecha_diagnostico_tomador_3_dia","Fecha de diagnóstico (día)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaDiagnostico"],
+["fecha_diagnostico_tomador_3_mes","Fecha de diagnóstico (mes)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaDiagnostico"],
+["fecha_diagnostico_tomador_3_ano","Fecha de diagnóstico (año)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaDiagnostico"],
+["tratamientos_recibidos_asegurado_1","Tratamientos recibidos","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].tratamientosRecibidos"],
+["tratamientos_recibidos_asegurado_2","Tratamientos recibidos","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].tratamientosRecibidos"],
+["tratamientos_recibidos_asegurado_3","Tratamientos recibidos","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].tratamientosRecibidos"],
+["tratamientos_recibidos_tomador_1","Tratamientos recibidos","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].tratamientosRecibidos"],
+["tratamientos_recibidos_tomador_2","Tratamientos recibidos","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].tratamientosRecibidos"],
+["tratamientos_recibidos_tomador_3","Tratamientos recibidos","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].tratamientosRecibidos"],
+["estado_actual_condicion_asegurado_1","Estado actual de la condición, enfermedad o traumatismo","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].codigoEstadoActualCondicion"],
+["estado_actual_condicion_asegurado_2","Estado actual de la condición, enfermedad o traumatismo","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].codigoEstadoActualCondicion"],
+["estado_actual_condicion_asegurado_3","Estado actual de la condición, enfermedad o traumatismo","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].codigoEstadoActualCondicion"],
+["estado_actual_condicion_tomador_1","Estado actual de la condición, enfermedad o traumatismo","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].codigoEstadoActualCondicion"],
+["estado_actual_condicion_tomador_2","Estado actual de la condición, enfermedad o traumatismo","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].codigoEstadoActualCondicion"],
+["estado_actual_condicion_tomador_3","Estado actual de la condición, enfermedad o traumatismo","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].codigoEstadoActualCondicion"],
+["fecha_alta_medica_asegurado_1_dia","Fecha de alta médica (día)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaAltaMedica"],
+["fecha_alta_medica_asegurado_1_mes","Fecha de alta médica (mes)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaAltaMedica"],
+["fecha_alta_medica_asegurado_1_ano","Fecha de alta médica (año)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaAltaMedica"],
+["fecha_alta_medica_asegurado_2_dia","Fecha de alta médica (día)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaAltaMedica"],
+["fecha_alta_medica_asegurado_2_mes","Fecha de alta médica (mes)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaAltaMedica"],
+["fecha_alta_medica_asegurado_2_ano","Fecha de alta médica (año)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaAltaMedica"],
+["fecha_alta_medica_asegurado_3_dia","Fecha de alta médica (día)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaAltaMedica"],
+["fecha_alta_medica_asegurado_3_mes","Fecha de alta médica (mes)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaAltaMedica"],
+["fecha_alta_medica_asegurado_3_ano","Fecha de alta médica (año)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaAltaMedica"],
+["fecha_alta_medica_tomador_1_dia","Fecha de alta médica (día)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaAltaMedica"],
+["fecha_alta_medica_tomador_1_mes","Fecha de alta médica (mes)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaAltaMedica"],
+["fecha_alta_medica_tomador_1_ano","Fecha de alta médica (año)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaAltaMedica"],
+["fecha_alta_medica_tomador_2_dia","Fecha de alta médica (día)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaAltaMedica"],
+["fecha_alta_medica_tomador_2_mes","Fecha de alta médica (mes)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaAltaMedica"],
+["fecha_alta_medica_tomador_2_ano","Fecha de alta médica (año)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaAltaMedica"],
+["fecha_alta_medica_tomador_3_dia","Fecha de alta médica (día)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaAltaMedica"],
+["fecha_alta_medica_tomador_3_mes","Fecha de alta médica (mes)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaAltaMedica"],
+["fecha_alta_medica_tomador_3_ano","Fecha de alta médica (año)","Fecha (parte)","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].fechaAltaMedica"],
+["nombre_medico_clinica_hospital_padecimientos_asegurado_1","Nombre y dirección de los médicos, clínicas u hospitales que le atendieron","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].nombreMedicoClinicaHospital"],
+["nombre_medico_clinica_hospital_padecimientos_asegurado_2","Nombre y dirección de los médicos, clínicas u hospitales que le atendieron","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].nombreMedicoClinicaHospital"],
+["nombre_medico_clinica_hospital_padecimientos_asegurado_3","Nombre y dirección de los médicos, clínicas u hospitales que le atendieron","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].nombreMedicoClinicaHospital"],
+["nombre_medico_clinica_hospital_padecimientos_tomador_1","Nombre y dirección de los médicos, clínicas u hospitales que le atendieron","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].nombreMedicoClinicaHospital"],
+["nombre_medico_clinica_hospital_padecimientos_tomador_2","Nombre y dirección de los médicos, clínicas u hospitales que le atendieron","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].nombreMedicoClinicaHospital"],
+["nombre_medico_clinica_hospital_padecimientos_tomador_3","Nombre y dirección de los médicos, clínicas u hospitales que le atendieron","Texto","Información del Riesgo","Padecimientos","datosFormulario.personas[].riesgo[].padecimientos[].nombreMedicoClinicaHospital"],
+["cv_uso_droga_medicamento_asegurado_si","¿Consume o ha consumido drogas o sustancias psicoactivas?: Sí","Casilla","Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.indicadorUso"],
+["cv_uso_droga_medicamento_asegurado_no","¿Consume o ha consumido drogas o sustancias psicoactivas?: No","Casilla","Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.indicadorUso"],
+["cv_uso_droga_medicamento_tomador_si","¿Consume o ha consumido drogas o sustancias psicoactivas?: Sí","Casilla","Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.indicadorUso"],
+["cv_uso_droga_medicamento_tomador_no","¿Consume o ha consumido drogas o sustancias psicoactivas?: No","Casilla","Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.indicadorUso"],
+["nombre_quien_usa_asegurado","Nombre de quien usa","Texto","Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.nombreQuienUsa"],
+["nombre_quien_usa_tomador","Nombre de quien usa","Texto","Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.nombreQuienUsa"],
+["frecuencia_asegurado","Frecuencia","Texto","Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.frecuencia"],
+["frecuencia_tomador","Frecuencia","Texto","Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.frecuencia"],
+["cantidad_asegurado","Cantidad","Texto","Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.cantidad"],
+["cantidad_tomador","Cantidad","Texto","Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.cantidad"],
+["motivo_asegurado","Motivo","Texto","Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.motivo"],
+["motivo_tomador","Motivo","Texto","Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.motivo"],
+["nombre_asegurado","Nombre","Texto","Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.nombre"],
+["nombre_tomador","Nombre","Texto","Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.nombre"],
+["detalle_uso_droga_medicamento_asegurado","Detalles sobre el uso de drogas o sustancias psicoactivas","Texto","Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.detalleUso"],
+["detalle_uso_droga_medicamento_tomador","Detalles sobre el uso de drogas o sustancias psicoactivas","Texto","Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.detalleUso"],
+["cv_uso_medicamentos_droga_medicamento_asegurado_si","¿Utiliza medicamentos o tratamientos médicos actualmente, o ha recibido medicina nuclear, isótopos radioactivos o quimioterapia?: Sí","Casilla","Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.indicadorUsoMedicamentos"],
+["cv_uso_medicamentos_droga_medicamento_asegurado_no","¿Utiliza medicamentos o tratamientos médicos actualmente, o ha recibido medicina nuclear, isótopos radioactivos o quimioterapia?: No","Casilla","Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.indicadorUsoMedicamentos"],
+["cv_uso_medicamentos_droga_medicamento_tomador_si","¿Utiliza medicamentos o tratamientos médicos actualmente, o ha recibido medicina nuclear, isótopos radioactivos o quimioterapia?: Sí","Casilla","Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.indicadorUsoMedicamentos"],
+["cv_uso_medicamentos_droga_medicamento_tomador_no","¿Utiliza medicamentos o tratamientos médicos actualmente, o ha recibido medicina nuclear, isótopos radioactivos o quimioterapia?: No","Casilla","Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.indicadorUsoMedicamentos"],
+["detalle_uso_medicamentos_asegurado","Detalles de medicamentos o tratamientos médicos","Texto","Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.detalleUsoMedicamentos"],
+["detalle_uso_medicamentos_tomador","Detalles de medicamentos o tratamientos médicos","Texto","Información del Riesgo","Drogas / Medicamentos","datosFormulario.personas[].riesgo[].drogaMedicamento.detalleUsoMedicamentos"],
+["cv_fumador_tabaquismo_asegurado_si","Alguna vez ha fumado: Sí","Casilla","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorFumador"],
+["cv_fumador_tabaquismo_asegurado_no","Alguna vez ha fumado: No","Casilla","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorFumador"],
+["cv_fumador_tabaquismo_tomador_si","Alguna vez ha fumado: Sí","Casilla","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorFumador"],
+["cv_fumador_tabaquismo_tomador_no","Alguna vez ha fumado: No","Casilla","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorFumador"],
+["cantidad_fumado_diario_asegurado","Cantidad fumada diaria","Texto","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.cantidadFumadoDiario"],
+["cantidad_fumado_diario_tomador","Cantidad fumada diaria","Texto","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.cantidadFumadoDiario"],
+["hace_cuanto_tiempo_fuma_asegurado","Hace cuánto tiempo fuma","Texto","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.haceCuantoTiempoFuma"],
+["hace_cuanto_tiempo_fuma_tomador","Hace cuánto tiempo fuma","Texto","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.haceCuantoTiempoFuma"],
+["cv_vapea_tabaquismo_asegurado_si","Vapea actualmente: Sí","Casilla","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorVapea"],
+["cv_vapea_tabaquismo_asegurado_no","Vapea actualmente: No","Casilla","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorVapea"],
+["cv_vapea_tabaquismo_tomador_si","Vapea actualmente: Sí","Casilla","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorVapea"],
+["cv_vapea_tabaquismo_tomador_no","Vapea actualmente: No","Casilla","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorVapea"],
+["cantidad_vapeo_diario_asegurado","Cantidad de vapeo diario","Texto","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.cantidadVapeoDiario"],
+["cantidad_vapeo_diario_tomador","Cantidad de vapeo diario","Texto","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.cantidadVapeoDiario"],
+["hace_cuanto_tiempo_vapea_asegurado","Hace cuánto tiempo vapea","Texto","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.haceCuantoTiempoVapea"],
+["hace_cuanto_tiempo_vapea_tomador","Hace cuánto tiempo vapea","Texto","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.haceCuantoTiempoVapea"],
+["cv_dejo_de_fumar_tabaquismo_asegurado_si","Dejó de fumar: Sí","Casilla","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorDejoDeFumar"],
+["cv_dejo_de_fumar_tabaquismo_asegurado_no","Dejó de fumar: No","Casilla","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorDejoDeFumar"],
+["cv_dejo_de_fumar_tabaquismo_tomador_si","Dejó de fumar: Sí","Casilla","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorDejoDeFumar"],
+["cv_dejo_de_fumar_tabaquismo_tomador_no","Dejó de fumar: No","Casilla","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorDejoDeFumar"],
+["hace_cuanto_tiempo_dejo_de_fumar_asegurado","Hace cuánto dejó de fumar","Texto","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.haceCuantoTiempoDejoDeFumar"],
+["hace_cuanto_tiempo_dejo_de_fumar_tomador","Hace cuánto dejó de fumar","Texto","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.haceCuantoTiempoDejoDeFumar"],
+["cv_fuma_actualmente_tabaquismo_asegurado_si","¿Fuma actualmente?: Sí","Casilla","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorFumaActualmente"],
+["cv_fuma_actualmente_tabaquismo_asegurado_no","¿Fuma actualmente?: No","Casilla","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorFumaActualmente"],
+["cv_fuma_actualmente_tabaquismo_tomador_si","¿Fuma actualmente?: Sí","Casilla","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorFumaActualmente"],
+["cv_fuma_actualmente_tabaquismo_tomador_no","¿Fuma actualmente?: No","Casilla","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorFumaActualmente"],
+["cv_dejo_vapear_tabaquismo_asegurado_si","¿Dejó de vapear?: Sí","Casilla","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorDejoVapear"],
+["cv_dejo_vapear_tabaquismo_asegurado_no","¿Dejó de vapear?: No","Casilla","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorDejoVapear"],
+["cv_dejo_vapear_tabaquismo_tomador_si","¿Dejó de vapear?: Sí","Casilla","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorDejoVapear"],
+["cv_dejo_vapear_tabaquismo_tomador_no","¿Dejó de vapear?: No","Casilla","Información del Riesgo","Fumado","datosFormulario.personas[].riesgo[].tabaquismo.indicadorDejoVapear"],
+["cv_consulta_medica_asegurado_si","Consulta médica: Sí","Casilla","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].indicadorConsultaMedica"],
+["cv_consulta_medica_asegurado_no","Consulta médica: No","Casilla","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].indicadorConsultaMedica"],
+["cv_consulta_medica_tomador_si","Consulta médica: Sí","Casilla","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].indicadorConsultaMedica"],
+["cv_consulta_medica_tomador_no","Consulta médica: No","Casilla","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].indicadorConsultaMedica"],
+["quien_consulta_consulta_medica_asegurado_1","Quién consulta","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].quienConsulta"],
+["quien_consulta_consulta_medica_asegurado_2","Quién consulta","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].quienConsulta"],
+["quien_consulta_consulta_medica_asegurado_3","Quién consulta","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].quienConsulta"],
+["quien_consulta_consulta_medica_tomador_1","Quién consulta","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].quienConsulta"],
+["quien_consulta_consulta_medica_tomador_2","Quién consulta","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].quienConsulta"],
+["quien_consulta_consulta_medica_tomador_3","Quién consulta","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].quienConsulta"],
+["detalle_motivo_asegurado_1","Motivo de consulta","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].detalleMotivo"],
+["detalle_motivo_asegurado_2","Motivo de consulta","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].detalleMotivo"],
+["detalle_motivo_asegurado_3","Motivo de consulta","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].detalleMotivo"],
+["detalle_motivo_tomador_1","Motivo de consulta","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].detalleMotivo"],
+["detalle_motivo_tomador_2","Motivo de consulta","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].detalleMotivo"],
+["detalle_motivo_tomador_3","Motivo de consulta","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].detalleMotivo"],
+["diagnostico_medico_asegurado_1","Diagnóstico médico","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].diagnosticoMedico"],
+["diagnostico_medico_asegurado_2","Diagnóstico médico","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].diagnosticoMedico"],
+["diagnostico_medico_asegurado_3","Diagnóstico médico","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].diagnosticoMedico"],
+["diagnostico_medico_tomador_1","Diagnóstico médico","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].diagnosticoMedico"],
+["diagnostico_medico_tomador_2","Diagnóstico médico","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].diagnosticoMedico"],
+["diagnostico_medico_tomador_3","Diagnóstico médico","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].diagnosticoMedico"],
+["nombre_medico_tratante_consulta_medica_asegurado_1","Nombre del médico tratante","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].nombreMedicoTratante"],
+["nombre_medico_tratante_consulta_medica_asegurado_2","Nombre del médico tratante","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].nombreMedicoTratante"],
+["nombre_medico_tratante_consulta_medica_asegurado_3","Nombre del médico tratante","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].nombreMedicoTratante"],
+["nombre_medico_tratante_consulta_medica_tomador_1","Nombre del médico tratante","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].nombreMedicoTratante"],
+["nombre_medico_tratante_consulta_medica_tomador_2","Nombre del médico tratante","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].nombreMedicoTratante"],
+["nombre_medico_tratante_consulta_medica_tomador_3","Nombre del médico tratante","Texto","Información del Riesgo","Consultas Médicas","datosFormulario.personas[].riesgo[].consultaMedica[].nombreMedicoTratante"],
+["cv_diagnostico_especial_asegurado_si","Diagnóstico especial: Sí","Casilla","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].indicadorDiagnosticoEspecial"],
+["cv_diagnostico_especial_asegurado_no","Diagnóstico especial: No","Casilla","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].indicadorDiagnosticoEspecial"],
+["cv_diagnostico_especial_tomador_si","Diagnóstico especial: Sí","Casilla","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].indicadorDiagnosticoEspecial"],
+["cv_diagnostico_especial_tomador_no","Diagnóstico especial: No","Casilla","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].indicadorDiagnosticoEspecial"],
+["quien_consulta_diagnostico_especial_asegurado_1","Quién consulta","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].quienConsulta"],
+["quien_consulta_diagnostico_especial_asegurado_2","Quién consulta","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].quienConsulta"],
+["quien_consulta_diagnostico_especial_asegurado_3","Quién consulta","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].quienConsulta"],
+["quien_consulta_diagnostico_especial_tomador_1","Quién consulta","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].quienConsulta"],
+["quien_consulta_diagnostico_especial_tomador_2","Quién consulta","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].quienConsulta"],
+["quien_consulta_diagnostico_especial_tomador_3","Quién consulta","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].quienConsulta"],
+["motivo_asegurado_1","Motivo","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].motivo"],
+["motivo_asegurado_2","Motivo","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].motivo"],
+["motivo_asegurado_3","Motivo","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].motivo"],
+["motivo_tomador_1","Motivo","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].motivo"],
+["motivo_tomador_2","Motivo","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].motivo"],
+["motivo_tomador_3","Motivo","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].motivo"],
+["resultado_diagnostico_especial_asegurado_1","Resultado","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].resultado"],
+["resultado_diagnostico_especial_asegurado_2","Resultado","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].resultado"],
+["resultado_diagnostico_especial_asegurado_3","Resultado","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].resultado"],
+["resultado_diagnostico_especial_tomador_1","Resultado","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].resultado"],
+["resultado_diagnostico_especial_tomador_2","Resultado","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].resultado"],
+["resultado_diagnostico_especial_tomador_3","Resultado","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].resultado"],
+["nombre_medico_tratante_diagnostico_especial_asegurado_1","Nombre del médico tratante","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].nombreMedicoTratante"],
+["nombre_medico_tratante_diagnostico_especial_asegurado_2","Nombre del médico tratante","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].nombreMedicoTratante"],
+["nombre_medico_tratante_diagnostico_especial_asegurado_3","Nombre del médico tratante","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].nombreMedicoTratante"],
+["nombre_medico_tratante_diagnostico_especial_tomador_1","Nombre del médico tratante","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].nombreMedicoTratante"],
+["nombre_medico_tratante_diagnostico_especial_tomador_2","Nombre del médico tratante","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].nombreMedicoTratante"],
+["nombre_medico_tratante_diagnostico_especial_tomador_3","Nombre del médico tratante","Texto","Información del Riesgo","Diagnósticos Especiales","datosFormulario.personas[].riesgo[].diagnosticoEspecial[].nombreMedicoTratante"],
+["cv_positivo_covid_asegurado_si","Diagnóstico COVID-19: Sí","Casilla","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.indicadorPositivo"],
+["cv_positivo_covid_asegurado_no","Diagnóstico COVID-19: No","Casilla","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.indicadorPositivo"],
+["cv_positivo_covid_tomador_si","Diagnóstico COVID-19: Sí","Casilla","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.indicadorPositivo"],
+["cv_positivo_covid_tomador_no","Diagnóstico COVID-19: No","Casilla","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.indicadorPositivo"],
+["fecha_diagnostico_asegurado_dia","Fecha de diagnóstico (día)","Fecha (parte)","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.fechaDiagnostico"],
+["fecha_diagnostico_asegurado_mes","Fecha de diagnóstico (mes)","Fecha (parte)","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.fechaDiagnostico"],
+["fecha_diagnostico_asegurado_ano","Fecha de diagnóstico (año)","Fecha (parte)","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.fechaDiagnostico"],
+["fecha_diagnostico_tomador_dia","Fecha de diagnóstico (día)","Fecha (parte)","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.fechaDiagnostico"],
+["fecha_diagnostico_tomador_mes","Fecha de diagnóstico (mes)","Fecha (parte)","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.fechaDiagnostico"],
+["fecha_diagnostico_tomador_ano","Fecha de diagnóstico (año)","Fecha (parte)","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.fechaDiagnostico"],
+["fecha_alta_asegurado_dia","Fecha de alta (día)","Fecha (parte)","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.fechaAlta"],
+["fecha_alta_asegurado_mes","Fecha de alta (mes)","Fecha (parte)","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.fechaAlta"],
+["fecha_alta_asegurado_ano","Fecha de alta (año)","Fecha (parte)","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.fechaAlta"],
+["fecha_alta_tomador_dia","Fecha de alta (día)","Fecha (parte)","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.fechaAlta"],
+["fecha_alta_tomador_mes","Fecha de alta (mes)","Fecha (parte)","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.fechaAlta"],
+["fecha_alta_tomador_ano","Fecha de alta (año)","Fecha (parte)","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.fechaAlta"],
+["cv_hospitalizacion_covid_asegurado_si","Requirió hospitalización: Sí","Casilla","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.indicadorHospitalizacion"],
+["cv_hospitalizacion_covid_asegurado_no","Requirió hospitalización: No","Casilla","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.indicadorHospitalizacion"],
+["cv_hospitalizacion_covid_tomador_si","Requirió hospitalización: Sí","Casilla","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.indicadorHospitalizacion"],
+["cv_hospitalizacion_covid_tomador_no","Requirió hospitalización: No","Casilla","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.indicadorHospitalizacion"],
+["centro_hospitalario_asegurado","Centro hospitalario","Texto","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.centroHospitalario"],
+["centro_hospitalario_tomador","Centro hospitalario","Texto","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.centroHospitalario"],
+["detalle_sintomas_secuelas_asegurado","Síntomas o secuelas","Texto","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.detalleSintomasSecuelas"],
+["detalle_sintomas_secuelas_tomador","Síntomas o secuelas","Texto","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.detalleSintomasSecuelas"],
+["cv_vacunacion_completa_sars_cov2_covid_asegurado_si","Vacunación completa SARS-CoV-2: Sí","Casilla","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.indicadorVacunacionCompletaSarsCov2"],
+["cv_vacunacion_completa_sars_cov2_covid_asegurado_no","Vacunación completa SARS-CoV-2: No","Casilla","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.indicadorVacunacionCompletaSarsCov2"],
+["cv_vacunacion_completa_sars_cov2_covid_tomador_si","Vacunación completa SARS-CoV-2: Sí","Casilla","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.indicadorVacunacionCompletaSarsCov2"],
+["cv_vacunacion_completa_sars_cov2_covid_tomador_no","Vacunación completa SARS-CoV-2: No","Casilla","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.indicadorVacunacionCompletaSarsCov2"],
+["fecha_ultima_dosis_sars_cov2_asegurado_dia","Fecha de última dosis SARS-CoV-2 (día)","Fecha (parte)","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.fechaUltimaDosisSarsCov2"],
+["fecha_ultima_dosis_sars_cov2_asegurado_mes","Fecha de última dosis SARS-CoV-2 (mes)","Fecha (parte)","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.fechaUltimaDosisSarsCov2"],
+["fecha_ultima_dosis_sars_cov2_asegurado_ano","Fecha de última dosis SARS-CoV-2 (año)","Fecha (parte)","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.fechaUltimaDosisSarsCov2"],
+["fecha_ultima_dosis_sars_cov2_tomador_dia","Fecha de última dosis SARS-CoV-2 (día)","Fecha (parte)","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.fechaUltimaDosisSarsCov2"],
+["fecha_ultima_dosis_sars_cov2_tomador_mes","Fecha de última dosis SARS-CoV-2 (mes)","Fecha (parte)","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.fechaUltimaDosisSarsCov2"],
+["fecha_ultima_dosis_sars_cov2_tomador_ano","Fecha de última dosis SARS-CoV-2 (año)","Fecha (parte)","Información del Riesgo","COVID","datosFormulario.personas[].riesgo[].covid.fechaUltimaDosisSarsCov2"],
+["detalle_otro_beneficiario_beneficiario_1","Detalle otro beneficiario","Texto","Beneficiarios","Beneficiarios","datosFormulario.personas[].detalleOtroBeneficiario"],
+["detalle_otro_beneficiario_beneficiario_2","Detalle otro beneficiario","Texto","Beneficiarios","Beneficiarios","datosFormulario.personas[].detalleOtroBeneficiario"],
+["detalle_otro_beneficiario_beneficiario_3","Detalle otro beneficiario","Texto","Beneficiarios","Beneficiarios","datosFormulario.personas[].detalleOtroBeneficiario"],
+["detalle_otro_beneficiario_beneficiario_4","Detalle otro beneficiario","Texto","Beneficiarios","Beneficiarios","datosFormulario.personas[].detalleOtroBeneficiario"],
+["detalle_otro_beneficiario_beneficiario_5","Detalle otro beneficiario","Texto","Beneficiarios","Beneficiarios","datosFormulario.personas[].detalleOtroBeneficiario"],
+["interes_asegurable_otro_beneficiario_beneficiario_1","Interés asegurable","Texto","Beneficiarios","Beneficiarios","datosFormulario.personas[].interesAsegurableOtroBeneficiario"],
+["interes_asegurable_otro_beneficiario_beneficiario_2","Interés asegurable","Texto","Beneficiarios","Beneficiarios","datosFormulario.personas[].interesAsegurableOtroBeneficiario"],
+["interes_asegurable_otro_beneficiario_beneficiario_3","Interés asegurable","Texto","Beneficiarios","Beneficiarios","datosFormulario.personas[].interesAsegurableOtroBeneficiario"],
+["interes_asegurable_otro_beneficiario_beneficiario_4","Interés asegurable","Texto","Beneficiarios","Beneficiarios","datosFormulario.personas[].interesAsegurableOtroBeneficiario"],
+["interes_asegurable_otro_beneficiario_beneficiario_5","Interés asegurable","Texto","Beneficiarios","Beneficiarios","datosFormulario.personas[].interesAsegurableOtroBeneficiario"],
+["cv_agregar_beneficiario_beneficiario_1_si","¿Desea agregar beneficiarios?: Sí","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].indicadorAgregarBeneficiario"],
+["cv_agregar_beneficiario_beneficiario_1_no","¿Desea agregar beneficiarios?: No","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].indicadorAgregarBeneficiario"],
+["cv_agregar_beneficiario_beneficiario_2_si","¿Desea agregar beneficiarios?: Sí","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].indicadorAgregarBeneficiario"],
+["cv_agregar_beneficiario_beneficiario_2_no","¿Desea agregar beneficiarios?: No","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].indicadorAgregarBeneficiario"],
+["cv_agregar_beneficiario_beneficiario_3_si","¿Desea agregar beneficiarios?: Sí","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].indicadorAgregarBeneficiario"],
+["cv_agregar_beneficiario_beneficiario_3_no","¿Desea agregar beneficiarios?: No","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].indicadorAgregarBeneficiario"],
+["cv_agregar_beneficiario_beneficiario_4_si","¿Desea agregar beneficiarios?: Sí","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].indicadorAgregarBeneficiario"],
+["cv_agregar_beneficiario_beneficiario_4_no","¿Desea agregar beneficiarios?: No","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].indicadorAgregarBeneficiario"],
+["cv_agregar_beneficiario_beneficiario_5_si","¿Desea agregar beneficiarios?: Sí","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].indicadorAgregarBeneficiario"],
+["cv_agregar_beneficiario_beneficiario_5_no","¿Desea agregar beneficiarios?: No","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].indicadorAgregarBeneficiario"],
+["cv_parentesco_beneficiario_1_madre","Parentesco: madre","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_1_padre","Parentesco: padre","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_1_hijo","Parentesco: hijo","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_1_hermano","Parentesco: hermano","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_1_conyuge","Parentesco: conyuge","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_1_otro","Parentesco: otro","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_2_madre","Parentesco: madre","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_2_padre","Parentesco: padre","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_2_hijo","Parentesco: hijo","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_2_hermano","Parentesco: hermano","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_2_conyuge","Parentesco: conyuge","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_2_otro","Parentesco: otro","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_3_madre","Parentesco: madre","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_3_padre","Parentesco: padre","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_3_hijo","Parentesco: hijo","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_3_hermano","Parentesco: hermano","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_3_conyuge","Parentesco: conyuge","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_3_otro","Parentesco: otro","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_4_madre","Parentesco: madre","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_4_padre","Parentesco: padre","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_4_hijo","Parentesco: hijo","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_4_hermano","Parentesco: hermano","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_4_conyuge","Parentesco: conyuge","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_4_otro","Parentesco: otro","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_5_madre","Parentesco: madre","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_5_padre","Parentesco: padre","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_5_hijo","Parentesco: hijo","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_5_hermano","Parentesco: hermano","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_5_conyuge","Parentesco: conyuge","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["cv_parentesco_beneficiario_5_otro","Parentesco: otro","Casilla","Beneficiarios","Beneficiarios","datosFormulario.personas[].codigoParentesco"],
+["porcentaje_beneficiario_1","Porcentaje","Texto","Beneficiarios","Beneficiarios","datosFormulario.personas[].porcentaje"],
+["porcentaje_beneficiario_2","Porcentaje","Texto","Beneficiarios","Beneficiarios","datosFormulario.personas[].porcentaje"],
+["porcentaje_beneficiario_3","Porcentaje","Texto","Beneficiarios","Beneficiarios","datosFormulario.personas[].porcentaje"],
+["porcentaje_beneficiario_4","Porcentaje","Texto","Beneficiarios","Beneficiarios","datosFormulario.personas[].porcentaje"],
+["porcentaje_beneficiario_5","Porcentaje","Texto","Beneficiarios","Beneficiarios","datosFormulario.personas[].porcentaje"],
+["cv_cliente_da_consentimiento_solicitud_si","Autorización: Sí","Casilla","Declaraciones y Autorización","Autorizaciones","datosFormulario.datosGenerales.indicadorClienteDaConsentimiento"],
+["cv_cliente_da_consentimiento_solicitud_no","Autorización: No","Casilla","Declaraciones y Autorización","Autorizaciones","datosFormulario.datosGenerales.indicadorClienteDaConsentimiento"],
+["cv_cliente_da_consentimiento_asegurado_si","Consentimiento: Sí","Casilla","Declaraciones y Autorización","Autorizaciones","datosFormulario.personas[].indicadorClienteDaConsentimiento"],
+["cv_cliente_da_consentimiento_asegurado_no","Consentimiento: No","Casilla","Declaraciones y Autorización","Autorizaciones","datosFormulario.personas[].indicadorClienteDaConsentimiento"],
+["cv_cliente_da_consentimiento_tomador_si","Consentimiento: Sí","Casilla","Declaraciones y Autorización","Autorizaciones","datosFormulario.personas[].indicadorClienteDaConsentimiento"],
+["cv_cliente_da_consentimiento_tomador_no","Consentimiento: No","Casilla","Declaraciones y Autorización","Autorizaciones","datosFormulario.personas[].indicadorClienteDaConsentimiento"],
+["cv_acepta_terminos_solicitud_si","Acepta términos: Sí","Casilla","Declaraciones y Autorización","Declaraciones Legales","datosFormulario.datosGenerales.indicadorAceptaTerminos"],
+["cv_acepta_terminos_solicitud_no","Acepta términos: No","Casilla","Declaraciones y Autorización","Declaraciones Legales","datosFormulario.datosGenerales.indicadorAceptaTerminos"]
+];
+/*DIC:end*/
+const dicNorm=s=>fbSlug(String(s||"").replace(/[¿?:]/g,""));
+const dicPathKey=p=>String(p||"").replace(/\[(\d*|i)\]/gi,"[]");          /* [0] / [i] / [] → [] */
+const dicLoose=p=>String(p||"").replace(/\[(\d*|i)\]/gi,"");              /* sin corchetes: lista ≈ objeto */
+let DIC_IX=null;
+function dicIx(){
+  if(DIC_IX)return DIC_IX;
+  const by=new Map(),path=new Map(),loose=new Map();
+  DIC.forEach((d,i)=>{[d[0],...d[1]].forEach(n=>{const k=dicNorm(n);if(!k)return;if(!by.has(k))by.set(k,[]);if(!by.get(k).includes(i))by.get(k).push(i)});
+    const pk=dicPathKey(d[4]);if(!path.has(pk))path.set(pk,i);const lk=dicLoose(d[4]);if(!loose.has(lk))loose.set(lk,i)});
+  return DIC_IX={by,path,loose,toks:DIC.map(d=>[d[0],...d[1]].map(n=>fbToks(n)))};
+}
+/* candidatos del diccionario para un texto: nombre web / sinónimo / nombre PDF exacto; si no, similitud ≥ 1.0 */
+function dicFind(label,ctx){
+  const k=dicNorm(label);if(!k||!DIC.length)return[];const I=dicIx();
+  let c=(I.by.get(k)||[]).slice();
+  if(!c.length){const t=fbToks(label);let best=0;
+    DIC.forEach((d,i)=>{const s=Math.max(0,...I.toks[i].map(x=>fbSim(t,x)));if(s>=1&&s>=best){if(s>best){best=s;c=[]}c.push(i)}})}
+  if(c.length>1&&ctx){const ct=fbToks(ctx);c=c.map(i=>[i,fbSim(ct,fbToks(DIC[i][2]+" "+DIC[i][3]))]).sort((a,b)=>b[1]-a[1]).map(x=>x[0])}
+  return c;
+}
+/* una ruta del JSON contra el diccionario: ok (igual) / est (igual salvo lista vs objeto) / none */
+function dicPathSt(path){
+  if(!path||!DIC.length)return{st:"none",i:-1};const I=dicIx();
+  const a=I.path.get(dicPathKey(path));if(a!=null)return{st:"ok",i:a};
+  const b=I.loose.get(dicLoose(path));return b!=null?{st:"est",i:b}:{st:"none",i:-1};
+}
+/* la ruta del diccionario en el JSON cargado */
+function dicJsonPath(ruta){
+  const k=dicPathKey(ruta),l=dicLoose(ruta);
+  const a=ST.paths.find(p=>dicPathKey(p.path)===k);if(a)return{path:a.path,st:"ok"};
+  const b=ST.paths.find(p=>dicLoose(p.path)===l);return b?{path:b.path,st:"est"}:null;
+}
+/* entrada del diccionario de una pregunta: primero por su ruta JSON, después por el nombre */
+function dicOf(q){
+  if(!q||!DIC.length)return null;const r=fbRoot(q);
+  if(q.json){const s=dicPathSt(q.json);if(s.st!=="none")return{i:s.i,by:"ruta"}}
+  const c=dicFind(q.label,secTitle(r.sid)+" "+(r.sub||""));if(!c.length)return null;
+  const inJ=c.find(i=>{const j=dicJsonPath(DIC[i][4]);return j&&j.st==="ok"})??c.find(i=>dicJsonPath(DIC[i][4]))??c[0];
+  return{i:inJ,by:"nombre"};
+}
+/* estado de la pregunta vs. el diccionario: ok / est (lista vs objeto) / dif (otra ruta) / sinruta / none */
+function dicState(q){
+  const o=dicOf(q);if(!o)return{st:"none"};const d=DIC[o.i];
+  if(!q.json)return{st:"sinruta",d};
+  if(dicPathKey(q.json)===dicPathKey(d[4]))return{st:"ok",d};
+  if(dicLoose(q.json)===dicLoose(d[4]))return{st:"est",d};
+  return{st:"dif",d};
+}
+const DIC_TXT={ok:"Coincide",est:"Distinta (lista / objeto)",dif:"Distinta",sinruta:"Sin ruta",none:"No está"};
+function f2DicChip(q){
+  if(q.parentId||!DIC.length)return"";const s=dicState(q);if(s.st==="none")return"";
+  const r=tplPath(s.d[4]);
+  return s.st==="ok"?`<span class="dchip ok" title="Diccionario INS: ${esc(s.d[0])} · ${esc(r)}">✓ Diccionario</span>`
+    :s.st==="sinruta"?`<span class="dchip sug" title="Diccionario INS: ${esc(s.d[0])}">Diccionario: ${esc(r)}</span>`
+    :`<span class="dchip dif" title="El diccionario dice ${esc(r)}">≠ Diccionario${s.st==="est"?" · lista/objeto":""}</span>`;
+}
+function f2DicBlk(q){
+  if(q.parentId||!DIC.length)return"";const o=dicOf(q);
+  if(!o)return`<div class="f2e-blk"><div class="f2e-h">Diccionario INS</div><p class="hint">Esta pregunta no está en el Diccionario INS.</p></div>`;
+  const d=DIC[o.i],s=dicState(q),jp=ST.paths.length?dicJsonPath(d[4]):null;
+  const enJ=!ST.paths.length?"No hay JSON cargado.":jp?(jp.st==="ok"?"✓ Está en el JSON cargado.":`≠ En el JSON es distinta (lista / objeto): ${esc(tplPath(jp.path))}`):"No está en el JSON cargado.";
+  return`<div class="f2e-blk"><div class="f2e-h">Diccionario INS</div>
+    <p class="hint"><b>${esc(d[0])}</b> · ${esc(d[2])} › ${esc(d[3])} · ${d[5]?"visible":"oculto"}${o.by==="ruta"?" · reconocida por la ruta":""}</p>
+    <div class="chips"><span class="dchip ${s.st==="ok"?"ok":s.st==="sinruta"?"sug":"dif"}">${esc(tplPath(d[4]))}</span>${s.st==="ok"?"":`<button class="mini" data-act="usedic">Usar la del diccionario</button>`}</div>
+    <p class="hint">${enJ}</p></div>`;
+}
+function f2UseDic(q){
+  const o=dicOf(q);if(!o)return;const d=DIC[o.i];const jp=dicJsonPath(d[4]);
+  const prev=ST.Q.find(x=>x!==q&&x.json===(jp?jp.path:d[4]));if(prev){prev.json=null;prev.jsonOk=false}
+  q.json=jp?jp.path:d[4];q.jsonOk=true;if(!q.sub)q.sub=d[3];if(q.json.includes("[]")&&!q._subRep)q.repeat=true;
+}
+/* Ordenar y ubicar por el diccionario lo que se reconoce con evidencia del JSON (ruta del diccionario en el JSON) */
+function f2DicArrange(){
+  if(!DIC.length)return 0;let n=0;
+  const secFor=t=>{let s=ST.S.find(x=>x.title===t);if(!s){s={id:ST.nid++,title:t,hidden:fbSlug(t)===fbSlug(SYS_SEC),cond:null,condTxt:"",notes:"",subs:[]};ST.S.push(s)}return s};
+  ST.Q.forEach(q=>{if(q.parentId)return;
+    let i=-1,strong=false;
+    if(q.json){const s=dicPathSt(q.json);if(s.st!=="none"){i=s.i;strong=true}}
+    if(i<0){const c=dicFind(q.label,secTitle(q.sid));const hit=c.find(k=>{const j=dicJsonPath(DIC[k][4]);return j&&!ST.Q.some(x=>x!==q&&x.json===j.path)});
+      if(hit!=null){i=hit;const j=dicJsonPath(DIC[i][4]);q.json=j.path;q.jsonOk=j.st==="ok";strong=true}}
+    if(!strong)return;const d=DIC[i];q.dicI=i;
+    if(dicNorm(q.label)!==dicNorm(d[0])&&!d[1].some(x=>dicNorm(x)===dicNorm(q.label)))q.label=d[0];
+    const s=secFor(d[2]);q.sid=s.id;fbParts(q).forEach(p=>p.sid=s.id);q.sub=d[3];
+    if(!d[5]&&!s.hidden){q.oculto=true;q.hiddenSrc=q.hiddenSrc||"Viene del sistema";q.rule=q.rule||"Viene del sistema"}
+    if(q.json&&q.json.includes("[]")&&!q._subRep)q.repeat=true;n++});
+  /* datos del JSON sin pregunta que están en el diccionario: van con su paso / sección, visibles u ocultos según el diccionario */
+  const owned=new Set(ST.Q.map(q=>q.json).filter(Boolean));
+  ST.paths.forEach(p=>{if(owned.has(p.path))return;const st=dicPathSt(p.path);if(st.st==="none")return;const d=DIC[st.i];
+    const s=secFor(d[2]);const q=f2FromPath(p,s.id);q.label=d[0];q.sub=d[3];q.inPdf=false;q.jsonOk=st.st==="ok";q.dicI=st.i;owned.add(p.path);
+    if(!d[5]){q.origin="Sistema (no se ve)";q.hiddenSrc="Viene del sistema";q.rule="Viene del sistema";if(!s.hidden)q.oculto=true}n++});
+  return n;
+}
+/* ── Paso 2 · Armar el formulario (preguntas primero) ── */
+const fbPretty=s=>{const t=String(s||"").replace(/_/g," ").trim();return t?t[0].toUpperCase()+t.slice(1):""};
+function fbSlug(t){return String(t||"").toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"_").replace(/^_|_$/g,"")}
+function fbType(base,kind){
+  if(kind==="sig")return"Firma";
+  if(kind==="check"||kind==="radio")return"Casilla de aceptación";
+  if(/correo|email|mail/.test(base))return"Email";
+  if(/telefono|celular|movil/.test(base))return"Teléfono";
+  if(/fecha/.test(base))return"Fecha";
+  if(/porcentaje/.test(base))return"Porcentaje";
+  if(/monto|importe|suma|prima/.test(base))return"Importe";
+  if(/edad|cantidad/.test(base))return"Número";
+  if(/observ|comentario/.test(base))return"Texto largo";
+  return"Texto corto";
+}
+const fbToks=s=>String(s).replace(/\[\]/g," ").replace(/([a-z])([A-Z])/g,"$1 $2").toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g,"").split(/[^a-z0-9]+/).filter(t=>t&&!["de","del","la","el","los","las","y","lista","datos","dato","seccion","sus","su","a","en"].includes(t));
+const fbEq=(a,b)=>a===b||(a.length>=5&&b.length>=5&&a.slice(0,5)===b.slice(0,5));
+function fbSim(qt,pt,repA,repB){
+  if(!qt.length||!pt.length)return 0;
+  const hit=qt.filter(a=>pt.some(b=>fbEq(a,b))).length;if(!hit)return 0;
+  let s=2*hit/(qt.length+pt.length);
+  if(fbEq(qt[qt.length-1],pt[pt.length-1]))s+=0.25;
+  if(repA!=null&&repB!=null&&!!repA!==!!repB)s-=0.3;
+  return s;
+}
+const secTitle=sid=>(ST.S.find(s=>s.id===sid)||{}).title||"";
+const fbQ=id=>ST.Q.find(q=>q.id===id);
+const fbParts=q=>ST.Q.filter(x=>x.parentId===q.id);
+const fbOwner=i=>ST.Q.find(q=>q.boxes.includes(i));
+const qToks=q=>fbToks(secTitle(q.sid)+" "+q.label);
+const fbRoot=q=>q.parentId?(fbQ(q.parentId)||q):q;
+const fbRootSub=q=>fbRoot(q).sub||"";
+function fbNewSub(title){return{title,hidden:false,rep:0,cond:null,condTxt:"",notes:""}}
+/* Sección y subsección de una pregunta; "hidden" = no se le muestra a la persona */
+function fbArea(q){const r=fbRoot(q);const s=ST.S.find(x=>x.id===r.sid);const sub=s&&s.subs?s.subs.find(u=>u.title===(r.sub||""))||null:null;return{s,sub,hidden:!!((s&&s.hidden)||(sub&&sub.hidden)||r.oculto)}}
+const fbHiddenArea=q=>fbArea(q).hidden;
+/* Orden del formulario: sección → subsección (orden de s.subs) → orden en ST.Q */
+function fbOrdered(){return ST.S.flatMap(s=>{const subs=["",...(s.subs||[]).map(u=>u.title)];const rk=q=>Math.max(0,subs.indexOf(fbRootSub(q)));return ST.Q.map((q,i)=>[q,i]).filter(([q])=>q.sid===s.id).sort((a,b)=>rk(a[0])-rk(b[0])||a[1]-b[1]).map(x=>x[0])})}
+function fbNorm(){
+  ST.S.forEach(s=>{if(!Array.isArray(s.subs))s.subs=[]});
+  ST.S.sort((a,b)=>(b.hidden?1:0)-(a.hidden?1:0));
+  ST.Q.forEach(q=>{if(q.parentId||!q.sub)return;const s=ST.S.find(x=>x.id===q.sid);if(s&&!s.subs.some(u=>u.title===q.sub))s.subs.push(fbNewSub(q.sub))});
+  ST.Q.filter(q=>!q.parentId).forEach(q=>{const{sub}=fbArea(q);const sr=sub&&+sub.rep>0?+sub.rep:0;
+    if(sr){q.repeat=true;q._subRep=true}else if(q._subRep){q.repeat=false;delete q._subRep}
+    q.rep=q.repeat?(sr||+q.repMax||q.boxes.length||5):0});
+  ST.Q.filter(q=>q.parentId).forEach(q=>{const par=fbQ(q.parentId);if(!par)return;q.sid=par.sid;q.repeat=par.repeat;q.rep=par.rep});
+}
+/* Fecha en 3 casilleros y preguntas que en el PDF van partidas («En el PDF va partido en») */
+const fbSlots=q=>String(q.split||"").split("/").map(x=>x.trim()).filter(Boolean);
+function fbDateOrder(q){const sl=fbSlots(q).map(x=>{const k=fbSlug(x);return/^d/.test(k)?"dia":/^m/.test(k)?"mes":/^a/.test(k)?"ano":null});return sl.length===3&&sl.every(Boolean)&&new Set(sl).size===3?sl:["dia","mes","ano"]}
+function fbRoleOpts(q){if(q.boxes.length<2)return null;if(q.type==="Fecha")return[["dia","día"],["mes","mes"],["ano","año"]];const sl=fbSlots(q);return sl.length>=2?sl.map(x=>[x,x]):null}
+const fbRoleLabel=(q,v)=>q.type==="Fecha"?({dia:"día",mes:"mes",ano:"año"})[v]||v:v;
+function fbRoleOf(q,i,autoOnly){
+  if(!autoOnly&&q.roles&&q.roles[i]!=null)return q.roles[i];
+  const bs=[...q.boxes].sort((a,b)=>a-b);const k=bs.indexOf(i);
+  if(q.type==="Fecha"){const sfx=((rn.rows[i]&&rn.rows[i].nuevo.match(/_(dia|mes|ano)$/))||[])[1];if(sfx)return sfx;return bs.length===3?fbDateOrder(q)[k]:null}
+  const sl=fbSlots(q);return sl.length>=2?(sl[k]??null):null;
+}
+function fbSplitSuggest(label){
+  const b=fbSlug(label);
+  if(/nombre_completo|nombre_y_apellido/.test(b))return["Primer nombre","Segundo nombre","Primer apellido","Segundo apellido"];
+  if(/apellido/.test(b))return["Primer apellido","Segundo apellido"];
+  if(/nombre/.test(b))return["Primer nombre","Segundo nombre"];
+  if(/direccion|domicilio/.test(b))return["Calle","Número","Barrio"];
+  if(/telefono|celular/.test(b))return["Código de área","Número"];
+  return["Parte 1","Parte 2"];
+}
+function fbNewQ(label,sid,extra){
+  const q=Object.assign({id:ST.nid++,sid:sid??f2ActiveSid(),label:label||"Nueva pregunta",type:fbType(fbSlug(label||""),"text"),req:true,boxes:[],opts:[],repeat:false,rep:0,json:null,jsonOk:false,sub:"",inPdf:true,cond:null,origin:"La completa la persona",fmt:"",maxLen:"",ex:"",notes:""},extra||{});
+  ST.Q.push(q);return q;
+}
+function f2ActiveSid(){if(!ST.S.length)ST.S.push({id:ST.nid++,title:"Sección 1",subs:[]});if(!ST.S.some(s=>s.id===ST.activeS))ST.activeS=ST.S[ST.S.length-1].id;return ST.activeS}
+/* sugerencias */
+function f2SuggestJson(q){
+  if(!ST.paths.length)return null;const used=new Set(ST.Q.filter(x=>x!==q&&x.json).map(x=>x.json));
+  {const r=fbRoot(q);for(const i of dicFind(q.label,secTitle(r.sid)+" "+(r.sub||""))){const j=dicJsonPath(DIC[i][4]);if(j&&!used.has(j.path))return j.path}}
+  const bt=q.boxes.length?fbToks(rn.rows[q.boxes[0]].nuevo.replace(/_/g," ").replace(/\d+/g," ").replace(/\b(dia|mes|ano|si|no)\b/g," ")):[];
+  let best=null;ST.paths.forEach(p=>{if(used.has(p.path))return;const pt=fbToks(p.path);const s=Math.max(fbSim(qToks(q),pt,q.repeat,p.arr),bt.length?fbSim(bt,pt,q.repeat,p.arr):0);if(s>=0.75&&(!best||s>best.s))best={p,s}});
+  return best?best.p.path:null;
+}
+function f2SuggestBoxes(q){
+  const qt=qToks(q);const out=[];
+  rn.rows.forEach(r=>{if(fbOwner(r.i))return;const s=fbSim(qt,fbToks(r.nuevo.replace(/_/g," ").replace(/\d+/g," ")));if(s>=0.6)out.push({i:r.i,s})});
+  out.sort((a,b)=>b.s-a.s);return out.slice(0,6).map(o=>o.i);
+}
+function f2AutoJson(q){if(fbParts(q).length){if(q.json&&!q.jsonOk)q.json=null;return}if(!q.json){const p=f2SuggestJson(q);if(p){q.json=p;q.jsonOk=false}}
+  /* sección del diccionario solo con evidencia: reconocida por la ruta o ya en el paso del diccionario */
+  if(!q.parentId&&!q.sub){const o=dicOf(q);if(o&&(o.by==="ruta"||DIC[o.i][2]===secTitle(q.sid)))q.sub=DIC[o.i][3]}}
+/* proponer (opcional) */
+function f2ProposeFromPdf(){
+  const rows=rn.rows,used=new Set(rows.filter(r=>fbOwner(r.i)).map(r=>r.i));
+  const secMap=new Map(ST.S.map(s=>[fbSlug(s.title),s.id]));
+  const rawSec={};rows.forEach(r=>{const k=r.nuevo.split("_")[0].replace(/\d+$/,"");if(r.sec&&!rawSec[k])rawSec[k]=r.sec});
+  const nice=t=>{t=String(t||"").trim();if(!t)return"";const low=t===t.toUpperCase()?t.toLowerCase():t;return low[0].toUpperCase()+low.slice(1)};
+  const sidFor=name=>{const k=name.split("_")[0].replace(/\d+$/,"");if(!secMap.has(k)){const s={id:ST.nid++,title:nice(rawSec[k])||fbPretty(k)};const ex=ST.S.find(x=>fbSlug(x.title)===fbSlug(s.title));if(ex){secMap.set(k,ex.id)}else{ST.S.push(s);secMap.set(k,s.id)}}return secMap.get(k)};
+  const mk=(name,label,type,idx,extra)=>{
+    const ex=ST.Q.find(q=>!q.parentId&&!q.boxes.length&&!fbParts(q).length&&fbToks(q.label).join("_")===fbToks(label).join("_"));
+    if(ex){ex.boxes=idx.slice();if(ex.type==="Texto corto"||ex.type===fbType(fbSlug(ex.label),"text"))ex.type=type;if(extra&&extra.opts&&!ex.opts.length)ex.opts=extra.opts;if(extra&&extra.repeat)ex.repeat=true;idx.forEach(i=>used.add(i));return ex}
+    const q=fbNewQ(label,sidFor(name),Object.assign({type,boxes:idx},extra||{}));idx.forEach(i=>used.add(i));return q};
+  const group=(re,fn)=>{const g=new Map();rows.forEach(r=>{if(used.has(r.i))return;const m=r.nuevo.match(re);if(!m)return;const k=fn(m,r);if(k==null)return;if(!g.has(k))g.set(k,[]);g.get(k).push(r)});return g};
+  const byName=new Map(rows.map(r=>[r.nuevo,r]));
+  const lab=(b,idx)=>{const r=idx&&idx.length?rows[idx[0]]:byName.get(b);let raw=r&&(r.qlab||r.lab||(idx&&idx.length===1?r.olab:""));if(raw&&/^¿/.test(raw)&&!/\?$/.test(raw))raw+="?";return raw?nice(raw.replace(/\s*\/\s*$/,"")):fbPretty(b.split("_").slice(1).join("_")||b)};
+  let n=0;
+  group(/^(.+)_(dia|mes|ano)$/,m=>m[1]).forEach((rs,b)=>{if(rs.length<2)return;mk(b,lab(b,rs.map(r=>r.i)),"Fecha",rs.map(r=>r.i));n++});
+  group(/^(.+)_(si|no)$/,m=>m[1]).forEach((rs,b)=>{if(rs.length!==2)return;mk(b,lab(b,rs.map(r=>r.i)),"Sí / No",rs.map(r=>r.i),{opts:rs.map(r=>({label:r.nuevo.endsWith("_si")?"Sí":"No",code:"",box:r.i}))});n++});
+  group(/^([a-z]+)(\d+)_(.+)$/,m=>m[1]+"_"+m[3]).forEach((rs,b)=>{if(rs.length<2)return;rs.sort((a,c)=>a.i-c.i);mk(b,lab(b,rs.map(r=>r.i)),fbType(b,rs[0].kind==="check"?"text":rs[0].kind),rs.map(r=>r.i),{repeat:true});n++});
+  group(/^(.+)_(\d+)$/,m=>m[1]).forEach((rs,b)=>{if(rs.length<2)return;rs.sort((a,c)=>a.i-c.i);mk(b,lab(b,rs.map(r=>r.i)),fbType(b,"text"),rs.map(r=>r.i),{repeat:true});n++});
+  {const cks=rows.filter(r=>!used.has(r.i)&&(r.kind==="check"||r.kind==="radio")).sort((a,b)=>a.i-b.i);
+   const common=(a,b)=>{const x=a.split("_"),y=b.split("_");let k=0;while(k<x.length&&k<y.length&&x[k]===y[k])k++;return x.slice(0,k)};
+   let g=[];const flush=()=>{if(g.length>=2){const base=g.reduce((acc,r)=>common(acc,r.nuevo).join("_"),g[0].nuevo);mk(base,lab(base,g.map(r=>r.i)),"Una opción de una lista",g.map(r=>r.i),{opts:g.map(r=>({label:r.olab?nice(r.olab):fbPretty(r.nuevo.slice(base.length+1)),code:"",box:r.i}))});n++}g=[]};
+   cks.forEach(r=>{if(g.length){const pre=g.reduce((acc,x)=>common(acc,x.nuevo).join("_"),r.nuevo);const prev=g[g.length-1];if(pre.split("_").length>=2&&r.i-prev.i<=2&&r.page===prev.page){g.push(r);return}flush()}g.push(r)});flush();}
+  rows.forEach(r=>{if(used.has(r.i))return;mk(r.nuevo,lab(r.nuevo,[r.i])||fbPretty(r.nuevo),fbType(r.nuevo,r.kind),[r.i]);n++});
+  ST.Q.forEach(f2AutoJson);return n;
+}
+function f2ProposeFromJson(){
+  const owned=new Set(ST.Q.map(q=>q.json).filter(Boolean));let n=0;const secMap=new Map(ST.S.map(s=>[fbSlug(s.title),s.id]));
+  ST.paths.forEach(p=>{if(owned.has(p.path))return;const parts=p.path.replace(/\[\]/g,"").split(".");const top=parts[0];
+    if(!secMap.has(fbSlug(top))){const s={id:ST.nid++,title:fbPretty(fbToks(top).join(" "))};ST.S.push(s);secMap.set(fbSlug(top),s.id)}
+    f2FromPath(p,secMap.get(fbSlug(top)));n++});
+  return n;
+}
+function f2FromPath(p,sid){
+  const last=p.path.replace(/\[\]/g,"").split(".").pop();const label=fbPretty(fbToks(last).join(" "));
+  const ex=p.ex;let type=typeof ex==="boolean"?"Sí / No":typeof ex==="number"?"Número":/^\d{4}-\d{2}-\d{2}/.test(String(ex))?"Fecha":fbType(fbSlug(label),"text");
+  return fbNewQ(label,sid,{type,json:p.path,jsonOk:true,repeat:!!p.arr});
+}
+/* acciones */
+function f2Select(id,open){ST.selQ=id;ST.side=null;if(open)ST.open=id;fbNorm();f2Form();f2PaintPdf();f2Json();f2Stats();
+  if(id!=null){const q=fbQ(id);if(q&&q.boxes.length)f2ScrollBox(q.boxes[0])}f2Side()}
+function f2ScrollBox(i){const b=document.querySelector(`#f2-pdf .rn-box[data-i="${i}"]`);const P=$("#f2-pdf");if(!b||!P)return;const pr=P.getBoundingClientRect(),br=b.getBoundingClientRect();if(br.top<pr.top+20||br.bottom>pr.bottom-20)P.scrollTop+=br.top-pr.top-P.clientHeight/3}
+function f2AddBox(q,i){
+  const o=fbOwner(i);if(o&&o!==q){o.boxes=o.boxes.filter(x=>x!==i);o.opts.forEach(op=>{if(op.box===i)op.box=null})}
+  if(!q.boxes.includes(i))q.boxes.push(i);
+  const r=rn.rows[i];
+  if(q.type==="Fecha"||fbSlots(q).length>=2){q.roles=q.roles||{};if(q.roles[i]==null){const sfx=q.type==="Fecha"?(r.nuevo.match(/_(dia|mes|ano)$/)||[])[1]:null;const used=new Set(q.boxes.filter(b=>b!==i&&q.roles[b]!=null).map(b=>q.roles[b]));const pool=q.type==="Fecha"?fbDateOrder(q):fbSlots(q);const v=sfx||pool.find(p=>!used.has(p));if(v)q.roles[i]=v}}
+  if(/opción/.test(q.type)&&(r.kind==="check"||r.kind==="radio")&&!q.opts.some(op=>op.box===i)){
+    const free=q.opts.find(op=>op.box==null);if(free)free.box=i;else q.opts.push({label:fbPretty(r.nuevo.split("_").pop()),code:"",box:i})}
+  if(q.type==="Sí / No"&&(r.kind==="check"||r.kind==="radio")){const lab=/_no$/.test(r.nuevo)?"No":"Sí";let op=q.opts.find(o=>o.label===lab);if(!op){op={label:lab,code:"",box:null};q.opts.push(op)}op.box=i}
+}
+function f2RemoveBox(q,i){q.boxes=q.boxes.filter(x=>x!==i);if(q.roles)delete q.roles[i];q.opts.forEach(op=>{if(op.box===i)op.box=null})}
+function f2Move(qid,sid,beforeId,sub){
+  const q=fbQ(qid);if(!q||q.parentId)return;
+  const block=[q,...fbParts(q)];ST.Q=ST.Q.filter(x=>!block.includes(x));
+  q.sid=sid;block.forEach(b=>b.sid=sid);
+  const bq=beforeId!=null?fbQ(beforeId):null;
+  if(sub!==undefined)q.sub=sub;else if(bq)q.sub=fbRootSub(bq);
+  else{const s=ST.S.find(x=>x.id===sid);const subs=(s&&s.subs)||[];if(q.sub&&!subs.some(u=>u.title===q.sub))q.sub=subs.length?subs[subs.length-1].title:""}
+  const at=bq?ST.Q.indexOf(bq):-1;
+  if(at<0)ST.Q.push(...block);else ST.Q.splice(at,0,...block);
+}
+function f2Step(qid,d){
+  const q=fbQ(qid);const list=fbOrdered().filter(x=>!x.parentId);const k=list.indexOf(q);const t=list[k+d];
+  if(!t)return;
+  const same=t.sid===q.sid&&fbRootSub(t)===fbRootSub(q);
+  if(d<0){if(same)f2Move(qid,t.sid,t.id);else f2Move(qid,t.sid,null,fbRootSub(t))}
+  else{if(!same)f2Move(qid,t.sid,t.id);else{const a=list[k+2];f2Move(qid,t.sid,a&&a.sid===t.sid&&fbRootSub(a)===fbRootSub(t)?a.id:null,fbRootSub(t))}}
+}
+/* render: formulario */
+const f2TypeIcon=t=>({"Texto corto":"Aa","Texto largo":"¶","Número":"#","Importe":"$","Porcentaje":"%","Fecha":"📅","Hora":"⏱","Email":"@","Teléfono":"☎","Una opción de una lista":"◉","Varias opciones de una lista":"☑","Sí / No":"S/N","Casilla de aceptación":"☐","Firma":"✍","Texto informativo":"i"})[t]||"Aa";
+function f2CondChip(o){return o.cond&&o.cond.qid&&fbQ(o.cond.qid)?`<span class="cchip">👁 si ${esc(condText(o))}</span>`:o.condTxt?`<span class="cchip rev" title="No se pudo leer la condición">👁 (revisar) ${esc(o.condTxt)}</span>`:""}
+function f2Form(){
+  fbNorm();
+  const qs=($("#f2-qs").value||"").trim().toLowerCase();
+  const ord=fbOrdered();
+  const hit=q=>q.label.toLowerCase().includes(qs)||(q.json||"").toLowerCase().includes(qs)||q.boxes.some(i=>rn.rows[i].nuevo.includes(qs));
+  const html=ST.S.map((s,si)=>{
+    const items=ord.filter(q=>q.sid===s.id);
+    const vis=qs?items.filter(hit):items;
+    if(qs&&!vis.length)return"";
+    const fold=!qs&&ST.coll.has("s|"+s.id);
+    const groups=[{t:"",u:null},...s.subs.map(u=>({t:u.title,u}))];
+    const body=groups.map(g=>{const gq=vis.filter(q=>fbRootSub(q)===g.t);if(!gq.length&&(!g.u||qs))return"";
+      const col=!qs&&ST.coll.has(s.id+"|"+g.t);
+      const head=g.u?`<div class="f2sub"><button class="f2sub-t" data-subfold="${esc(g.t)}" aria-expanded="${!col}">${col?"▸":"▾"} ${esc(g.t)}</button>${g.u.hidden?'<span class="hidb">oculta</span>':""}${+g.u.rep>0?`<span class="pchip">se repite hasta ${g.u.rep}</span>`:""}${f2CondChip(g.u)}<span class="cnt">${gq.filter(q=>!q.parentId).length}</span></div>`:"";
+      return`<div class="f2sub-g" data-sub="${esc(g.t)}">${head}${col?"":gq.map(f2Card).join("")}</div>`}).join("");
+    return `<div class="f2s${s.id===ST.activeS?" act":""}" data-sid="${s.id}" style="--secbg:var(${s.hidden?"--sec-h":"--sec"+(si%8)})">
+      <div class="f2s-h" draggable="true" data-sdrag="${s.id}"><span class="grip" title="Arrastrá para mover la sección">⋮⋮</span><button class="mini f2fold" data-sact="fold" aria-expanded="${!fold}" aria-label="${fold?"Abrir":"Cerrar"} la sección">${fold?"▸":"▾"}</button><input class="f2s-t" data-sid="${s.id}" value="${esc(s.title)}" aria-label="Nombre de la sección">${s.hidden?'<span class="hidb">oculta</span>':""}${f2CondChip(s)}<span class="cnt">${items.filter(q=>!q.parentId).length}</span>
+        <button class="mini" data-sact="up" ${si===0?"disabled":""} aria-label="Subir sección">↑</button><button class="mini" data-sact="down" ${si===ST.S.length-1?"disabled":""} aria-label="Bajar sección">↓</button><button class="mini${s.hidden?" hid":""}" data-sact="hide" title="Una sección oculta no se le muestra a la persona, pero sus datos van al PDF y al JSON">${s.hidden?"Oculta":"Visible"}</button><button class="mini" data-sact="del" aria-label="Borrar sección">Borrar</button></div>
+      <div class="f2s-b" data-drop="${s.id}">${fold?"":(body||`<p class="f2-empty">Sección vacía. Escribí una pregunta arriba o arrastrá una acá.</p>`)}</div></div>`}).join("");
+  $("#f2-form").innerHTML=html||'<p class="f2-empty">No hay resultados para esa búsqueda.</p>';
+}
+function f2Card(q){
+  const parts=fbParts(q);const sel=q.id===ST.selQ,open=q.id===ST.open;
+  const pdf=q.parentId?`<span class="pchip">PDF: junto con «${esc((fbQ(q.parentId)||{}).label)}»</span>`:(q.inPdf===false&&!q.boxes.length)?`<span class="pchip">PDF: no va</span>`:q.boxes.length?`<span class="pchip ok">PDF: ${q.boxes.length}${q.repeat?" filas":""}</span>`:`<span class="pchip none">PDF: —</span>`;
+  const js=q.json?`<span class="jchip ${q.jsonOk?"ok":"sug"}">${q.jsonOk?"✓ ":"¿"}${esc(tplPath(q.json))}${q.jsonOk?"":"?"}</span>${q.jsonOk?"":`<button class="mini ok" data-act="okj" title="Confirmar este dato del JSON">✓ Aceptar</button><button class="mini" data-act="nojson" title="Descartar la sugerencia" aria-label="Descartar">×</button>`}`:`<span class="jchip none">JSON: —</span>`;
+  return `<div class="f2q${sel?" sel":""}${q.parentId?" part":""}${parts.length?" joined":""}" data-id="${q.id}" ${q.parentId?"":'draggable="true"'}>
+    <div class="f2q-row">${q.parentId?'<span class="grip">↳</span>':'<span class="grip" title="Arrastrá para mover">⋮⋮</span>'}<span class="ti" title="${esc(q.type)}">${f2TypeIcon(parts.length?"Texto corto":q.type)}</span>
+      <span class="lb">${esc(q.label)}${q.req&&!parts.length?'<b class="req">*</b>':""}</span>
+      ${q.parentId?"":`<button class="mini" data-act="up" aria-label="Subir">↑</button><button class="mini" data-act="down" aria-label="Bajar">↓</button>`}</div>
+    <div class="f2q-meta">${f2DicChip(q)}${q.oculto?'<span class="hidb">dato oculto</span>':""}${parts.length?`<span class="pchip">se arma con ${parts.map(p=>esc(p.label)).join(" + ")}</span>`:""}${q.cond&&q.cond.qid&&fbQ(q.cond.qid)?`<span class="cchip">👁 si ${esc(condText(q))}</span>`:""}${q.origin&&q.origin!=="La completa la persona"?`<span class="pchip">${esc(q.origin)}</span>`:""}${pdf}${js}</div>
+    ${open?f2Editor(q):""}</div>`;
+}
+function f2Editor(q){
+  const parts=fbParts(q);const list=/opción|Sí \/ No/.test(q.type);
+  const sugB=q.parentId?[]:f2SuggestBoxes(q);
+  const canSplit=!q.parentId&&/Texto|Número/.test(q.type);
+  const boxOpts=q.boxes.map(i=>`<option value="${i}">${esc(rn.rows[i].nuevo)}</option>`).join("");
+  return `<div class="f2e">
+    <div class="f2e-g"><label>Pregunta<input data-e="label" value="${esc(q.label)}"></label>
+      <label>Tipo<select data-e="type">${TIPOS.map(t=>`<option${t===q.type?" selected":""}>${esc(t)}</option>`).join("")}</select></label>
+      ${q.parentId?"":`<label>Sección<select data-e="sid">${ST.S.map(s=>`<option value="${s.id}"${s.id===q.sid?" selected":""}>${esc(s.title)}</option>`).join("")}</select></label>`}</div>
+    ${q.parentId?"":`<div class="f2e-g"><label>Subsección<input data-e="sub" value="${esc(q.sub||"")}" list="f2-subs-${q.sid}" placeholder="Opcional"><datalist id="f2-subs-${q.sid}">${((ST.S.find(s=>s.id===q.sid)||{}).subs||[]).map(u=>u.title).map(v=>`<option value="${esc(v)}">`).join("")}</datalist></label><label>Origen<select data-e="origin">${ORIGENES.map(o=>`<option${o===(q.origin||ORIGENES[0])?" selected":""}>${o}</option>`).join("")}</select></label></div>`}
+    <div class="f2e-c"><label><input type="checkbox" data-e="req" ${q.req?"checked":""}> Obligatoria</label>${q.parentId?"":`<label><input type="checkbox" data-e="inpdf" ${q.inPdf!==false?"checked":""}> Se ve en el PDF</label><label><input type="checkbox" data-e="repeat" ${q.repeat?"checked":""}> Se repite (una fila por casillero)</label>${q.repeat?`<label>Máximo <input type="number" data-e="repmax" min="1" max="99" value="${q.rep||5}" style="width:64px"></label>`:""}<label><input type="checkbox" data-e="oculto" ${q.oculto?"checked":""}> Dato oculto (no se le muestra)</label>`}</div>
+    ${q.parentId?"":(()=>{const c=q.cond||{};const t=c.qid?fbQ(c.qid):null;const cands=fbOrdered().filter(x=>x!==q&&!x.parentId&&!fbParts(x).length);
+      const valCtl=t&&t.opts.length?`<select data-e="cval"><option value="">—</option>${t.opts.map(o=>`<option${o.label===c.val?" selected":""}>${esc(o.label)}</option>`).join("")}</select>`:t&&t.type==="Sí / No"?`<select data-e="cval"><option value="">—</option><option${c.val==="Sí"?" selected":""}>Sí</option><option${c.val==="No"?" selected":""}>No</option></select>`:`<input data-e="cval" value="${esc(c.val||"")}" placeholder="Valor">`;
+      return `<div class="f2e-blk"><div class="f2e-h">Visibilidad</div><div class="f2e-cond"><span class="hint">Se muestra si</span><select data-e="cq"><option value="">siempre</option>${cands.map(x=>`<option value="${x.id}"${x.id===c.qid?" selected":""}>${esc(x.label)}</option>`).join("")}</select>${t?`<select data-e="cop">${CONDOPS.map(o=>`<option${o===(c.op||CONDOPS[0])?" selected":""}>${o}</option>`).join("")}</select>${/igual/.test(c.op||CONDOPS[0])?valCtl:""}`:""}</div></div>`})()}
+    ${q.parentId?"":`<div class="f2e-g"><label>Reglas / formato<input data-e="rule" value="${esc(q.rule||[q.fmt,q.maxLen?`máx. ${q.maxLen}`:""].filter(Boolean).join(" · "))}" placeholder="Ej.: 9 dígitos · email · máx. 50"></label><label>Ejemplo<input data-e="ex" value="${esc(q.ex||"")}"></label><label>En el PDF va partido en<input data-e="split" value="${esc(q.split||"")}" placeholder="Ej.: día / mes / año · código / número"></label>${fbHiddenArea(q)?`<label>Valor o cálculo<input data-e="calc" value="${esc(q.calc||"")}"></label>`:""}<label>Notas<input data-e="notes" value="${esc(q.notes||"")}"></label></div>${q.condTxt&&!(q.cond&&q.cond.qid)?`<p class="hint" style="color:var(--warn)">Condición escrita en la plantilla que no se pudo leer: «${esc(q.condTxt)}». Elegila arriba en Visibilidad.</p>`:""}`}
+    ${list?`<div class="f2e-blk"><div class="f2e-h">Opciones</div>${q.opts.map((o,k)=>`<div class="f2e-opt"><input data-o="label" data-k="${k}" value="${esc(o.label)}" placeholder="Opción" aria-label="Opción"><input data-o="code" data-k="${k}" value="${esc(o.code||"")}" placeholder="Código" aria-label="Código" class="code"><select data-o="box" data-k="${k}" aria-label="Casillero"><option value="">sin casilla</option>${q.boxes.map(i=>`<option value="${i}"${o.box===i?" selected":""}>${esc(rn.rows[i].nuevo)}</option>`).join("")}</select><button class="mini" data-act="delopt" data-k="${k}" aria-label="Quitar opción">×</button></div>`).join("")}<button class="mini" data-act="addopt">+ Opción</button></div>`:""}
+    <div class="f2e-blk"><div class="f2e-h">PDF</div>
+      ${q.parentId?`<p class="hint">Va escrito junto con las otras partes en el casillero de «${esc((fbQ(q.parentId)||{}).label)}».</p>`:`
+      <div class="chips">${q.boxes.map(i=>`<span class="bchip">${esc(rn.rows[i].nuevo)}${f2RoleSel(q,i)}<button data-act="unbox" data-i="${i}" aria-label="Quitar casillero">×</button></span>`).join("")||'<span class="hint">Sin casilleros. Tocá casilleros libres en el PDF para sumarlos.</span>'}</div>
+      ${sugB.length?`<div class="chips sug"><span class="hint">Sugeridos:</span>${sugB.map(i=>`<button class="bchip add" data-act="addbox" data-i="${i}">+ ${esc(rn.rows[i].nuevo)}</button>`).join("")}</div>`:""}`}</div>
+    ${f2DicBlk(q)}
+    <div class="f2e-blk"><div class="f2e-h">JSON</div>
+      ${q.json?`<div class="chips"><span class="jchip ${q.jsonOk?"ok":"sug"}">${esc(tplPath(q.json))}</span>${q.jsonOk?"":`<button class="mini" data-act="okj">Confirmar</button>`}<button class="mini" data-act="nojson">Quitar</button></div>`:`<span class="hint">${ST.paths.length?"Tocá un dato en el panel del JSON para unirlo.":"No hay JSON cargado."}</span>`}</div>
+    ${canSplit?`<div class="f2e-blk"><div class="f2e-h">Partes ${parts.length?"":"<span class='hint'>(opcional)</span>"}</div>
+      ${parts.length?`<div class="f2e-parts">${parts.map((p,k)=>`<div class="f2e-opt"><input data-p="${p.id}" value="${esc(p.label)}" aria-label="Parte ${k+1}"><button class="mini" data-act="delpart" data-pid="${p.id}" aria-label="Quitar parte">×</button></div>`).join("")}</div>
+        <div class="f2e-c"><button class="mini" data-act="addpart">+ Parte</button><label>Entre partes <select data-e="sep">${[[" ","espacio"],[", ","coma"],[" - ","guion"],["","nada"]].map(([v,l])=>`<option value="${v}"${(q.sep??" ")===v?" selected":""}>${l}</option>`).join("")}</select></label><button class="mini" data-act="join">Volver a una sola pregunta</button></div>
+        <p class="hint">Se pregunta por separado. En el PDF se escribe: <b>${parts.map(p=>esc(p.label)).join(esc(q.sep??" ").replace(/ /g,"&nbsp;")||"")}</b></p>`
+      :`<button class="mini" data-act="split">Partir en varias preguntas…</button> <span class="hint">Ej.: Nombre → Primer nombre + Segundo nombre, juntas en el mismo casillero.</span>`}</div>`:""}
+    <div class="f2e-c" style="justify-content:space-between"><button class="mini" data-act="close">Cerrar</button><button class="mini danger" data-act="del">Borrar pregunta</button></div>
+  </div>`;
+}
+function f2RoleSel(q,i){const o=fbRoleOpts(q);if(!o)return"";const cur=(q.roles||{})[i]||"";const a=fbRoleOf(q,i,true);return`<select class="rsel" data-e="role" data-i="${i}" aria-label="Qué parte va en ${esc(rn.rows[i].nuevo)}"><option value="">auto${a?` (${esc(fbRoleLabel(q,a))})`:""}</option>${o.map(([v,l])=>`<option value="${esc(v)}"${v===cur?" selected":""}>${esc(l)}</option>`).join("")}</select>`}
+/* render: PDF */
+async function f2RenderPdf(){
+  const tok=ST.pdfTok=(ST.pdfTok||0)+1;
+  const box=$("#f2-pdf");box.innerHTML="";if(!rn.pdf){box.innerHTML='<p class="f2-empty">Primero cargá un PDF en el paso 0.</p>';return}
+  const avail=box.clientWidth-20;if(avail<50)return;
+  for(let p=1;p<=rn.pdf.numPages;p++){
+    const page=await rn.pdf.getPage(p);if(tok!==ST.pdfTok)return;const base=page.getViewport({scale:1});
+    const scale=Math.max(0.4,avail/base.width);const vp=page.getViewport({scale});const dpr=Math.min(2,window.devicePixelRatio||1);
+    const wrap=document.createElement("div");wrap.className="rn-page";wrap.style.width=vp.width+"px";
+    const c=document.createElement("canvas");c.width=vp.width*dpr;c.height=vp.height*dpr;c.style.width=vp.width+"px";
+    wrap.appendChild(c);box.appendChild(wrap);
+    await page.render({canvasContext:c.getContext("2d"),viewport:page.getViewport({scale:scale*dpr})}).promise;if(tok!==ST.pdfTok)return;
+    rn.rows.filter(r=>r.page===p).forEach(r=>{[r.rect,...r.extra.map(e=>[e.x0,e.y0,e.x1,e.y1])].forEach(rc=>{
+      const [x0,y0,x1,y1]=vp.convertToViewportRectangle(rc);const b=document.createElement("button");
+      b.className="rn-box fb";b.dataset.i=r.i;Object.assign(b.style,{left:Math.min(x0,x1)+"px",top:Math.min(y0,y1)+"px",width:Math.abs(x1-x0)+"px",height:Math.abs(y1-y0)+"px"});
+      b.addEventListener("click",e=>f2BoxClick(r.i,e));wrap.appendChild(b)})});
+  }
+  ST.pdfDone=true;f2PaintPdf();
+}
+function f2PaintPdf(){
+  const sel=fbQ(ST.selQ);const own=sel?(sel.parentId?fbQ(sel.parentId):sel):null;const ps=($("#f2-ps").value||"").trim().toLowerCase();
+  document.querySelectorAll("#f2-pdf .rn-box").forEach(b=>{const i=+b.dataset.i;const o=fbOwner(i);
+    b.className="rn-box fb "+(!o?"free":own&&o.id===own.id?"multi":"inq")+(ps&&rn.rows[i].nuevo.includes(ps)?" hit":"");
+    b.title=rn.rows[i].nuevo+(o?" · "+o.label:" · libre")});
+  const res=$("#f2-pres");
+  if(ps){const hits=rn.rows.filter(r=>r.nuevo.includes(ps)).slice(0,30);res.innerHTML=hits.length?hits.map(r=>`<button class="mini" data-goto="${r.i}">${esc(r.nuevo)}${fbOwner(r.i)?"":" ·libre"}</button>`).join(""):'<span class="hint">Ningún casillero con ese nombre.</span>';res.hidden=false}
+  else{res.hidden=true;res.innerHTML=""}
+}
+function f2BoxClick(i,e){
+  if(f2Solo()){const o=fbOwner(i);if(o){ST.activeS=fbRoot(o).sid;f2Select(o.id,false)}ST.side={box:i};f2PaintPdf();f2Side();return}
+  const o=fbOwner(i);let sel=fbQ(ST.selQ);if(sel&&sel.parentId)sel=fbQ(sel.parentId);const m=$("#f2-msg");
+  if(sel&&o===sel){f2RemoveBox(sel,i);m.textContent=`Quitado de «${sel.label}».`}
+  else if(sel&&!o){f2AddBox(sel,i);f2AutoJson(sel);m.textContent=`${rn.rows[i].nuevo} → «${sel.label}».`}
+  else if(sel&&o&&(e.ctrlKey||e.metaKey||e.shiftKey)){f2AddBox(sel,i);m.textContent=`${rn.rows[i].nuevo} pasó de «${o.label}» a «${sel.label}».`}
+  else if(o){ST.activeS=o.sid;f2Select(o.id,true);return}
+  else{m.textContent="Elegí primero una pregunta (a la izquierda) y después tocá sus casilleros.";return}
+  f2Select(ST.selQ,true);
+}
+/* render: JSON */
+function f2Json(){
+  const box=$("#f2-json");if(!ST.paths.length){box.innerHTML='<p class="f2-empty">No hay JSON cargado. Podés volver al paso 1 o seguir sin él.</p>';return}
+  const js=($("#f2-js").value||"").trim().toLowerCase();const sel=fbQ(ST.selQ);
+  const by=new Map();ST.Q.forEach(q=>{if(q.json)by.set(q.json,q)});
+  const fil=$("#f2-jf").value;
+  box.innerHTML=ST.paths.filter(p=>(!js||p.path.toLowerCase().includes(js)||String(p.ex).toLowerCase().includes(js))&&(fil==="all"||(fil==="free"&&!by.has(p.path))||(fil==="used"&&by.has(p.path)))).map(p=>{const u=by.get(p.path);const mine=sel&&u&&u.id===sel.id;
+    return `<div class="jp${u?" used":""}${mine?" mine":""}" data-path="${esc(p.path)}"><button class="jp-m" data-path="${esc(p.path)}"><span class="mono">${esc(tplPath(p.path))}${p.arr?' <span class="tag">se repite</span>':""}${(()=>{const t=dicPathSt(p.path);return t.st==="ok"?' <span class="tag dic" title="'+esc(DIC[t.i][0])+'">✓ dic</span>':t.st==="est"?' <span class="tag dicx" title="'+esc(DIC[t.i][0])+' · lista / objeto">≠ dic</span>':""})()}</span><span class="ex">${esc(typeof p.ex==="string"?p.ex:JSON.stringify(p.ex))}${u?` · ${esc(u.label)}${u.jsonOk?"":" (sugerido)"}`:""}</span></button><button class="mini" data-newq="${esc(p.path)}" title="Crear una pregunta con este dato">+ pregunta</button></div>`}).join("")||'<p class="f2-empty">Nada coincide con la búsqueda.</p>';
+}
+function f2Stats(){
+  const roots=ST.Q.filter(q=>!q.parentId);const asked=ST.Q.filter(q=>!fbParts(q).length);
+  const noPdf=roots.filter(q=>!q.boxes.length&&!fbParts(q).length).length;
+  const free=rn.rows.filter(r=>!fbOwner(r.i)).length;const by=new Set(ST.Q.map(q=>q.json).filter(Boolean));
+  const freeP=ST.paths.filter(p=>!by.has(p.path)).length;const sug=ST.Q.filter(q=>q.json&&!q.jsonOk).length;const noJ=asked.filter(q=>!q.json).length;
+  $("#f2-stats").innerHTML=`<span><b>${ST.S.length}</b> secciones · <b>${asked.length}</b> preguntas</span><span class="${free?"w":""}"><b>${free}</b> de ${rn.rows.length} casilleros libres</span>${ST.paths.length?`<span class="${freeP?"w":""}"><b>${freeP}</b> de ${ST.paths.length} datos del JSON libres</span>`:""}${noJ?`<span><b>${noJ}</b> preguntas sin JSON</span>`:""}${sug?`<span class="s"><b>${sug}</b> sugerencias sin confirmar</span>`:""}${DIC.length?(()=>{const st=asked.filter(q=>!q.parentId).map(q=>dicState(q).st);const ok=st.filter(x=>x==="ok").length,dif=st.filter(x=>x==="est"||x==="dif").length;return`<span><b>${ok}</b> coinciden con el Diccionario INS${dif?` · <b>${dif}</b> distintas`:""}</span>`})():""}`;
+}
+function fbAll(){f2Form();f2Json();f2Stats();if(!ST.pdfDone)f2RenderPdf();else f2PaintPdf()}
+function f2View(v){
+  ST.view2=v;const show={all:[1,1,1],fp:[1,1,0],fj:[1,0,1],pj:[0,1,1],p:[0,1,0],f:[1,0,0],j:[0,0,1]}[v]||[1,1,1];
+  ["f2-cf","f2-cp","f2-cj"].forEach((id,k)=>{$("#"+id).hidden=!show[k]});$("#f2-side").hidden=!f2Solo();
+  $("#f2-grid").className="f2-grid v-"+v;
+  document.querySelectorAll("#st2 .vsel button").forEach(b=>b.classList.toggle("on",b.dataset.v===v));
+  if(show[1]){ST.pdfDone=false;f2RenderPdf()}
+  f2Side();
+}
+/* vistas de a una (Solo PDF / Solo formulario / Solo JSON): tocar algo muestra al costado su casillero, su pregunta y su ruta */
+const f2Solo=()=>["p","f","j"].includes(ST.view2);
+function f2Side(){
+  const el=$("#f2-side");if(!el||el.hidden)return;
+  const s=ST.side||{};let q=null,box=null,path=null;
+  if(s.box!=null){box=s.box;q=fbOwner(box)||null}
+  else if(s.path){path=s.path;q=ST.Q.find(x=>x.json===path)||null}
+  else q=fbQ(ST.selQ)||null;
+  const root=q?fbRoot(q):null;if(q&&!path)path=q.json||(root&&root.json)||null;
+  const boxes=box!=null?[box]:q?q.boxes:[];const p=path?ST.paths.find(x=>x.path===path):null;
+  if(!q&&box==null&&!path){el.innerHTML=`<div class="f2-sc"><b>Tocá un campo</b><span class="hint">${ST.view2==="p"?"Tocá un casillero del PDF":ST.view2==="j"?"Tocá un dato del JSON":"Tocá una pregunta"} y acá ves cómo se llama en las otras dos: el casillero, la pregunta y la ruta.</span></div>`;return}
+  const pdf=boxes.length?`<div class="f2-sv mono">${boxes.map(i=>{const r=rn.rows[i];const ro=q&&!q.parentId&&fbRoleOpts(q)?fbRoleOf(q,i):null;const o=q?q.opts.find(x=>x.box===i):null;return`${esc(r.nuevo)}${o?` <span class="hint">(${esc(o.label)})</span>`:ro?` <span class="hint">(${esc(fbRoleLabel(q,ro))})</span>`:""}`}).join("<br>")}</div><div class="hint">Página ${[...new Set(boxes.map(i=>rn.rows[i].page))].join(", ")}</div>`
+    :q&&q.inPdf===false?`<div class="f2-sv mut">No va en el PDF</div>`:`<div class="f2-sv bad">Sin casillero</div>`;
+  const form=q?`<div class="f2-sv">${esc(q.label)}${q.parentId&&root?` <span class="hint">· parte de «${esc(root.label)}»</span>`:""}</div><div class="hint">${esc(secTitle(root.sid))}${fbRootSub(q)?" › "+esc(fbRootSub(q)):""}</div><div class="hint">${esc(q.type)} · ${q.req?"obligatoria":"opcional"}${q.oculto||fbHiddenArea(q)?" · dato oculto":""}</div>${q.opts.length?`<div class="hint">${q.opts.map(o=>esc(o.label)+(o.code?` = <span class="mono">${esc(o.code)}</span>`:"")).join(" · ")}</div>`:""}`
+    :`<div class="f2-sv bad">No es ninguna pregunta</div><div class="hint">${box!=null?"Este casillero está libre.":"Ninguna pregunta usa este dato."}</div>`;
+  const json=path?`<div class="f2-sv mono">${esc(tplPath(path))}</div>${p?`<div class="hint">Ejemplo: <span class="mono">${esc(typeof p.ex==="string"?p.ex:JSON.stringify(p.ex))}</span></div>`:`<div class="hint bad">No está en el JSON del cliente.</div>`}${q&&q.json===path&&!q.jsonOk?'<div class="hint" style="color:var(--warn)">Sugerida, falta confirmar.</div>':""}`
+    :`<div class="f2-sv bad">Sin ruta JSON</div>`;
+  const go=(v,t)=>ST.view2===v?"":`<button class="mini" data-side-go="${v}">Ver en ${t}</button>`;
+  el.innerHTML=`<div class="f2-sc"><div class="f2-sh">PDF</div>${pdf}${boxes.length?go("p","el PDF"):""}</div>
+    <div class="f2-sc"><div class="f2-sh">Formulario</div>${form}${q?go("f","el formulario"):""}</div>
+    <div class="f2-sc"><div class="f2-sh">JSON</div>${json}${path&&p?go("j","el JSON"):""}</div>
+    <p class="hint">Para unir o cambiar casilleros y datos, usá «Los 3» o las vistas de a dos.</p>`;
+}
+$("#f2-side").addEventListener("click",e=>{
+  const v=e.target.dataset.sideGo;if(!v)return;const s=ST.side;f2View(v);
+  if(v==="p"){const {q,box}=(()=>{const q0=s&&s.box!=null?null:fbQ(ST.selQ);return{q:q0,box:s&&s.box!=null?s.box:q0&&q0.boxes[0]}})();const t=setInterval(()=>{if(ST.pdfDone){clearInterval(t);if(box!=null)f2ScrollBox(box)}},100);setTimeout(()=>clearInterval(t),8000)}
+  if(v==="f"){const q=fbQ(ST.selQ);const c=q&&document.querySelector(`#f2-form [data-id="${q.id}"]`);const col=$("#f2-form");if(c&&col){const r=c.getBoundingClientRect(),cr=col.getBoundingClientRect();col.scrollTop+=r.top-cr.top-col.clientHeight/3}}
+  if(v==="j"){const path=(s&&s.path)||(fbQ(ST.selQ)||{}).json;const j=path&&[...document.querySelectorAll("#f2-json .jp")].find(x=>x.dataset.path===path);const col=$("#f2-json");if(j&&col){const r=j.getBoundingClientRect(),cr=col.getBoundingClientRect();col.scrollTop+=r.top-cr.top-col.clientHeight/3}}
+  ST.side=s;f2Side();
+});
+/* eventos */
+$("#f2-quick").addEventListener("keydown",e=>{
+  if(e.key!=="Enter")return;e.preventDefault();const t=e.target.value.trim();if(!t)return;
+  const q=fbNewQ(t,f2ActiveSid());f2AutoJson(q);e.target.value="";
+  $("#f2-msg").textContent=`Agregada «${t}» en «${secTitle(q.sid)}». Elegila y tocá sus casilleros en el PDF.`;
+  f2Select(q.id,false);
+});
+$("#f2-addsec").addEventListener("click",()=>{const s={id:ST.nid++,title:`Sección ${ST.S.length+1}`};ST.S.push(s);ST.activeS=s.id;f2Form();f2Stats();const inp=document.querySelector(`.f2s-t[data-sid="${s.id}"]`);if(inp){inp.focus();inp.select()}});
+$("#f2-qs").addEventListener("input",f2Form);
+$("#f2-ps").addEventListener("input",f2PaintPdf);
+$("#f2-js").addEventListener("input",f2Json);
+$("#f2-jf").addEventListener("change",f2Json);
+$("#f2-pres").addEventListener("click",e=>{const g=e.target.dataset.goto;if(g==null)return;const i=+g;const b=document.querySelector(`#f2-pdf .rn-box[data-i="${i}"]`);if(b){f2ScrollBox(i);b.classList.add("flash");setTimeout(()=>b.classList.remove("flash"),900)}});
+document.querySelectorAll("#st2 .vsel button").forEach(b=>b.addEventListener("click",()=>f2View(b.dataset.v)));
+$("#f2-propdf").addEventListener("click",()=>{if(ST.Q.length&&!$("#f2-propdf").dataset.sure){$("#f2-propdf").dataset.sure="1";$("#f2-msg").textContent="Ya hay preguntas: se agregan las que falten (solo con casilleros libres). Tocá de nuevo para confirmar.";return}delete $("#f2-propdf").dataset.sure;const n=f2ProposeFromPdf();$("#f2-msg").textContent=n?`Se propusieron ${n} preguntas desde los casilleros libres del PDF. Revisalas, renombralas y movelas.`:"No quedan casilleros libres.";fbAll()});
+$("#f2-projson").addEventListener("click",()=>{if(!ST.paths.length){$("#f2-msg").textContent="No hay JSON cargado.";return}const n=f2ProposeFromJson();$("#f2-msg").textContent=n?`Se crearon ${n} preguntas desde los datos libres del JSON.`:"Todos los datos del JSON ya tienen pregunta.";fbAll()});
+$("#f2-okall").addEventListener("click",()=>{ST.Q.forEach(q=>{if(q.json)q.jsonOk=true});fbAll()});
+$("#f2-form").addEventListener("click",e=>{
+  const sh=e.target.closest(".f2s");if(sh)ST.activeS=+sh.dataset.sid;
+  const sf=e.target.closest("[data-subfold]");if(sf&&sh){const k=sh.dataset.sid+"|"+sf.dataset.subfold;if(ST.coll.has(k))ST.coll.delete(k);else ST.coll.add(k);f2Form();return}
+  const sa=e.target.dataset.sact;
+  if(sa==="fold"&&sh){const k="s|"+sh.dataset.sid;if(ST.coll.has(k))ST.coll.delete(k);else ST.coll.add(k);f2Form();return}
+  if(sa){const sid=+sh.dataset.sid;const k=ST.S.findIndex(s=>s.id===sid);
+    if(sa==="hide"){ST.S[k].hidden=!ST.S[k].hidden}
+    if(sa==="up"&&k>0){[ST.S[k-1],ST.S[k]]=[ST.S[k],ST.S[k-1]]}
+    if(sa==="down"&&k<ST.S.length-1){[ST.S[k+1],ST.S[k]]=[ST.S[k],ST.S[k+1]]}
+    if(sa==="del"){const has=ST.Q.some(q=>q.sid===sid);if(has&&e.target.dataset.sure!=="1"){e.target.dataset.sure="1";e.target.textContent="¿Borrar con sus preguntas?";return}ST.Q=ST.Q.filter(q=>q.sid!==sid);ST.S.splice(k,1);if(!ST.S.length)f2ActiveSid()}
+    fbAll();return}
+  const card=e.target.closest(".f2q");if(!card){if(sh)document.querySelectorAll(".f2s").forEach(x=>x.classList.toggle("act",+x.dataset.sid===ST.activeS));return}
+  const q=fbQ(+card.dataset.id);const act=e.target.dataset.act;const m=$("#f2-msg");
+  if(!act){if(e.target.closest(".f2e"))return;if(ST.open===q.id&&ST.selQ===q.id){ST.open=null;f2Select(q.id)}else f2Select(q.id,true);return}
+  const par=q;
+  switch(act){
+    case"up":f2Step(q.id,-1);break;
+    case"down":f2Step(q.id,1);break;
+    case"close":ST.open=null;break;
+    case"del":{if(e.target.dataset.sure!=="1"){e.target.dataset.sure="1";e.target.textContent="¿Seguro? Tocá de nuevo";return}ST.Q=ST.Q.filter(x=>x!==q&&x.parentId!==q.id);if(ST.selQ===q.id)ST.selQ=null;break}
+    case"unbox":f2RemoveBox(q,+e.target.dataset.i);break;
+    case"addbox":f2AddBox(q,+e.target.dataset.i);f2AutoJson(q);break;
+    case"okj":q.jsonOk=true;break;
+    case"usedic":f2UseDic(q);m.textContent=`«${q.label}» ↔ ${tplPath(q.json)} (Diccionario INS)`;break;
+    case"nojson":q.json=null;q.jsonOk=false;break;
+    case"addopt":q.opts.push({label:`Opción ${q.opts.length+1}`,code:"",box:null});break;
+    case"delopt":q.opts.splice(+e.target.dataset.k,1);break;
+    case"split":{const names=fbSplitSuggest(q.label);q.sep=" ";if(q.json&&!q.jsonOk)q.json=null;names.forEach(n=>{const p=fbNewQ(n,q.sid,{parentId:q.id,type:fbType(fbSlug(n),"text"),req:q.req});});const ps=fbParts(q);ST.Q=ST.Q.filter(x=>!ps.includes(x));ST.Q.splice(ST.Q.indexOf(q)+1,0,...ps);ps.forEach(f2AutoJson);m.textContent=`«${q.label}» quedó partida en ${names.join(" + ")}. Cambiá los nombres si hace falta.`;break}
+    case"addpart":{const ps=fbParts(q);const p=fbNewQ(`Parte ${ps.length+1}`,q.sid,{parentId:q.id,type:"Texto corto",req:false});ST.Q=ST.Q.filter(x=>x!==p);const last=ps.length?ST.Q.indexOf(ps[ps.length-1]):ST.Q.indexOf(q);ST.Q.splice(last+1,0,p);break}
+    case"delpart":ST.Q=ST.Q.filter(x=>x.id!==+e.target.dataset.pid);if(!fbParts(q).length)delete q.sep;break;
+    case"join":ST.Q=ST.Q.filter(x=>x.parentId!==q.id);delete q.sep;break;
+  }
+  ST.selQ=ST.Q.includes(q)?q.id:ST.selQ;fbAll();
+});
+$("#f2-form").addEventListener("input",e=>{
+  const t=e.target;
+  if(t.classList.contains("f2s-t")){const s=ST.S.find(x=>x.id===+t.dataset.sid);if(s)s.title=t.value;return}
+  const card=t.closest(".f2q");if(!card)return;const q=fbQ(+card.dataset.id);
+  if(t.dataset.e==="label"){q.label=t.value;const lb=card.querySelector(".f2q-row .lb");if(lb)lb.firstChild.textContent=t.value;return}
+  if(t.dataset.p){const p=fbQ(+t.dataset.p);if(p)p.label=t.value;return}
+  if(t.dataset.o){const op=q.opts[+t.dataset.k];if(!op)return;if(t.dataset.o==="box")op.box=t.value===""?null:+t.value;else op[t.dataset.o]=t.value}
+});
+$("#f2-form").addEventListener("change",e=>{
+  const t=e.target;const card=t.closest(".f2q");if(t.classList.contains("f2s-t")){f2Json();return}if(!card)return;const q=fbQ(+card.dataset.id);
+  const k=t.dataset.e;
+  if(k==="type"){q.type=t.value;if(q.type==="Sí / No"&&!q.opts.length)q.opts=[{label:"Sí",code:"",box:null},{label:"No",code:"",box:null}];fbAll();return}
+  if(k==="sid"){f2Move(q.id,+t.value,null);ST.activeS=+t.value;fbAll();return}
+  if(k==="req"){q.req=t.checked;f2Form();return}
+  if(k==="inpdf"){q.inPdf=t.checked;f2Form();f2Stats();return}
+  if(k==="origin"){q.origin=t.value;f2Form();return}
+  if(k==="sub"){q.sub=t.value.trim();f2Form();return}
+  if(k==="role"){q.roles=q.roles||{};if(t.value)q.roles[+t.dataset.i]=t.value;else delete q.roles[+t.dataset.i];return}
+  if(k==="split"){q.split=t.value.trim();f2Form();return}
+  if(k==="repmax"){const n=parseInt(t.value,10);if(n>0)q.repMax=n;else delete q.repMax;fbNorm();return}
+  if(k==="oculto"){q.oculto=t.checked;f2Form();return}
+  if(k==="fmt"){q.fmt=t.value;return}
+  if(k==="rule"){q.rule=t.value;return}
+  if(k==="calc"){q.calc=t.value;return}
+  if(k==="maxlen"){q.maxLen=t.value;return}
+  if(k==="ex"){q.ex=t.value;return}
+  if(k==="notes"){q.notes=t.value;return}
+  if(k==="cq"){q.cond=t.value?{qid:+t.value,op:"es igual a",val:""}:null;q.condTxt="";f2Form();return}
+  if(k==="cop"){q.cond.op=t.value;f2Form();return}
+  if(k==="cval"){q.cond.val=t.value;f2Form();return}
+  if(k==="repeat"){q.repeat=t.checked;if(q.json&&!q.jsonOk)q.json=null;f2AutoJson(q);fbAll();return}
+  if(k==="sep"){q.sep=t.value;f2Form();return}
+  if(k==="label"||t.dataset.p){if(!q.json||!q.jsonOk){if(!q.jsonOk)q.json=null;f2AutoJson(q)}fbParts(q).forEach(p=>{if(!p.jsonOk){p.json=null;f2AutoJson(p)}});fbAll()}
+});
+/* arrastrar */
+$("#f2-form").addEventListener("dragstart",e=>{
+  const s=e.target.closest("[data-sdrag]");if(s&&e.target===s){e.dataTransfer.setData("text/sid",s.dataset.sdrag);e.dataTransfer.effectAllowed="move";return}
+  const c=e.target.closest(".f2q[draggable=true]");if(c){e.dataTransfer.setData("text/qid",c.dataset.id);e.dataTransfer.effectAllowed="move";c.classList.add("dragging")}
+});
+$("#f2-form").addEventListener("dragend",()=>document.querySelectorAll(".dragging,.drop-before,.drop-in").forEach(x=>x.classList.remove("dragging","drop-before","drop-in")));
+$("#f2-form").addEventListener("dragover",e=>{
+  const types=[...e.dataTransfer.types];if(!types.includes("text/qid")&&!types.includes("text/sid"))return;e.preventDefault();
+  document.querySelectorAll(".drop-before,.drop-in").forEach(x=>x.classList.remove("drop-before","drop-in"));
+  if(types.includes("text/sid")){const s=e.target.closest(".f2s");if(s)s.classList.add("drop-before");return}
+  const c=e.target.closest(".f2q");if(c&&!c.classList.contains("part")){c.classList.add("drop-before");return}
+  const b=e.target.closest(".f2s");if(b)b.classList.add("drop-in");
+});
+$("#f2-form").addEventListener("drop",e=>{
+  e.preventDefault();const sid=e.dataTransfer.getData("text/sid"),qid=e.dataTransfer.getData("text/qid");
+  if(sid){const t=e.target.closest(".f2s");if(!t)return;const a=ST.S.findIndex(s=>s.id===+sid);const mv=ST.S.splice(a,1)[0];const b=ST.S.findIndex(s=>s.id===+t.dataset.sid);ST.S.splice(b<0?ST.S.length:b,0,mv);fbAll();return}
+  if(qid){const c=e.target.closest(".f2q");const s=e.target.closest(".f2s");if(!s)return;
+    if(c&&!c.classList.contains("part")&&+c.dataset.id!==+qid)f2Move(+qid,+s.dataset.sid,+c.dataset.id);else if(!c){const g=e.target.closest(".f2sub-g");f2Move(+qid,+s.dataset.sid,null,g?g.dataset.sub:undefined)}
+    ST.activeS=+s.dataset.sid;fbAll()}
+});
+$("#f2-json").addEventListener("click",e=>{
+  const nq=e.target.dataset.newq;const m=$("#f2-msg");
+  if(nq){const p=ST.paths.find(x=>x.path===nq);if(ST.Q.some(q=>q.json===nq)){m.textContent="Ese dato ya tiene pregunta.";return}const q=f2FromPath(p,f2ActiveSid());m.textContent=`Agregada «${q.label}» en «${secTitle(q.sid)}», unida a ${nq}.`;f2Select(q.id,true);return}
+  const b=e.target.closest(".jp-m");if(!b)return;const path=b.dataset.path;const sel=fbQ(ST.selQ);
+  if(f2Solo()){const o=ST.Q.find(q=>q.json===path);if(o)f2Select(o.id,false);ST.side={path};f2Side();return}
+  if(!sel){m.textContent="Elegí primero una pregunta, o usá «+ pregunta» para crear una con este dato.";return}
+  const prev=ST.Q.find(q=>q.json===path);if(prev&&prev!==sel){prev.json=null;prev.jsonOk=false}
+  sel.json=path;sel.jsonOk=true;if(path.includes("[]")&&!sel.parentId)sel.repeat=true;m.textContent=`«${sel.label}» ↔ ${path}`;fbAll();
+});
+let f2RT;window.addEventListener("resize",()=>{clearTimeout(f2RT);f2RT=setTimeout(()=>{if(ST.cur===2&&rn.pdf){ST.pdfDone=false;f2RenderPdf()}},250)});
+
+/* ── Ficha en Excel (con estilo) ── */
+async function f2Excel(msgEl){
+  const m=msgEl||$("#f2-msg");
+  if(!window.ExcelJS){m.textContent="No se pudo cargar el generador de Excel. Recargá la página.";return}
+  fbNorm();
+  const C={blue:"FF1F4E79",blueL:"FFDCE8F5",amber:"FF9C5700",amberL:"FFFCEBD0",green:"FF17614A",greenL:"FFDDF1E7",gray:"FF4A5160",grayL:"FFEEF0F4",red:"FFB4231D",redL:"FFFBE3E1",ink:"FF1B1F2A",line:"FFD5D9E0",sec:"FF2B3245",white:"FFFFFFFF"};
+  const F=(argb)=>({type:"pattern",pattern:"solid",fgColor:{argb}});
+  const thin={style:"thin",color:{argb:C.line}};const BOX={top:thin,left:thin,bottom:thin,right:thin};
+  const font=(o)=>Object.assign({name:"Arial",size:10,color:{argb:C.ink}},o||{});
+  const wb=new ExcelJS.Workbook();wb.creator="Ficha de formulario";wb.created=new Date();
+  const ord=fbOrdered();const pid=new Map();let n=0;ord.forEach(q=>{if(!fbParts(q).length||true)pid.set(q.id,`P-${String(++n).padStart(3,"0")}`)});
+  const by=new Map();ST.Q.forEach(q=>{if(q.json)by.set(q.json,q)});
+  const asked=ST.Q.filter(q=>!fbParts(q).length);
+  const st={secs:ST.S.length,preg:asked.length,cas:rn.rows.length,casUsed:rn.rows.filter(r=>fbOwner(r.i)).length,js:ST.paths.length,jsUsed:ST.paths.filter(p=>by.has(p.path)).length,sug:ST.Q.filter(q=>q.json&&!q.jsonOk).length};
+  const hdr=(ws,row,cols,fill)=>{cols.forEach((t,k)=>{const c=ws.getCell(row,k+1);c.value=t;c.font=font({bold:true,color:{argb:C.white}});c.fill=F(fill[k]||fill);c.alignment={vertical:"middle",wrapText:true};c.border=BOX});ws.getRow(row).height=30};
+  const band=(ws,row,c1,c2,text,fill)=>{ws.mergeCells(row,c1,row,c2);const c=ws.getCell(row,c1);c.value=text;c.font=font({bold:true,size:9,color:{argb:C.white}});c.fill=F(fill);c.alignment={horizontal:"center",vertical:"middle"}};
+  const stCell=(c,val)=>{const map={"Confirmado":[C.greenL,C.green],"Asignado":[C.greenL,C.green],"Unido":[C.greenL,C.green],"Sugerido":[C.amberL,C.amber],"Falta":[C.redL,C.red],"Libre":[C.redL,C.red],"Sin pregunta":[C.redL,C.red],"No aplica":[C.grayL,C.gray]};const s=map[val];c.value=val;if(s){c.fill=F(s[0]);c.font=font({bold:true,color:{argb:s[1]}})}c.alignment={horizontal:"center",vertical:"top"}};
+  const base=rnBase();
+  /* Portada */
+  const p0=wb.addWorksheet("Portada",{views:[{showGridLines:false}],properties:{tabColor:{argb:C.blue}}});
+  p0.columns=[{width:3},{width:30},{width:60}];
+  p0.getCell("B2").value="Ficha de formulario";p0.getCell("B2").font=font({size:20,bold:true,color:{argb:C.blue}});
+  p0.getCell("B3").value=base;p0.getCell("B3").font=font({size:12,color:{argb:C.gray}});
+  p0.getCell("B4").value=`Generada el ${new Date().toLocaleDateString("es-ES")}`;p0.getCell("B4").font=font({italic:true,color:{argb:C.gray}});
+  let r=6;p0.getCell(`B${r}`).value="Resumen";p0.getCell(`B${r}`).font=font({bold:true,size:12,color:{argb:C.blue}});r++;
+  [["Secciones",st.secs],["Preguntas del formulario",st.preg],["Casilleros del PDF",`${st.casUsed} de ${st.cas} asignados`],["Datos del JSON del cliente",st.js?`${st.jsUsed} de ${st.js} unidos`:"Sin JSON"],["Uniones sugeridas sin confirmar",st.sug]].forEach(([a,b])=>{p0.getCell(`B${r}`).value=a;p0.getCell(`C${r}`).value=b;p0.getCell(`B${r}`).font=font({color:{argb:C.gray}});p0.getCell(`C${r}`).font=font({bold:true});[p0.getCell(`B${r}`),p0.getCell(`C${r}`)].forEach(c=>{c.border={bottom:thin}});r++});
+  r++;p0.getCell(`B${r}`).value="Colores";p0.getCell(`B${r}`).font=font({bold:true,size:12,color:{argb:C.blue}});r++;
+  [["Formulario","Lo que se le pregunta a la persona",C.blue],["PDF","Dónde se escribe cada respuesta",C.amber],["JSON","Cómo sale cada dato para su sistema",C.green],["Verde","Confirmado / asignado",C.green],["Amarillo","Sugerido, falta confirmar",C.amber],["Rojo","Falta o libre",C.red]].forEach(([a,b,col])=>{const c=p0.getCell(`B${r}`);c.value=a;c.fill=F(col);c.font=font({bold:true,color:{argb:C.white}});p0.getCell(`C${r}`).value=b;r++});
+  r++;p0.getCell(`B${r}`).value="Hojas";p0.getCell(`B${r}`).font=font({bold:true,size:12,color:{argb:C.blue}});r++;
+  [["Formulario","Secciones y preguntas, con su PDF y su JSON"],["Opciones","Opciones de cada lista, con código y casilla del PDF"],["JSON del cliente","Cada dato del JSON y la pregunta que lo llena"],["Casilleros PDF","Nombre original y nuevo de cada casillero"],["Pendientes","Lo que falta resolver"]].forEach(([a,b])=>{const c=p0.getCell(`B${r}`);c.value={text:a,hyperlink:`#'${a}'!A1`};c.font=font({color:{argb:"FF2F6FD6"},underline:true});p0.getCell(`C${r}`).value=b;r++});
+  /* Formulario */
+  const w1=wb.addWorksheet("Formulario",{views:[{state:"frozen",ySplit:2,xSplit:4}],properties:{tabColor:{argb:C.blue},outlineProperties:{summaryBelow:false,summaryRight:false}}});
+  /* agrupado: Sección (0) > Subsección (1) > Pregunta (2) > Opciones (3) */
+  const lvl=(r,n)=>{if(n)w1.getRow(r).outlineLevel=n};
+  const cols1=[["ID",8],["Sección",22],["Subsección",18],["#",5],["Pregunta",34],["Tipo de respuesta",22],["Obligatoria",11],["Origen",20],["Se repite",10],["Se arma con / parte de",28],["Se muestra si",32],["Opciones",30],["Reglas / formato",22],["Valor o cálculo",18],["Se ve en el PDF",10],["Casilleros del PDF",42],["Estado PDF",12],["Ruta JSON",40],["Estado JSON",13],["Trazabilidad",34],["Ruta del diccionario",40],["Estado vs. diccionario",16]];
+  const NC=cols1.length;
+  w1.columns=cols1.map(([,w])=>({width:w}));
+  band(w1,1,1,14,"FORMULARIO",C.blue);band(w1,1,15,17,"PDF",C.amber);band(w1,1,18,19,"JSON",C.green);band(w1,1,20,20,"TRAZABILIDAD",C.gray);band(w1,1,21,22,"DICCIONARIO INS",C.blue);
+  hdr(w1,2,cols1.map(x=>x[0]),[...Array(14).fill(C.blue),C.amber,C.amber,C.amber,C.green,C.green,C.gray,C.blue,C.blue]);
+  let row=3;
+  ST.S.forEach(s=>{
+    const qs=ord.filter(q=>q.sid===s.id);
+    w1.mergeCells(row,1,row,NC);const sc=w1.getCell(row,1);sc.value=`${s.title}${s.hidden?"  ·  OCULTA (no se le muestra a la persona)":""}${(s.cond&&s.cond.qid)||s.condTxt?"  ·  se muestra si "+condText(s):""}  ·  ${qs.filter(q=>!q.parentId).length} preguntas`;sc.font=font({bold:true,color:{argb:C.white},size:11});sc.fill=F(s.hidden?C.gray:C.sec);w1.getRow(row).height=20;row++;
+    let k=0,cs=null;
+    qs.forEach(q=>{
+      if(!q.parentId&&fbRootSub(q)!==cs){cs=fbRootSub(q);const u=(s.subs||[]).find(x=>x.title===cs);if(cs){w1.mergeCells(row,1,row,NC);const uc=w1.getCell(row,1);uc.value=`   ${cs}${u&&u.hidden?"  ·  oculta":""}${u&&+u.rep>0?`  ·  se repite hasta ${u.rep}`:""}${u&&((u.cond&&u.cond.qid)||u.condTxt)?"  ·  se muestra si "+condText(u):""}`;uc.font=font({bold:true,color:{argb:C.sec}});uc.fill=F("FFE8ECF4");lvl(row,1);row++}}
+      const parts=fbParts(q);const par=q.parentId?fbQ(q.parentId):null;if(!q.parentId)k++;
+      const inPdf=par?par.inPdf!==false:q.inPdf!==false;
+      const pdfOk=par||!inPdf?"No aplica":q.boxes.length?"Asignado":"Falta";
+      const vals=[pid.get(q.id),s.title,par?"":(q.sub||""),q.parentId?"":k,(q.parentId?"   ↳ ":"")+q.label,parts.length?"Se arma con las partes":q.type,parts.length?"—":q.req?"Sí":"No",par?"":(q.origin||"La completa la persona"),q.repeat?`Sí (${q.rep})`:"No",
+        parts.length?parts.map(p=>p.label).join(" + ")+(q.sep?` (separa «${q.sep}»)`:""):par?`Parte de ${pid.get(par.id)} ${par.label}`:"",
+        condText(q),q.opts.map(o=>o.label+(o.code?` = ${o.code}`:"")).join("\n"),q.rule||q.fmt||"",q.calc||q.maxLen||"",inPdf?"Sí":"No",(par?"":q.boxes.map(i=>{const ro=fbRoleOpts(q)?fbRoleOf(q,i):null;return rn.rows[i].nuevo+(ro?` (${fbRoleLabel(q,ro)})`:"")}).join("\n")),"",tplPath(q.json),"",q.notes||"",...(()=>{if(par)return["",""];const ds=dicState(q);return[ds.d?tplPath(ds.d[4]):"",DIC_TXT[ds.st]]})()];
+      vals.forEach((v,c)=>{const cell=w1.getCell(row,c+1);cell.value=v;cell.font=font(q.parentId?{color:{argb:C.gray}}:{});cell.border=BOX;cell.alignment={vertical:"top",wrapText:true};if(k%2===0&&!q.parentId)cell.fill=F("FFF7F8FA")});
+      if(q.cond&&q.cond.qid){const cc=w1.getCell(row,11);cc.font=font({color:{argb:"FF5B2DB8"}})}
+      stCell(w1.getCell(row,17),pdfOk);
+      stCell(w1.getCell(row,19),parts.length&&!q.json?"No aplica":q.json?(q.jsonOk?"Confirmado":"Sugerido"):"Falta");
+      w1.getCell(row,16).font=font({name:"Consolas",size:9});w1.getCell(row,18).font=font({name:"Consolas",size:9});
+      w1.getCell(row,6).dataValidation={type:"list",allowBlank:true,formulae:[`"${TIPOS.join(",").replace(/"/g,"")}"`]};
+      w1.getCell(row,7).dataValidation={type:"list",allowBlank:true,formulae:['"Sí,No,—"']};
+      lvl(row,q.parentId?3:2);row++;
+      q.opts.forEach((o,oi)=>{
+        const ov={5:`      ○ ${o.label}`,12:o.code?`${o.label} = ${o.code}`:o.label,16:o.box!=null&&rn.rows[o.box]?rn.rows[o.box].nuevo:""};
+        for(let c=1;c<=NC;c++){const cell=w1.getCell(row,c);cell.value=ov[c]??"";cell.font=font({color:{argb:C.gray},size:9});cell.border=BOX;cell.alignment={vertical:"top"}}
+        w1.getCell(row,16).font=font({name:"Consolas",size:9,color:{argb:C.gray}});lvl(row,3);row++;
+      });
+    });
+  });
+  w1.autoFilter={from:{row:2,column:1},to:{row:2,column:NC}};
+  /* Opciones */
+  const w2=wb.addWorksheet("Opciones",{views:[{state:"frozen",ySplit:1}],properties:{tabColor:{argb:C.blue}}});
+  w2.columns=[{width:8},{width:30},{width:8},{width:30},{width:14},{width:40}];
+  hdr(w2,1,["ID","Pregunta","Orden","Opción (como se ve)","Código","Casilla del PDF"],[C.blue,C.blue,C.blue,C.blue,C.blue,C.amber]);
+  let r2=2;ord.forEach(q=>q.opts.forEach((o,k)=>{[pid.get(q.id),q.label,k+1,o.label,o.code||"",o.box!=null?rn.rows[o.box].nuevo:"— sin casilla —"].forEach((v,c)=>{const cell=w2.getCell(r2,c+1);cell.value=v;cell.font=font();cell.border=BOX;cell.alignment={vertical:"top"}});if(o.box==null){w2.getCell(r2,6).font=font({color:{argb:C.red}})}r2++}));
+  if(r2===2){w2.getCell("A2").value="No hay preguntas con opciones.";w2.getCell("A2").font=font({italic:true,color:{argb:C.gray}})}
+  w2.autoFilter={from:{row:1,column:1},to:{row:1,column:6}};
+  /* JSON */
+  const w3=wb.addWorksheet("JSON del cliente",{views:[{state:"frozen",ySplit:1}],properties:{tabColor:{argb:C.green}}});
+  w3.columns=[{width:46},{width:28},{width:11},{width:34},{width:15}];
+  hdr(w3,1,["Ruta","Valor de ejemplo","Se repite","Pregunta que lo llena","Estado"],[C.green,C.green,C.green,C.blue,C.green]);
+  ST.paths.forEach((p,k)=>{const q=by.get(p.path);const rr=k+2;[tplPath(p.path),typeof p.ex==="string"?p.ex:JSON.stringify(p.ex),p.arr?"Sí":"No",q?`${pid.get(q.id)} ${q.label}`:"— sin pregunta —"].forEach((v,c)=>{const cell=w3.getCell(rr,c+1);cell.value=v;cell.font=font(c===0?{name:"Consolas",size:9}:{});cell.border=BOX});stCell(w3.getCell(rr,5),q?(q.jsonOk?"Unido":"Sugerido"):"Sin pregunta")});
+  if(!ST.paths.length){w3.getCell("A2").value="No se cargó un JSON del cliente.";w3.getCell("A2").font=font({italic:true,color:{argb:C.gray}})}
+  w3.autoFilter={from:{row:1,column:1},to:{row:1,column:5}};
+  /* Casilleros */
+  const w4=wb.addWorksheet("Casilleros PDF",{views:[{state:"frozen",ySplit:1}],properties:{tabColor:{argb:C.amber}}});
+  w4.columns=[{width:8},{width:22},{width:42},{width:10},{width:34},{width:12}];
+  hdr(w4,1,["Página","Nombre original","Nombre nuevo","Tipo","Pregunta","Estado"],[C.amber,C.amber,C.amber,C.amber,C.blue,C.amber]);
+  rn.rows.forEach((x,k)=>{const q=fbOwner(x.i);const rr=k+2;[x.page,x.old,x.nuevo,{text:"texto",check:"casilla",radio:"opción",sig:"firma",choice:"lista"}[x.kind]||x.kind,q?`${pid.get(q.id)} ${q.label}`:"— libre —"].forEach((v,c)=>{const cell=w4.getCell(rr,c+1);cell.value=v;cell.font=font(c===1||c===2?{name:"Consolas",size:9}:{});cell.border=BOX});stCell(w4.getCell(rr,6),q?"Asignado":"Libre")});
+  w4.autoFilter={from:{row:1,column:1},to:{row:1,column:6}};
+  /* Pendientes */
+  const w5=wb.addWorksheet("Pendientes",{views:[{state:"frozen",ySplit:1}],properties:{tabColor:{argb:C.red}}});
+  w5.columns=[{width:30},{width:60},{width:14}];
+  hdr(w5,1,["Qué","Detalle","Estado"],[C.red,C.red,C.red]);
+  const pend=[];
+  ord.forEach(q=>{const parts=fbParts(q);if(!q.parentId&&!parts.length&&!q.boxes.length&&q.inPdf!==false)pend.push(["Pregunta sin casillero en el PDF",`${pid.get(q.id)} ${q.label} (¿va solo al JSON?)`]);if(!parts.length&&!q.json&&ST.paths.length)pend.push(["Pregunta sin dato del JSON",`${pid.get(q.id)} ${q.label}`]);if(q.json&&!q.jsonOk)pend.push(["Unión sugerida sin confirmar",`${pid.get(q.id)} ${q.label} ↔ ${q.json}`]);if(/opción|Sí/.test(q.type)&&!q.opts.length)pend.push(["Lista sin opciones",`${pid.get(q.id)} ${q.label}`])});
+  rn.rows.forEach(x=>{if(!fbOwner(x.i))pend.push(["Casillero del PDF sin pregunta",x.nuevo])});
+  ST.paths.forEach(p=>{if(!by.has(p.path))pend.push(["Dato del JSON sin pregunta",p.path])});
+  pend.forEach((p,k)=>{const rr=k+2;p.forEach((v,c)=>{const cell=w5.getCell(rr,c+1);cell.value=v;cell.font=font();cell.border=BOX});const c3=w5.getCell(rr,3);c3.value="Abierto";c3.dataValidation={type:"list",allowBlank:true,formulae:['"Abierto,Resuelto,No aplica"']};c3.border=BOX;c3.font=font({bold:true,color:{argb:C.red}})});
+  if(!pend.length){w5.getCell("A2").value="Nada pendiente.";w5.getCell("A2").font=font({bold:true,color:{argb:C.green}})}
+  w5.addConditionalFormatting({ref:`C2:C${Math.max(2,pend.length+1)}`,rules:[{type:"cellIs",operator:"equal",formulae:['"Resuelto"'],style:{font:{color:{argb:C.green},bold:true},fill:F(C.greenL)}}]});
+  const buf=await wb.xlsx.writeBuffer();
+  await rnSave(base+"_ficha.xlsx",new Uint8Array(buf));
+  m.textContent=$("#rn-msg").textContent;
+}
+
+/* ── Plantilla de preguntas (bajar / subir) ── */
+const ORIGENES=["La completa la persona","Prellenado editable","Prellenado bloqueado","Se calcula","Sistema (no se ve)"];
+const FORMATOS=["","Texto libre","Solo números","Alfanumérico","Email","Teléfono","Fecha dd/mm/aaaa","Importe","Porcentaje"];
+const CONDOPS=["es igual a","no es igual a","tiene valor","está vacía"];
+const OCULTO_ORIG=["Viene del sistema","Se calcula","Valor fijo"];
+const yes=v=>/^(s|si|sí|x|true|1|yes)$/i.test(String(v??"").trim());
+function qCurVal(t){const ps=fbParts(t);if(ps.length)return ps.map(p=>TP.vals[p.id]).filter(Boolean).join(t.sep??" ");return TP.vals[t.id]}
+function condOk(c,depth){
+  if(!c||!c.qid)return true;const t=fbQ(c.qid);if(!t)return true;
+  if(!qVisible(t,(depth||0)+1))return false;
+  let v=qCurVal(t);if(Array.isArray(v))v=v.find(Boolean);
+  const s=v===true?"Sí":v===false||v==null?"":String(v);
+  const eq=s.trim().toLowerCase()===String(c.val??"").trim().toLowerCase();
+  if(c.op==="no es igual a")return!eq;
+  if(c.op==="tiene valor")return s!=="";
+  if(c.op==="está vacía")return s==="";
+  return eq;
+}
+/* Visible = cumple la condición de su sección, de su subsección y la propia */
+function qVisible(q,depth){
+  depth=depth||0;if(depth>8)return true;
+  const own=q.parentId?fbQ(q.parentId):q;if(!own)return true;
+  const A=fbArea(own);
+  if(A.s&&!condOk(A.s.cond,depth))return false;
+  if(A.sub&&!condOk(A.sub.cond,depth))return false;
+  return condOk(own.cond,depth);
+}
+function condText(q){const c=q.cond;if(!c||!c.qid){return q.condTxt?`(revisar) ${q.condTxt}`:""}const t=fbQ(c.qid);if(!t)return"";return`«${t.label}» ${c.op}${/igual/.test(c.op)?` «${c.val||""}»`:""}`}
+function condPlainC(c,txt){if(!c||!c.qid)return txt||"";const t=fbQ(c.qid);if(!t)return txt||"";return`si ${t.label} ${c.op==="es igual a"?"=":c.op==="no es igual a"?"≠":c.op}${/igual/.test(c.op)?" "+(c.val||""):""}`}
+function condPlain(q){return condPlainC(q.cond,q.condTxt)}
+function parseCond(txt,self){
+  let t=String(txt||"").trim().replace(/^se muestra\s+/i,"").replace(/^si\s+/i,"").trim();if(!t)return null;
+  let m,op,val="",lab;
+  /* primero los símbolos (=, ≠): así una pregunta con «es» en el texto no se corta en el lugar equivocado */
+  if((m=t.match(/^(.+?)\s*(?:≠|!=|<>)\s*(.+)$/))){lab=m[1];op="no es igual a";val=m[2]}
+  else if((m=t.match(/^(.+?)\s*==?\s*(.+)$/))){lab=m[1];op="es igual a";val=m[2]}
+  else if((m=t.match(/^(.+?)\s+(?:tiene valor|está complet[ao]|esta complet[ao]|no está vací[ao]|no esta vaci[ao])$/i))){lab=m[1];op="tiene valor"}
+  else if((m=t.match(/^(.+?)\s+(?:está vací[ao]|esta vaci[ao]|vací[ao]|vaci[ao])$/i))){lab=m[1];op="está vacía"}
+  else if((m=t.match(/^(.+?)\s+(?:no es igual a|distinto de|no es)\s+(.+)$/i))){lab=m[1];op="no es igual a";val=m[2]}
+  else if((m=t.match(/^(.+?)\s+(?:es igual a|es)\s+(.+)$/i))){lab=m[1];op="es igual a";val=m[2]}
+  else return null;
+  lab=lab.replace(/^[«"'“]|[»"'”]$/g,"").trim();val=val.replace(/^[«"'“]|[»"'”]$/g,"").trim();
+  const k=fbToks(lab).join("_");const target=ST.Q.find(x=>x!==self&&fbToks(x.label).join("_")===k);
+  return target?{qid:target.id,op,val}:null;
+}
+function parseOpts(txt,old){
+  return String(txt||"").split(/;|\n/).map(x=>x.trim()).filter(Boolean).map(x=>{const i=x.lastIndexOf("=");const label=(i>0?x.slice(0,i):x).trim(),code=i>0?x.slice(i+1).trim():"";const prev=(old||[]).find(o=>fbSlug(o.label)===fbSlug(label));return{label,code,box:prev?prev.box:null}});
+}
+/* Lector del formato anterior de la plantilla (hojas «Lo que ve la persona» / «Datos ocultos») */
+async function f2TplUploadV1(file){
+  const m=$("#f2-msg");if(!window.ExcelJS){m.textContent="No se pudo cargar el lector de Excel. Recargá la página.";return}
+  let wb;try{wb=new ExcelJS.Workbook();await wb.xlsx.load(await file.arrayBuffer())}catch(e){m.textContent="No se pudo leer ese archivo. ¿Es la plantilla en .xlsx?";return}
+  const txt=v=>{if(v==null)return"";if(typeof v==="object"){if(v.richText)return v.richText.map(x=>x.text).join("");if(v.text)return String(v.text);if(v.result!=null)return String(v.result)}return String(v).trim()};
+  const sheet=re=>wb.worksheets.find(w=>re.test(fbSlug(w.name)));
+  const table=ws=>{if(!ws)return[];const hdr=[];ws.getRow(1).eachCell({includeEmpty:true},(c,i)=>hdr[i]=fbSlug(txt(c.value)));const out=[];ws.eachRow((row,r)=>{if(r===1)return;const o={_r:r};hdr.forEach((h,i)=>{if(h)o[h]=txt(row.getCell(i).value)});if(Object.keys(o).some(k=>k!=="_r"&&o[k]))out.push(o)});return out};
+  const V=table(sheet(/ve_la_persona|visibl|preguntas/)).filter(r=>!/^EJ/i.test(r.id||"")),Hd=table(sheet(/oculto/)).filter(r=>!/^EJ/i.test(r.id||""));
+  if(!V.length&&!Hd.length){m.textContent="La plantilla está vacía (las filas de ejemplo no cuentan).";return}
+  const secBy=t=>{const k=fbSlug(t);let s=ST.S.find(x=>!x.hidden&&fbSlug(x.title)===k);if(!s&&t){s={id:ST.nid++,title:t,hidden:false};ST.S.push(s)}return s};
+  let nNew=0,nUpd=0,nDel=0,nCondRev=0;const seen=new Set();const vis=[],hid=[],secOrder=[];
+  const getQ=(r,label,sid)=>{let q=/^Q\d+$/i.test(r.id||"")?fbQ(+r.id.slice(1)):null;if(q)nUpd++;else{q=fbNewQ(label,sid);nNew++}seen.add(q.id);return q};
+  const del=r=>{if(/^Q\d+$/i.test(r.id||"")){const q=fbQ(+r.id.slice(1));if(q){ST.Q=ST.Q.filter(x=>x!==q);nDel++}}};
+  V.forEach(r=>{if(!r.pregunta)return;if(r.va&&!yes(r.va)){del(r);return}
+    const s=secBy(r.seccion||(secOrder[secOrder.length-1]||{}).title||"Sección 1");if(!secOrder.includes(s))secOrder.push(s);
+    const q=getQ(r,r.pregunta,s.id);q.sid=s.id;q.label=r.pregunta;q.sub=r.subseccion||"";
+    if(TIPOS.includes(r.tipo))q.type=r.tipo;
+    if(r.opciones)q.opts=parseOpts(r.opciones,q.opts);else if(!/opción|Sí \/ No/.test(q.type))q.opts=[];
+    if(r.obligatoria)q.req=yes(r.obligatoria);
+    q.origin=yes(r.viene_prellenado)?(/Prellenado/.test(q.origin||"")?q.origin:"Prellenado editable"):(/Prellenado|Sistema/.test(q.origin||"")?"La completa la persona":(q.origin||"La completa la persona"));
+    q.rule=r.reglas_formato||"";q.ex=r.ejemplo||"";q.notes=r.notas||"";q._cond=r.se_muestra_si||"";
+    vis.push({q,s,o:r.orden!==""&&Number.isFinite(+r.orden)?+r.orden:9999,r:r._r});
+  });
+  const hs=Hd.length?f2HiddenSid():null;
+  Hd.forEach(r=>{if(!r.dato)return;if(r.va&&!yes(r.va)){del(r);return}
+    const q=getQ(r,r.dato,hs);q.sid=hs;q.label=r.dato;q.hiddenSrc=OCULTO_ORIG.includes(r.de_donde_sale)?r.de_donde_sale:"Viene del sistema";
+    q.origin=q.hiddenSrc==="Se calcula"?"Se calcula":"Sistema (no se ve)";q.calc=r.valor_o_calculo||"";q.ex=r.ejemplo||"";q.notes=r.notas||"";q.cond=null;q.condTxt="";
+    hid.push({q,o:r.orden!==""&&Number.isFinite(+r.orden)?+r.orden:9999,r:r._r});
+  });
+  vis.forEach(({q})=>{const t=q._cond;delete q._cond;if(!t){q.cond=null;q.condTxt="";return}const c=parseCond(t,q);if(c){q.cond=c;q.condTxt=""}else{q.cond=null;q.condTxt=t;nCondRev++}});
+  vis.sort((a,b)=>secOrder.indexOf(a.s)-secOrder.indexOf(b.s)||a.o-b.o||a.r-b.r);hid.sort((a,b)=>a.o-b.o||a.r-b.r);
+  const placed=new Set();const out=[];
+  const put=q=>{if(placed.has(q.id))return;const par=q.parentId?fbQ(q.parentId):null;if(par&&!placed.has(par.id)){par.sid=q.sid;placed.add(par.id);out.push(par)}placed.add(q.id);out.push(q)};
+  vis.forEach(x=>put(x.q));hid.forEach(x=>put(x.q));
+  const rest=ST.Q.filter(q=>!placed.has(q.id)&&!fbParts(q).length);
+  ST.Q.filter(q=>!placed.has(q.id)&&fbParts(q).length&&!fbParts(q).some(p=>placed.has(p.id))).forEach(q=>rest.push(q));
+  ST.Q=[...out,...rest.filter(q=>!placed.has(q.id))];
+  ST.Q=ST.Q.filter(q=>!q.parentId||fbQ(q.parentId));
+  const hsObj=ST.S.filter(s=>s.hidden);ST.S=[...secOrder,...ST.S.filter(s=>!s.hidden&&!secOrder.includes(s)&&ST.Q.some(q=>q.sid===s.id)),...hsObj.filter(s=>ST.Q.some(q=>q.sid===s.id))];
+  if(!ST.S.length)f2ActiveSid();
+  ST.Q.forEach(f2AutoJson);ST.selQ=null;ST.open=null;
+  const keep=rest.filter(q=>!seen.has(q.id)).length;
+  m.textContent=`Plantilla cargada: ${nNew} nuevas, ${nUpd} actualizadas${nDel?`, ${nDel} quitadas («¿Va?» = No)`:""}. Las que ya estaban conectadas al PDF o al JSON conservan sus conexiones.${nCondRev?` ${nCondRev} condiciones «Se muestra si» no se pudieron leer: quedaron marcadas «(revisar)».`:""}${keep?` ${keep} preguntas que no estaban en la plantilla quedaron al final.`:""}`;
+  fbAll();
+}
+
+/* ── Plantilla: tipos, prellenado y reglas (compartido por todos los formatos) ── */
+const SYS_SEC="Datos del sistema (oculto)";
+const TPL_TIPOS=["Texto corto","Texto largo","Número","Fecha","Email","Teléfono","Una opción de una lista","Una opción (botones)","Varias opciones","Sí / No","Casilla de verificación","Texto informativo","Firma","Dato oculto"];
+const TPL_TIPO_OUT={"Importe":"Número","Porcentaje":"Número","Hora":"Texto corto","Varias opciones de una lista":"Varias opciones","Casilla de aceptación":"Casilla de verificación"};
+const TPL_TIPO_IN={"Una opción (botones)":"Una opción de una lista","Varias opciones":"Varias opciones de una lista","Casilla de verificación":"Casilla de aceptación"};
+const tplTypeOf=(type,ui)=>type==="Una opción de una lista"&&ui==="botones"?"Una opción (botones)":(TPL_TIPO_OUT[type]||type);
+function tplType(q){return q.oculto||fbHiddenArea(q)?"Dato oculto":tplTypeOf(q.type,q.ui)}
+function fromTplType(t,q,areaHidden){
+  if(t==="Dato oculto"){q.oculto=!areaHidden;return}
+  q.oculto=false;if(!TPL_TIPOS.includes(t))return;
+  if(tplTypeOf(q.type,q.ui)===t)return; /* equivalente: se conserva el tipo original */
+  q.type=TPL_TIPO_IN[t]||t;if(t==="Una opción (botones)")q.ui="botones";else delete q.ui;
+  if(q.type==="Sí / No"&&!q.opts.length)q.opts=[{label:"Sí",code:"",box:null},{label:"No",code:"",box:null}];
+}
+function tplPre(q){const o=q.origin||"La completa la persona";return o==="La completa la persona"?["No","Sí"]:o==="Prellenado editable"?["Sí","Sí"]:["Sí","No"]}
+function fromTplPre(g,h,q){
+  if(!g&&!h)return;const pre=yes(g),ed=h===""?!pre:yes(h);const cur=tplPre(q);
+  if(cur[0]===(pre?"Sí":"No")&&cur[1]===(ed?"Sí":"No"))return;
+  q.origin=!pre?"La completa la persona":ed?"Prellenado editable":"Prellenado bloqueado";
+}
+function tplRule(q){
+  if(tplType(q)!=="Dato oculto")return q.rule||[q.fmt,q.maxLen?`máx. ${q.maxLen}`:""].filter(Boolean).join(" · ");
+  if(q.rule&&OCULTO_ORIG.some(o=>fbSlug(q.rule).startsWith(fbSlug(o))))return q.rule;
+  return (q.hiddenSrc||(/calcula/i.test(q.origin||"")?"Se calcula":"Viene del sistema"))+(q.calc?` · ${q.calc}`:"");
+}
+function fbFillSubs(){
+  ST.Q.forEach(q=>{if(q.parentId||q.sub)return;const s=ST.S.find(x=>x.id===q.sid);if(!s)return;q.sub=(s.subs&&s.subs[0]&&s.subs[0].title)||s.title});
+  fbNorm();ST.S.forEach(s=>{if(!s.subs.length)s.subs.push(fbNewSub(s.title))});
+}
+function f2HiddenSid(){
+  let s=ST.S.find(x=>fbSlug(x.title)===fbSlug(SYS_SEC))||ST.S.find(x=>x.hidden);
+  if(!s){s={id:ST.nid++,title:SYS_SEC,hidden:true,cond:null,condTxt:"",notes:"",subs:[]};ST.S.unshift(s)}
+  return s.id;
+}
+function f2SysSub(path){
+  const p=fbSlug(path);
+  if(/direcc|domicil|notific|provinc|canton|distrit|ciudad/.test(p))return"Dirección y notificación";
+  if(/persona|cliente|asegurad|tomador|benefic|dependient|nombre|apellid|identific|genero|civil|parentes/.test(p))return"Personas";
+  return"Encabezado";
+}
+/* ── Plantilla v12: una hoja «Preguntas» + «JSON del cliente» + «Cómo se completa» + «Listas» (formato de docs/plantilla_referencia_v12.xlsx) ── */
+const PRE_HELP12=["Preguntas del formulario", "Una fila por pregunta, en el orden en que aparecen. Elegí la Sección y después la Subsección (la lista muestra solo las de esa sección). Para agregar: clic derecho en el número de fila → Insertar. Cada sección tiene su color (aunque agregues filas al final, toman el color de su sección). Al subir la planilla, la herramienta agrupa sola por Sección y Subsección.", "Ruta JSON: elegila de la lista (sale de tu JSON) y en \"Valor en el JSON\" vas a ver el dato de ejemplo. Si una ruta tiene [i], la pregunta se repite (ej. varios bienes). Las filas grises son datos ocultos: los completa Namirial."];
+const JSON_HELP12=["Lo que trae tu JSON", "Se arma solo a partir del JSON que cargaste. No hace falta editar esta hoja.", "\"¿Se usa?\" dice si alguna pregunta ya tomó esa ruta. Las que quedan en No, Namirial las revisa y las suma a los datos ocultos si corresponde."];
+const COMO12=[["Columna", "Qué poner", "En el machote del INS"], ["Sección", "La pantalla del formulario. Elegila de la lista; se puede escribir una nueva.", "Pasos Formulario"], ["Subsección", "El bloque dentro de la pantalla. La lista muestra solo las de la sección elegida.", "Sección"], ["Pregunta", "Cómo la ve la persona.", "Nombre del campo en formulario"], ["Tipo", "De la lista. Una fecha es una sola pregunta de tipo Fecha.", "Tipo de dato"], ["Opciones", "Para listas: opción=código separadas por punto y coma. Ej.: Masculino=M; Femenino=F. O \"Ver catálogo\".", "Valor (una fila por opción)"], ["Obligatoria", "Sí / No.", "Obligatorio (Both / WEB / JSON / None)"], ["Viene prellenado / Se puede editar", "Sí / No en cada una.", "Visualización (Disabled / Dato Prellenado / editable)"], ["Se muestra si", "Si depende de otra respuesta. Ej.: si ¿Tiene pólizas con otra compañía aseguradora? = Sí", "Regla"], ["Ruta JSON", "De la lista: sale de tu JSON. [i] = se repite (ej. bienes).", "Nombre de la sección del JSON"], ["Valor en el JSON", "Se completa solo. Si dice \"no está en el JSON\", revisá la ruta.", ""], ["En el PDF va partido en", "Solo si en el PDF va en varios casilleros. Ej.: día / mes / año.", "Nombre en PDF"], ["Reglas / formato", "Ej.: 9 dígitos · máx. 50 · email.", "Regla"], ["¿Va?", "No = se saca del formulario.", ""], ["ID (no tocar)", "Lo usa la herramienta para no perder lo ya conectado. En filas nuevas, dejalo vacío.", ""], ["Filas grises", "Datos ocultos (Datos del sistema). Los completa Namirial.", "Pasos / Sección = JSON"]];
+const COMO12_H=[31.5, 15.0, 15.0, 15.0, 15.0, 23.85, 15.0, 23.85, 23.85, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0];
+const MACHOTE12=[["Datos del sistema (oculto)", "Encabezado"], ["Datos del sistema (oculto)", "Personas"], ["Datos del sistema (oculto)", "Dirección y notificación"], ["Datos Generales", "Información de la Solicitud"], ["Información de Póliza", "Datos del Asesor"], ["Información de Póliza", "Datos de la Póliza"], ["Información de Póliza", "Información adicional"], ["Datos del Tomador", "Datos Tomador"], ["Datos del Tomador", "Contacto y ubicación"], ["Datos del Asegurado", "Datos Asegurado"], ["Datos del Asegurado", "Contacto y ubicación"], ["Datos del Asegurado", "Preferencias de notificación"], ["Datos del Dependiente", "Datos Dependiente"], ["Datos del Dependiente", "Contacto y ubicación"], ["Datos del Beneficiario", "Datos Beneficiario"], ["Datos del Beneficiario", "Contacto y ubicación"], ["Información del riesgo", "Información del riesgo"], ["Información del riesgo", "Bienes por asegurar"], ["Información del riesgo", "Coberturas Básicas"], ["Información del riesgo", "Coberturas Adicionales"], ["Declaraciones y Autorización", "Autorizaciones"], ["Declaraciones y Autorización", "Declaraciones Legales"]];
+const SEC_PAL=["FFEEF4FC","FFEEF8F1","FFFEF6EA","FFF5F0FC","FFFCF0F3","FFEDF7F8","FFF8F5EC","FFF1F2F9"];
+/* rutas: en la herramienta los arrays repetibles son «[]»; en la plantilla se ven como «[i]» */
+const tplPath=p=>String(p||"").replace(/\[\]/g,"[i]");
+const fromTplPath=p=>String(p||"").trim().replace(/\[i\]/gi,"[]");
+/* Sección/Subsección del machote más parecida a una sección propuesta desde el PDF */
+function f2MapMachote(){
+  const secs=[...new Set(MACHOTE12.map(r=>r[0]))].filter(t=>t!==SYS_SEC);
+  ST.S.slice().forEach(s=>{if(s.hidden||DIC.some(d=>d[2]===s.title))return;
+    let best=null;secs.forEach(t=>{const sc=fbSim(fbToks(s.title),fbToks(t));if(sc>=0.5&&(!best||sc>best.sc))best={t,sc}});
+    if(!best)return;
+    const other=ST.S.find(x=>x!==s&&x.title===best.t);
+    if(other){ST.Q.forEach(q=>{if(q.sid===s.id)q.sid=other.id});ST.S=ST.S.filter(x=>x!==s);s=other}else s.title=best.t;
+    const subs=MACHOTE12.filter(r=>r[0]===best.t).map(r=>r[1]);
+    ST.Q.filter(q=>q.sid===s.id&&!q.parentId&&!q.sub).forEach(q=>{let bs=null;subs.forEach(u=>{const sc=fbSim(fbToks(q.label),fbToks(u));if(sc>=0.5&&(!bs||sc>bs.sc))bs={u,sc}});q.sub=bs?bs.u:subs[0]});
+  });
+}
+function f2Infer(){
+  let n=0;
+  if(rn.rows.length)n+=f2ProposeFromPdf();
+  const key=q=>q.boxes.length?Math.min(...q.boxes):1e6;
+  ST.Q.sort((a,b)=>key(a)-key(b));
+  n+=f2DicArrange();
+  f2MapMachote();
+  if(ST.paths.length){
+    const owned=new Set(ST.Q.map(q=>q.json).filter(Boolean));
+    ST.paths.forEach(p=>{if(owned.has(p.path))return;
+      const q=f2FromPath(p,f2HiddenSid());q.sub=f2SysSub(p.path);q.inPdf=false;q.origin="Sistema (no se ve)";q.hiddenSrc="Viene del sistema";q.rule="Viene del sistema";n++});
+  }
+  /* orden: oculto primero; después los pasos en el orden del diccionario; el resto como aparece en el PDF */
+  const dicPaso=t=>{const i=DIC.findIndex(d=>d[2]===t);return i<0?1e5:i};
+  ST.Q.sort((a,b)=>((a.dicI??1e4)-(b.dicI??1e4))||key(a)-key(b));
+  const has=s=>ST.Q.some(q=>q.sid===s.id);
+  const firstIdx=s=>{const i=ST.Q.findIndex(q=>q.sid===s.id);return i<0?1e9:i};
+  ST.S=ST.S.filter(has);
+  ST.S.sort((a,b)=>((b.hidden?1:0)-(a.hidden?1:0))||(dicPaso(a.title)-dicPaso(b.title))||firstIdx(a)-firstIdx(b));
+  if(!ST.S.length)f2ActiveSid();
+  fbNorm();
+  /* subsecciones en el orden del diccionario y del machote */
+  const mi=(s,u)=>{const d=DIC.findIndex(x=>x[2]===s.title&&x[3]===u.title);if(d>=0)return d;const i=MACHOTE12.findIndex(r=>r[0]===s.title&&r[1]===u.title);return i<0?1e9:1e4+i};
+  ST.S.forEach(s=>{const o=s.subs.slice();s.subs.sort((a,b)=>(mi(s,a)-mi(s,b))||(o.indexOf(a)-o.indexOf(b)))});
+  return n;
+}
+async function f2TplDownload(){
+  const m=$("#f2-msg");if(!window.ExcelJS){m.textContent="No se pudo cargar el generador de Excel. Recargá la página.";return}
+  let inferred=0;if(!ST.Q.length)inferred=f2Infer();
+  fbFillSubs();
+  const NAVY="FF1F3A5F",GREEN="FF2E7D32",PURPLE="FF6941C6",LINE="FFD0D5DD",WHITE="FFFFFFFF";
+  const F=a=>({type:"pattern",pattern:"solid",fgColor:{argb:a}});
+  const thin={style:"thin",color:{argb:LINE}};const BOX={top:thin,left:thin,bottom:thin,right:thin};
+  const AR=o=>Object.assign({name:"Arial",size:10},o||{});
+  const wb=new ExcelJS.Workbook();wb.creator="Ficha de formulario";wb.calcProperties.fullCalcOnLoad=true;
+  const help=(ws,lines)=>{lines.forEach((t,i)=>{if(t==null)return;const c=ws.getCell(i+1,1);c.value=t;c.font=i===0?AR({size:14,bold:true,color:{argb:NAVY}}):AR({size:9,italic:true,color:{argb:"FF555555"}})});ws.getRow(1).height=17.35};
+  const header=(ws,row,cols)=>{cols.forEach(([h,w,fill],k)=>{ws.getColumn(k+1).width=w;const c=ws.getCell(row,k+1);c.value=h;if(fill===null)return;c.font=AR({size:11,bold:true,color:{argb:WHITE}});c.fill=F(fill||NAVY);c.alignment={vertical:"middle",wrapText:true};c.border=BOX});ws.getRow(row).height=31.5};
+  const cell=(c,o)=>{c.font=AR(o);c.alignment={vertical:"top",wrapText:true};c.border=BOX};
+  const dv=(ws,ref,f)=>ws.dataValidations.add(ref,{type:"list",allowBlank:true,showErrorMessage:false,formulae:[f]});
+  const cf=(ws,ref,formula,style)=>ws.addConditionalFormatting({ref,rules:[{type:"expression",formulae:[formula],style}]});
+  /* datos */
+  const asked=fbOrdered().filter(q=>!fbParts(q).length);
+  const jRows=ST.paths.map(p=>[tplPath(p.path),typeof p.ex==="string"?p.ex:JSON.stringify(p.ex)]);
+  const jMap=new Map(jRows.map(r=>[r[0],r[1]]));
+  const pRows=asked.map(q=>{const r=fbRoot(q);const[pre,ed]=tplPre(q);const oc=tplType(q)==="Dato oculto";
+    return[secTitle(r.sid),fbRootSub(q),q.label,tplType(q),q.opts.map(o=>o.label+(o.code?"="+o.code:"")).join("; "),oc?"":(q.req?"Sí":"No"),oc?"Sí":pre,oc?"No":ed,condPlain(q),tplPath(q.json||""),q.split||(q.type==="Fecha"&&q.boxes.length===3?"día / mes / año":""),tplRule(q),"Sí",q.notes||"","Q"+q.id]});
+  const pEnd=5+pRows.length+300,jEnd=4+Math.max(1,jRows.length);
+  /* Listas: machote + secciones/subsecciones del proyecto (las de una misma sección, juntas) */
+  const grp=new Map();const addL=(a,b)=>{if(!a||!b)return;if(!grp.has(a))grp.set(a,[]);const g=grp.get(a);if(!g.includes(b))g.push(b)};
+  MACHOTE12.forEach(r=>addL(r[0],r[1]));DIC.forEach(d=>addL(d[2],d[3]));ST.S.forEach(s=>s.subs.forEach(u=>addL(s.title,u.title)));
+  const lst=[...grp].flatMap(([a,bs])=>bs.map(b=>[a,b]));const uniq=[...grp.keys()];const lEnd=1+lst.length,dEnd=1+uniq.length;
+  /* Hoja Preguntas */
+  const wP=wb.addWorksheet("Preguntas",{views:[{state:"frozen",xSplit:3,ySplit:5,topLeftCell:"D6"}]});
+  help(wP,PRE_HELP12);
+  header(wP,5,[["Sección",24],["Subsección",24],["Pregunta",36],["Tipo",22],["Opciones",30],["Obligatoria",11],["Viene prellenado",12],["Se puede editar",11],["Se muestra si",30],["Ruta JSON",46,PURPLE],["Valor en el JSON",24,PURPLE],["En el PDF va partido en",20,GREEN],["Reglas / formato",22],["¿Va?",8],["Notas",30],["ID (no tocar)",10,"FF98A2B3"],["grupo",13,null],["seccion",13,null]]);
+  let g=0;const secIdx=[];
+  for(let r=6;r<=pEnd;r++){const v=pRows[r-6];
+    for(let k=1;k<=16;k++)cell(wP.getCell(r,k),k===11?{color:{argb:PURPLE}}:{});
+    if(v){[...v.slice(0,10),null,...v.slice(10)].forEach((x,k)=>{if(x!==""&&x!=null)wP.getCell(r,k+1).value=x})}
+    const jv=v&&v[9]?(jMap.has(v[9])?jMap.get(v[9]):"no está en el JSON"):"";
+    wP.getCell(r,11).value={formula:`IF(J${r}="","",IFERROR(INDEX('JSON del cliente'!$B$5:$B$${jEnd},MATCH(J${r},'JSON del cliente'!$A$5:$A$${jEnd},0)),"no está en el JSON"))`,result:jv};
+    const pv=r>6?pRows[r-7]:null;const ab=v?v[0]+"|"+v[1]:"|",pab=pv?pv[0]+"|"+pv[1]:"|";g=r===6?1:ab===pab?g:g+1;
+    wP.getCell(r,17).value=r===6?{formula:"1",result:1}:{formula:`IF(AND($A${r}=$A${r-1},$B${r}=$B${r-1}),Q${r-1},Q${r-1}+1)`,result:g};
+    let si="";if(v&&v[0]){let k=secIdx.indexOf(v[0]);if(k<0){secIdx.push(v[0]);k=secIdx.length-1}si=k+1}
+    wP.getCell(r,18).value={formula:`IF($A${r}="","",IFERROR(INDEX(R$5:R${r-1},MATCH($A${r},$A$5:$A${r-1},0)),MAX(R$5:R${r-1})+1))`,result:si}}
+  wP.getColumn(17).hidden=true;wP.getColumn(18).hidden=true;
+  dv(wP,`A6:A${pEnd}`,`Listas!$D$2:$D$${dEnd}`);
+  dv(wP,`B6:B${pEnd}`,`OFFSET(Listas!$B$2,MATCH($A6,Listas!$A$2:$A$${lEnd},0)-1,0,COUNTIF(Listas!$A$2:$A$${lEnd},$A6),1)`);
+  dv(wP,`D6:D${pEnd}`,`"${TPL_TIPOS.join(",")}"`);
+  ["F","G","H","N"].forEach(c=>dv(wP,`${c}6:${c}${pEnd}`,'"Sí,No"'));
+  dv(wP,`J6:J${pEnd}`,`'JSON del cliente'!$A$5:$A$${jEnd}`);
+  const R=`A6:P${pEnd}`,R7=`A7:P${pEnd}`;
+  /* el gris de los ocultos va primero: en Excel la regla de mayor prioridad gana el relleno */
+  cf(wP,R,'$D6="Dato oculto"',{fill:{type:"pattern",pattern:"solid",bgColor:{argb:"FFF2F4F7"}},font:{color:{argb:"FF475467"}}});
+  SEC_PAL.forEach((c,i)=>cf(wP,R,`AND($A6<>"",MOD($R6-1,8)=${i})`,{fill:{type:"pattern",pattern:"solid",bgColor:{argb:c}}}));
+  cf(wP,`K6:K${pEnd}`,'K6="no está en el JSON"',{font:{color:{argb:"FFB42318"}}});
+  cf(wP,`A7:A${pEnd}`,'AND($A7<>"",$A7=$A6)',{font:{color:{argb:"FFB0B7C3"}}});
+  cf(wP,`B7:B${pEnd}`,'AND($B7<>"",$A7=$A6,$B7=$B6)',{font:{color:{argb:"FFB0B7C3"}}});
+  cf(wP,R7,'AND($A7<>"",$A7<>$A6)',{border:{top:{style:"medium",color:{argb:NAVY}}}});
+  cf(wP,R7,'AND($B7<>"",$A7=$A6,$B7<>$B6)',{border:{top:{style:"thin",color:{argb:"FF7A9CC6"}}}});
+  wP.autoFilter=`A5:P${pEnd}`;
+  /* Hoja JSON del cliente */
+  const wJ=wb.addWorksheet("JSON del cliente",{views:[{state:"frozen",xSplit:0,ySplit:4,topLeftCell:"A5"}]});
+  help(wJ,JSON_HELP12);
+  header(wJ,4,[["Ruta JSON",62,PURPLE],["Valor de ejemplo",40,PURPLE],["¿Se usa?",10]]);
+  const usedP=new Set(pRows.map(v=>v[9]).filter(Boolean));
+  jRows.forEach((v,i)=>{const r=5+i;cell(wJ.getCell(r,1));cell(wJ.getCell(r,2));wJ.getCell(r,1).value=v[0];wJ.getCell(r,2).value=v[1];
+    const c=wJ.getCell(r,3);c.font=AR();c.border=BOX;c.value={formula:`IF(COUNTIF(Preguntas!$J$6:$J$${pEnd},A${r})>0,"Sí","No")`,result:usedP.has(v[0])?"Sí":"No"}});
+  if(!jRows.length){wJ.getCell("A5").value="No se cargó un JSON del cliente.";wJ.getCell("A5").font=AR({italic:true,color:{argb:"FF555555"}})}
+  cf(wJ,`C5:C${jEnd}`,'C5="Sí"',{fill:{type:"pattern",pattern:"solid",bgColor:{argb:"FFDCFAE6"}},font:{color:{argb:"FF067647"}}});
+  cf(wJ,`C5:C${jEnd}`,'C5="No"',{fill:{type:"pattern",pattern:"solid",bgColor:{argb:"FFFEF0C7"}},font:{color:{argb:"FFB54708"}}});
+  wJ.autoFilter=`A4:C${jEnd}`;
+  /* Hoja Cómo se completa (fija) */
+  const wC=wb.addWorksheet("Cómo se completa");
+  [26,70,36].forEach((w,k)=>wC.getColumn(k+1).width=w);
+  COMO12.forEach((row,i)=>{row.forEach((x,k)=>{const c=wC.getCell(i+1,k+1);if(x!=="")c.value=x;c.border=BOX;
+    if(i===0){c.font=AR({size:11,bold:true,color:{argb:WHITE}});c.fill=F(NAVY);c.alignment={vertical:"middle",wrapText:true}}
+    else cell(c,k===0?{bold:true}:{})});wC.getRow(i+1).height=COMO12_H[i]});
+  /* Hoja Listas (oculta) */
+  const wL=wb.addWorksheet("Listas",{state:"hidden"});
+  wL.getCell("A1").value="Sección";wL.getCell("B1").value="Subsección";wL.getCell("D1").value="Secciones (únicas)";
+  lst.forEach((x,i)=>{wL.getCell(i+2,1).value=x[0];wL.getCell(i+2,2).value=x[1]});
+  uniq.forEach((x,i)=>wL.getCell(i+2,4).value=x);
+  const buf=await wb.xlsx.writeBuffer();
+  await rnSave(rnBase()+"_plantilla_preguntas.xlsx",new Uint8Array(buf));
+  fbAll();
+  m.textContent=(inferred?`Se infirieron ${inferred} preguntas y datos ocultos desde el PDF y el JSON, y van en la plantilla para que el cliente los revise. `:"")+(/^Listo/.test($("#rn-msg").textContent)?"Plantilla descargada. Cuando vuelva completada, subila con «Subir plantilla».":$("#rn-msg").textContent);
+}
+/* Lector del formato v2 (hojas «Secciones» / «Preguntas» / «Equivalencias») */
+async function f2TplUploadV2(file){
+  const m=$("#f2-msg");if(!window.ExcelJS){m.textContent="No se pudo cargar el lector de Excel. Recargá la página.";return}
+  let wb;try{wb=new ExcelJS.Workbook();await wb.xlsx.load(await file.arrayBuffer())}catch(e){m.textContent="No se pudo leer ese archivo. ¿Es la plantilla en .xlsx?";return}
+  const byName=re=>wb.worksheets.find(w=>re.test(fbSlug(w.name)));
+  const wsP=byName(/^preguntas$/),wsS=byName(/^secciones$/);
+  if(!wsP)return f2TplUploadV1(file);
+  const txt=v=>{if(v==null)return"";if(typeof v==="object"){if(v.richText)return v.richText.map(x=>x.text).join("").trim();if(v.text)return String(v.text).trim();if("result" in v)return v.result==null?"":String(v.result).trim();if(v instanceof Date)return v.toISOString().slice(0,10);return""}return String(v).trim()};
+  const table=(ws,key)=>{if(!ws)return[];let hr=0;for(let r=1;r<=12&&!hr;r++)ws.getRow(r).eachCell(c=>{if(fbSlug(txt(c.value))===key)hr=r});if(!hr)return[];
+    const hdr=[];ws.getRow(hr).eachCell({includeEmpty:true},(c,i)=>hdr[i]=fbSlug(txt(c.value)));const out=[];
+    ws.eachRow((row,r)=>{if(r<=hr)return;const o={_r:r};hdr.forEach((h,i)=>{if(h&&h!=="grupo")o[h]=txt(row.getCell(i).value)});if(Object.keys(o).some(k=>k!=="_r"&&o[k]))out.push(o)});return out};
+  const SR=table(wsS,"subseccion"),PR=table(wsP,"pregunta");
+  if(!SR.length&&!PR.length){m.textContent="La plantilla está vacía.";return}
+  const K=fbSlug;let nNew=0,nUpd=0,nDel=0,nRev=0;
+  const delQ=q=>{if(!q||!ST.Q.includes(q))return;ST.Q=ST.Q.filter(x=>x!==q&&x.parentId!==q.id);nDel++};
+  /* 1) Secciones: el orden de las filas manda */
+  const oldS=new Map(ST.S.map(s=>[K(s.title),s]));const newS=[];const dropSub=new Set();const areaCond=[];
+  let lastT="";
+  SR.forEach(r=>{const title=r.seccion||lastT;if(!title)return;lastT=title;const k=K(title);
+    let s=newS.find(x=>K(x.title)===k);
+    if(!s){s=oldS.get(k)||{id:ST.nid++,title};s.title=title;s._old=s.subs||[];s.subs=[];s.cond=null;s.condTxt="";s.hidden=false;s.notes="";newS.push(s)}
+    const subT=r.subseccion||title;
+    if(r.va&&!yes(r.va)){dropSub.add(k+"|"+K(subT));return}
+    if(s.subs.some(u=>K(u.title)===K(subT)))return;
+    const u=s._old.find(x=>K(x.title)===K(subT))||fbNewSub(subT);u.title=subT;
+    u.rep=+r.se_repite_hasta>0?+r.se_repite_hasta:0;u.notes=r.notas||"";u.cond=null;u.condTxt="";
+    if(!s.subs.length){s.hidden=yes(r.oculta);s.notes=r.notas||"";u.hidden=false;if(r.se_muestra_si)areaCond.push({o:s,t:r.se_muestra_si})}
+    else{u.hidden=yes(r.oculta);if(r.se_muestra_si)areaCond.push({o:u,t:r.se_muestra_si})}
+    s.subs.push(u);
+  });
+  newS.forEach(s=>delete s._old);
+  const dropSec=new Set(newS.filter(s=>!s.subs.length).map(s=>K(s.title)));
+  let S2=SR.length?newS.filter(s=>s.subs.length):ST.S.slice();
+  /* lo que quedó con ¿Va? = No en Secciones se va con sus preguntas */
+  ST.Q.filter(q=>!q.parentId).forEach(q=>{const s=ST.S.find(x=>x.id===q.sid);if(!s)return;const k=K(s.title);if(dropSec.has(k)||dropSub.has(k+"|"+K(q.sub||s.title)))delQ(q)});
+  const secFor=t=>{const k=K(t);if(dropSec.has(k))return null;let s=S2.find(x=>K(x.title)===k);if(!s){s=oldS.get(k)||{id:ST.nid++,title:t,hidden:false,cond:null,condTxt:"",notes:""};s.subs=s.subs||[];S2.push(s)}return s};
+  const subFor=(s,t)=>{if(dropSub.has(K(s.title)+"|"+K(t)))return null;let u=s.subs.find(x=>K(x.title)===K(t));if(!u){u=fbNewSub(t);s.subs.push(u)}return u};
+  /* 2) Preguntas: una fila por pregunta, match por ID */
+  const seen=new Set();const placed=[];let lastS="";
+  PR.forEach(r=>{
+    if(!r.pregunta)return;
+    const idm=/^Q(\d+)$/i.exec(r.id_no_tocar||"");let q=idm?fbQ(+idm[1]):null;if(q&&seen.has(q.id))q=null;
+    if(r.va&&!yes(r.va)){if(q)delQ(q);return}
+    const st=r.seccion||lastS||"Sección 1";lastS=st;const s=secFor(st);
+    const u=s?subFor(s,r.subseccion||(s.subs[0]&&s.subs[0].title)||s.title):null;
+    if(!s||!u){if(q)delQ(q);return}
+    if(q)nUpd++;else{q=fbNewQ(r.pregunta,s.id);nNew++}
+    seen.add(q.id);q.sid=s.id;q.label=r.pregunta;
+    if(q.parentId){const par=fbQ(q.parentId);if(par){par.sid=s.id;par.sub=u.title}}else q.sub=u.title;
+    fromTplType(r.tipo,q,!!(s.hidden||u.hidden));
+    if(r.opciones)q.opts=parseOpts(r.opciones,q.opts);else if(!/opción|Sí \/ No/.test(q.type))q.opts=[];
+    if(r.obligatoria)q.req=yes(r.obligatoria);
+    fromTplPre(r.viene_prellenado,r.se_puede_editar,q);
+    if((q.split||"")!==(r.en_el_pdf_va_partido_en||"")){q.split=r.en_el_pdf_va_partido_en||"";delete q.roles}
+    q.rule=r.reglas_formato||"";q.ex=r.ejemplo||"";q.notes=r.notas||"";
+    if(r.tipo==="Dato oculto"){q.hiddenSrc=OCULTO_ORIG.find(o=>K(q.rule).startsWith(K(o)))||q.hiddenSrc||"Viene del sistema";if(!/Sistema|calcula/.test(q.origin||""))q.origin=q.hiddenSrc==="Se calcula"?"Se calcula":"Sistema (no se ve)"}
+    q._cond=r.se_muestra_si||"";placed.push({q,r:r._r});
+  });
+  /* 3) Secciones que quedaron fuera de la hoja pero tienen preguntas que no estaban en la plantilla */
+  const rest=ST.Q.filter(q=>!seen.has(q.id));
+  rest.forEach(q=>{if(q.parentId)return;const s=ST.S.find(x=>x.id===q.sid);if(s&&!S2.includes(s))S2.push(s)});
+  ST.S=S2;
+  /* 4) Condiciones (después de crear todas las preguntas) */
+  const cond=(o,t)=>{if(!t){o.cond=null;o.condTxt="";return}const c=parseCond(t,o.label!=null?o:null);if(c){o.cond=c;o.condTxt=""}else{o.cond=null;o.condTxt=t;nRev++}};
+  placed.forEach(({q})=>{const t=q._cond;delete q._cond;cond(q,t)});
+  areaCond.forEach(({o,t})=>cond(o,t));
+  /* 5) Orden: sección → subsección (hoja Secciones) → fila de la hoja Preguntas */
+  fbNorm();
+  const si=new Map(ST.S.map((s,i)=>[s.id,i]));
+  const ui=q=>{const r=fbRoot(q);const s=ST.S.find(x=>x.id===r.sid);return s?s.subs.findIndex(u=>u.title===(r.sub||"")):-1};
+  placed.sort((a,b)=>(si.get(fbRoot(a.q).sid)-si.get(fbRoot(b.q).sid))||(ui(a.q)-ui(b.q))||(a.r-b.r));
+  const out=[];const done=new Set();
+  const put=q=>{if(done.has(q.id))return;const par=q.parentId?fbQ(q.parentId):null;if(par&&!done.has(par.id)){done.add(par.id);out.push(par)}done.add(q.id);out.push(q)};
+  placed.forEach(x=>put(x.q));
+  ST.Q=[...out,...ST.Q.filter(q=>!done.has(q.id))].filter(q=>!q.parentId||fbQ(q.parentId));
+  if(!ST.S.length)f2ActiveSid();
+  fbNorm();ST.Q.forEach(f2AutoJson);ST.selQ=null;ST.open=null;
+  const keep=rest.filter(q=>!q.parentId&&ST.Q.includes(q)&&!done.has(q.id)).length;
+  m.textContent=`Plantilla cargada: ${nUpd} actualizadas, ${nNew} nuevas, ${nDel} eliminadas, ${nRev} a revisar. Las que ya estaban conectadas al PDF o al JSON conservan sus conexiones.${nRev?" Las condiciones «Se muestra si» que no se pudieron leer quedaron marcadas «(revisar)».":""}${keep?` ${keep} preguntas que no estaban en la plantilla quedaron al final de su sección.`:""}`;
+  fbAll();
+}
+
+/* Subir plantilla: detecta el formato (v12 / v2 con hoja Secciones / formato anterior) */
+async function f2TplUpload(file){
+  const m=$("#f2-msg");if(!window.ExcelJS){m.textContent="No se pudo cargar el lector de Excel. Recargá la página.";return}
+  let wb;try{wb=new ExcelJS.Workbook();await wb.xlsx.load(await file.arrayBuffer())}catch(e){m.textContent="No se pudo leer ese archivo. ¿Es la plantilla en .xlsx?";return}
+  const txt=v=>{if(v==null)return"";if(typeof v==="object"){if(v.richText)return v.richText.map(x=>x.text).join("").trim();if(v.text)return String(v.text).trim();if("result" in v)return v.result==null?"":String(v.result).trim();if(v instanceof Date)return v.toISOString().slice(0,10);return""}return String(v).trim()};
+  const wsP=wb.worksheets.find(w=>fbSlug(w.name)==="preguntas");
+  let hr=0,hdr=[];
+  if(wsP)for(let r=1;r<=12&&!hr;r++){const h=[];wsP.getRow(r).eachCell({includeEmpty:true},(c,i)=>h[i]=fbSlug(txt(c.value)));if(h.includes("pregunta")&&h.includes("ruta_json")){hr=r;hdr=h}}
+  if(!hr)return f2TplUploadV2(file);
+  /* encabezados: solo la primera columna con cada nombre («seccion» oculta repite el de «Sección») */
+  const col={};hdr.forEach((h,i)=>{if(h&&!(h in col))col[h]=i});
+  const PR=[];wsP.eachRow((row,r)=>{if(r<=hr)return;const o={_r:r};Object.entries(col).forEach(([h,i])=>{if(h!=="grupo"&&h!=="valor_en_el_json")o[h]=txt(row.getCell(i).value)});if(o.pregunta)PR.push(o)});
+  if(!PR.length){m.textContent="La plantilla está vacía.";return}
+  const K=fbSlug;let nNew=0,nUpd=0,nDel=0,nRev=0;const badPath=[];
+  const delQ=q=>{if(!q||!ST.Q.includes(q))return;ST.Q=ST.Q.filter(x=>x!==q&&x.parentId!==q.id);nDel++};
+  /* secciones y subsecciones en orden de primera aparición; «Datos del sistema (oculto)» siempre primera */
+  const S2=[];const order=new Map();
+  const secFor=t=>{const k=K(t);let s=S2.find(x=>K(x.title)===k);
+    if(!s){s=ST.S.find(x=>K(x.title)===k)||{id:ST.nid++,title:t,hidden:false,cond:null,condTxt:"",notes:"",subs:[]};s.title=t;s.subs=s.subs||[];if(k===K(SYS_SEC))s.hidden=true;S2.push(s);order.set(s,[])}
+    return s};
+  const subFor=(s,t)=>{let u=s.subs.find(x=>K(x.title)===K(t));if(!u){u=fbNewSub(t);s.subs.push(u)}const o=order.get(s);if(!o.includes(u))o.push(u);return u};
+  const seen=new Set();const placed=[];let lastS="",lastU="";
+  PR.forEach(r=>{
+    const idm=/^Q(\d+)$/i.exec(r.id_no_tocar||"");let q=idm?fbQ(+idm[1]):null;if(q&&seen.has(q.id))q=null;
+    if(r.va&&!yes(r.va)){if(q)delQ(q);return}
+    const st=r.seccion||lastS||"Sección 1";const s=secFor(st);
+    const ut=r.subseccion||(r.seccion&&K(r.seccion)!==K(lastS)?"":lastU)||(s.subs[0]&&s.subs[0].title)||s.title;
+    lastS=st;lastU=ut;const u=subFor(s,ut);
+    if(q)nUpd++;else{q=fbNewQ(r.pregunta,s.id);nNew++}
+    seen.add(q.id);q.sid=s.id;q.label=r.pregunta;
+    if(q.parentId){const par=fbQ(q.parentId);if(par){par.sid=s.id;par.sub=u.title}}else q.sub=u.title;
+    fromTplType(r.tipo,q,!!(s.hidden||u.hidden));
+    if(r.opciones)q.opts=parseOpts(r.opciones,q.opts);else if(!/opción|Sí \/ No/.test(q.type))q.opts=[];
+    if(r.obligatoria)q.req=yes(r.obligatoria);
+    fromTplPre(r.viene_prellenado,r.se_puede_editar,q);
+    const rp=fromTplPath(r.ruta_json);
+    if(rp!==(q.json||"")){q.json=rp||null;q.jsonOk=!!rp}
+    if(rp&&!q.parentId&&!q._subRep)q.repeat=rp.includes("[]");
+    if(rp&&ST.paths.length&&!ST.paths.some(p=>p.path===rp))badPath.push(r.ruta_json);
+    if((q.split||"")!==(r.en_el_pdf_va_partido_en||"")){q.split=r.en_el_pdf_va_partido_en||"";delete q.roles}
+    q.rule=r.reglas_formato||"";q.notes=r.notas||"";
+    if(r.tipo==="Dato oculto"){q.hiddenSrc=OCULTO_ORIG.find(o=>K(q.rule).startsWith(K(o)))||q.hiddenSrc||"Viene del sistema";if(!/Sistema|calcula/.test(q.origin||""))q.origin=q.hiddenSrc==="Se calcula"?"Se calcula":"Sistema (no se ve)"}
+    q._cond=r.se_muestra_si||"";placed.push({q,r:r._r});
+  });
+  /* subsecciones: primero las de la hoja (en orden de aparición), después las que ya existían */
+  S2.forEach(s=>{const o=order.get(s);s.subs=[...o,...s.subs.filter(u=>!o.includes(u))]});
+  S2.sort((a,b)=>(K(b.title)===K(SYS_SEC))-(K(a.title)===K(SYS_SEC)));
+  const rest=ST.Q.filter(q=>!seen.has(q.id));
+  rest.forEach(q=>{if(q.parentId)return;const s=ST.S.find(x=>x.id===q.sid);if(s&&!S2.includes(s))S2.push(s)});
+  ST.S=S2;
+  placed.forEach(({q})=>{const t=q._cond;delete q._cond;if(!t){q.cond=null;q.condTxt="";return}const c=parseCond(t,q);if(c){q.cond=c;q.condTxt=""}else{q.cond=null;q.condTxt=t;nRev++}});
+  /* orden: sección → subsección → fila (aunque la fila esté al final de la hoja) */
+  fbNorm();
+  const si=new Map(ST.S.map((s,i)=>[s.id,i]));
+  const ui=q=>{const r=fbRoot(q);const s=ST.S.find(x=>x.id===r.sid);return s?s.subs.findIndex(u=>u.title===(r.sub||"")):-1};
+  placed.sort((a,b)=>(si.get(fbRoot(a.q).sid)-si.get(fbRoot(b.q).sid))||(ui(a.q)-ui(b.q))||(a.r-b.r));
+  const out=[];const done=new Set();
+  const put=q=>{if(done.has(q.id))return;const par=q.parentId?fbQ(q.parentId):null;if(par&&!done.has(par.id)){done.add(par.id);out.push(par)}done.add(q.id);out.push(q)};
+  placed.forEach(x=>put(x.q));
+  ST.Q=[...out,...ST.Q.filter(q=>!done.has(q.id))].filter(q=>!q.parentId||fbQ(q.parentId));
+  if(!ST.S.length)f2ActiveSid();
+  fbNorm();ST.Q.forEach(f2AutoJson);ST.selQ=null;ST.open=null;
+  const keep=rest.filter(q=>!q.parentId&&ST.Q.includes(q)).length;
+  m.textContent=`Plantilla cargada: ${nUpd} actualizadas, ${nNew} nuevas, ${nDel} eliminadas, ${nRev} a revisar. Las que ya estaban conectadas al PDF o al JSON conservan sus conexiones.${nRev?" Las condiciones «Se muestra si» que no se pudieron leer quedaron marcadas «(revisar)».":""}${badPath.length?` Atención: ${badPath.length} ${badPath.length===1?"ruta no está":"rutas no están"} en el JSON cargado (${badPath.slice(0,3).join(", ")}${badPath.length>3?"…":""}).`:""}${keep?` ${keep} preguntas que no estaban en la plantilla quedaron al final de su sección.`:""}`;
+  fbAll();
+}
+
+$("#f2-tpl-dl").addEventListener("click",f2TplDownload);
+$("#f2-tpl-in").addEventListener("change",async e=>{const f=e.target.files[0];if(f)await f2TplUpload(f);e.target.value=""});
+$("#f2-xlsx").addEventListener("click",()=>f2Excel($("#f2-msg")));
+/* ── Paso 3 · Probar ── */
+const TP={vals:{},count:{},codes:{},slots:{},rendered:false};
+const tpParts=fbParts;
+const tpRepKey=q=>q.sid+"|"+fbRootSub(q)+"|"+q.rep;
+const tpBoxSorted=q=>[...q.boxes].sort((a,b)=>a-b);
+function tpGet(o,path){
+  if(!o)return undefined;
+  const i=path.indexOf("[]");
+  const get=(x,p)=>p.replace(/\[(\d+)\]/g,".$1").split(".").filter(Boolean).reduce((a,k)=>a==null?undefined:a[k],x);
+  if(i<0)return get(o,path);
+  const arr=get(o,path.slice(0,i));const rest=path.slice(i+2).replace(/^\./,"");
+  return Array.isArray(arr)?arr.map(el=>rest?get(el,rest):el):undefined;
+}
+function tpSet(o,path,val,k){
+  const i=path.indexOf("[]");
+  const set=(x,p,v)=>{const ks=p.replace(/\[(\d+)\]/g,".$1").split(".").filter(Boolean);let c=x;ks.slice(0,-1).forEach((kk,j)=>{if(typeof c[kk]!=="object"||c[kk]===null)c[kk]=/^\d+$/.test(ks[j+1])?[]:{};c=c[kk]});c[ks[ks.length-1]]=v};
+  if(i<0){set(o,path,val);return}
+  const pre=path.slice(0,i),rest=path.slice(i+2).replace(/^\./,"");
+  const ks=pre.replace(/\[(\d+)\]/g,".$1").split(".").filter(Boolean);let c=o;ks.slice(0,-1).forEach((kk,j)=>{if(typeof c[kk]!=="object"||c[kk]===null)c[kk]=/^\d+$/.test(ks[j+1])?[]:{};c=c[kk]});
+  const last=ks[ks.length-1];if(!Array.isArray(c[last]))c[last]=[];while(c[last].length<=k)c[last].push({});
+  if(rest)set(c[last][k],rest,val);else c[last][k]=val;
+}
+const tpNum=t=>/Número|Importe|Porcentaje/.test(t);
+function tpCtl(q,k){
+  const v=k>=0?((TP.vals[q.id]||[])[k]??""):(TP.vals[q.id]??"");const a=`data-q="${q.id}" data-k="${k}"`;const t=q.type;
+  const sl=fbSlots(q);
+  if(k<0&&t!=="Fecha"&&sl.length>=2&&!/opción|Sí \/ No|Casilla|Firma|informativo/.test(t)){const sv=tpSlotVals(q,TP.vals[q.id]);return`<div class="pv-slots">${sl.map((s,j)=>`<input type="text" data-q="${q.id}" data-k="-1" data-s="${j}" placeholder="${esc(s)}" aria-label="${esc(q.label)}: ${esc(s)}" value="${esc(sv[j]??"")}">`).join("")}</div>`}
+  if(t==="Una opción de una lista"||t==="Varias opciones de una lista"){
+    if(q.opts.length&&(q.opts.length<=5||q.ui==="botones"))return`<div class="pv-opts">${q.opts.map((o,j)=>`<label><input type="radio" name="tp${q.id}_${k}" value="${esc(o.label)}" ${a} ${v===o.label?"checked":""}> ${esc(o.label)}</label>`).join("")}</div>`;
+    return`<select ${a}><option value="">Elegí una opción</option>${q.opts.map(o=>`<option ${v===o.label?"selected":""}>${esc(o.label)}</option>`).join("")}</select>`;
+  }
+  if(t==="Sí / No")return`<div class="pv-opts"><label><input type="radio" name="tp${q.id}_${k}" value="Sí" ${a} ${v==="Sí"?"checked":""}> Sí</label><label><input type="radio" name="tp${q.id}_${k}" value="No" ${a} ${v==="No"?"checked":""}> No</label></div>`;
+  if(t==="Fecha")return`<input type="date" ${a} value="${esc(v)}">`;
+  if(t==="Hora")return`<input type="time" ${a} value="${esc(v)}">`;
+  if(t==="Texto largo")return`<textarea rows="2" ${a}>${esc(v)}</textarea>`;
+  if(t==="Firma")return`<div class="pv-sig">La firma se hace en el paso de firma</div>`;
+  if(t==="Texto informativo")return"";
+  return`<input type="${tpNum(t)?"number":t==="Email"?"email":t==="Teléfono"?"tel":"text"}" ${a} value="${esc(v)}">`;
+}
+function tpForm(){
+  fbNorm();let html="",sec=null,sub=null;const doneRep=new Set();
+  const closeSub=()=>{if(sub!==null){html+="</div>";sub=null}};
+  fbOrdered().forEach(q=>{
+    if(tpParts(q).length)return;
+    if(fbHiddenArea(q))return;
+    if(q.sid!==sec){closeSub();if(sec!==null)html+="</div>";sec=q.sid;html+=`<div class="pv-s" data-sw="${sec}"><h4 class="pv-sec">${esc(secTitle(sec))}</h4>`}
+    const st=fbRootSub(q);
+    if(st!==sub){closeSub();sub=st;html+=`<div class="pv-sb" data-subw="${sec}" data-subt="${esc(st)}">${st?`<h5 class="pv-sub">${esc(st)}</h5>`:""}`}
+    if(q.rep){
+      const key=tpRepKey(q);if(doneRep.has(key))return;doneRep.add(key);
+      const group=ST.Q.filter(x=>x.rep&&tpRepKey(x)===key&&!tpParts(x).length&&!fbHiddenArea(x));
+      const n=TP.count[key]??1;
+      html+=`<div class="pv-rep"><div class="pv-rh">Se repite · el PDF tiene lugar para ${q.rep}</div>${Array.from({length:n},(_,k)=>`<div class="pv-row">${group.map(g=>`<label class="pv-f"><span>${k+1}. ${esc(g.label)}</span>${tpCtl(g,k)}</label>`).join("")}</div>`).join("")}
+        <div style="display:flex;gap:6px">${n<q.rep?`<button class="mini" type="button" data-rep="${esc(key)}" data-d="1">+ Agregar otro</button>`:""}${n>1?`<button class="mini" type="button" data-rep="${esc(key)}" data-d="-1">Quitar el último</button>`:""}</div></div>`;
+      return;
+    }
+    if(q.type==="Casilla de aceptación"){html+=`<label class="pv-f pv-ck" data-qw="${q.id}"><input type="checkbox" data-q="${q.id}" data-k="-1" ${TP.vals[q.id]?"checked":""}> ${esc(q.label)}</label>`;return}
+    html+=`<label class="pv-f" data-qw="${q.id}"><span>${esc(q.label)}${q.req&&!q.parentId?' <b class="req">*</b>':""}${q.parentId?` <em>· parte de ${esc((fbQ(q.parentId)||{}).label||"")}</em>`:""}${q.cond&&q.cond.qid?` <em>· se muestra si ${esc(condText(q))}</em>`:""}</span>${tpCtl(q,-1)}</label>`;
+  });
+  closeSub();if(sec!==null)html+="</div>";
+  const hid=ST.S.filter(x=>x.hidden&&ST.Q.some(q=>q.sid===x.id)).map(x=>x.title);
+  $("#tp-form").innerHTML=(html||'<p class="msg">No hay preguntas. Volvé al paso 2.</p>')+(hid.length?`<p class="msg" style="margin-top:12px">Secciones ocultas (no se le muestran a la persona, pero sus datos van al PDF y al JSON): ${hid.map(esc).join(", ")}.</p>`:"");
+  tpApplyVis();
+}
+const tpSuffix=i=>(rn.rows[i].nuevo.match(/_(dia|mes|ano)$/)||[])[1];
+function tpSlotVals(q,v){const s=TP.slots[q.id];return s&&s.some(Boolean)?s:String(v??"").split(/\s*\/\s*|\s+/).filter(Boolean)}
+function tpFmtDate(iso){const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(iso||"");return m?{dia:m[3],mes:m[2],ano:m[1],full:`${m[3]}/${m[2]}/${m[1]}`}:null}
+function tpPdfValues(){
+  fbNorm();const out={};
+  const put=(q,v,boxes)=>{
+    if(v===""||v==null||v===false)return;
+    boxes=boxes||q.boxes;
+    if(q.type==="Fecha"){const d=tpFmtDate(v);if(!d)return;if(boxes.length>=2){const rl=boxes.map(b=>fbRoleOf(q,b));if(rl.every(Boolean)){boxes.forEach((b,j)=>{if(d[rl[j]]!=null)out[b]=d[rl[j]]});return}}boxes.forEach(b=>out[b]=d.full);return}
+    {const sl=fbSlots(q);if(sl.length>=2&&boxes.length>=2&&!/opción|Sí \/ No|Casilla/.test(q.type)){const sv=tpSlotVals(q,v);boxes.forEach(b=>{const r=fbRoleOf(q,b);const j=r!=null?sl.indexOf(r):-1;const x=j>=0?sv[j]:"";if(x)out[b]=String(x)});return}}
+    if((q.type==="Una opción de una lista"||q.type==="Sí / No")&&q.opts.length&&q.opts.every(o=>o.box!=null)){const o=q.opts.find(o=>o.label===v);if(o)out[o.box]="X";return}
+    if(q.type==="Casilla de aceptación"){boxes.forEach(b=>out[b]="X");return}
+    boxes.forEach(b=>out[b]=String(v));
+  };
+  ST.Q.forEach(q=>{
+    const parts=tpParts(q);if(!qVisible(q))return;
+    if(parts.length){
+      if(q.rep){const n=TP.count[tpRepKey(q)]??1;const bs=tpBoxSorted(q);for(let k=0;k<n;k++){const v=parts.map(p=>(TP.vals[p.id]||[])[k]).filter(Boolean).join(q.sep??" ");if(bs[k]!=null)put(q,v,[bs[k]])}}
+      else put(q,parts.map(p=>TP.vals[p.id]).filter(Boolean).join(q.sep??" "));
+      return;
+    }
+    if(q.parentId||!q.boxes.length||!qVisible(q))return;
+    if(q.rep){const bs=tpBoxSorted(q);(TP.vals[q.id]||[]).forEach((v,k)=>{if(bs[k]!=null)put(q,v,[bs[k]])});return}
+    put(q,TP.vals[q.id]);
+  });
+  return out;
+}
+function tpJsonVal(q,v){
+  if(v===""||v==null)return undefined;
+  if(q.type==="Sí / No")return v==="Sí";
+  if(q.type==="Casilla de aceptación")return v?true:undefined;
+  if(tpNum(q.type)){const n=Number(v);return Number.isFinite(n)?n:v}
+  if(/opción/.test(q.type)){const c=TP.codes[q.id+"|"+v];return c!=null?c:v}
+  return v;
+}
+function tpJson(){
+  const o={};
+  ST.Q.forEach(q=>{
+    if(!q.json||!qVisible(q))return;const parts=tpParts(q);
+    if(q.rep){const n=TP.count[tpRepKey(q)]??1;for(let k=0;k<n;k++){const v=parts.length?parts.map(p=>(TP.vals[p.id]||[])[k]).filter(Boolean).join(q.sep??" "):(TP.vals[q.id]||[])[k];const jv=tpJsonVal(q,v);if(jv!==undefined)tpSet(o,q.json,jv,k)}return}
+    const v=parts.length?parts.map(p=>TP.vals[p.id]).filter(Boolean).join(q.sep??" "):TP.vals[q.id];
+    const jv=tpJsonVal(q,v);if(jv!==undefined)tpSet(o,q.json,jv,0);
+  });
+  return o;
+}
+async function tpRender(){
+  const tok=TP.tok=(TP.tok||0)+1;
+  const box=$("#tp-pdf");box.innerHTML="";if(!rn.pdf)return;
+  const avail=box.clientWidth-20;
+  for(let p=1;p<=rn.pdf.numPages;p++){
+    const page=await rn.pdf.getPage(p);const base=page.getViewport({scale:1});
+    const scale=Math.max(0.4,avail/base.width);const vp=page.getViewport({scale});const dpr=Math.min(2,window.devicePixelRatio||1);
+    const wrap=document.createElement("div");wrap.className="rn-page";wrap.style.width=vp.width+"px";
+    const c=document.createElement("canvas");c.width=vp.width*dpr;c.height=vp.height*dpr;c.style.width=vp.width+"px";
+    wrap.appendChild(c);box.appendChild(wrap);
+    await page.render({canvasContext:c.getContext("2d"),viewport:page.getViewport({scale:scale*dpr})}).promise;if(tok!==TP.tok)return;
+    rn.rows.filter(r=>r.page===p).forEach(r=>{[r.rect,...r.extra.map(e=>[e.x0,e.y0,e.x1,e.y1])].forEach(rc=>{
+      const [x0,y0,x1,y1]=vp.convertToViewportRectangle(rc);const d=document.createElement("div");
+      d.className="tp-v";d.dataset.i=r.i;const h=Math.abs(y1-y0);
+      Object.assign(d.style,{left:Math.min(x0,x1)+"px",top:Math.min(y0,y1)+"px",width:Math.abs(x1-x0)+"px",height:h+"px",fontSize:Math.max(7,Math.min(13,h*0.72))+"px"});
+      if(r.kind==="check"||r.kind==="radio")d.classList.add("ck");
+      wrap.appendChild(d)})});
+  }
+  TP.rendered=true;tpUpdate();
+}
+function tpApplyVis(){
+  document.querySelectorAll("#tp-form [data-sw]").forEach(el=>{const s=ST.S.find(x=>x.id===+el.dataset.sw);el.hidden=s?!condOk(s.cond,0):false});
+  document.querySelectorAll("#tp-form [data-subw]").forEach(el=>{const s=ST.S.find(x=>x.id===+el.dataset.subw);const u=s&&(s.subs||[]).find(x=>x.title===el.dataset.subt);el.hidden=u?!condOk(u.cond,0):false});
+  document.querySelectorAll("#tp-form [data-qw]").forEach(el=>{const q=fbQ(+el.dataset.qw);el.hidden=q?!qVisible(q):false});
+}
+function tpUpdate(){tpApplyVis();
+  const pv=tpPdfValues();
+  document.querySelectorAll(".tp-v").forEach(d=>{const v=pv[+d.dataset.i];d.textContent=v??"";d.classList.toggle("on",v!=null&&v!=="")});
+  const j=tpJson();$("#tp-json").textContent=JSON.stringify(j,null,2);
+  const filled=Object.keys(pv).length;$("#tp-stats").innerHTML=`<span><b>${filled}</b> de ${rn.rows.length} casilleros con valor</span>`;
+}
+function tpPrefill(){
+  const m=$("#tp-msg");
+  if(!ST.json){m.textContent="No hay JSON cargado en el paso 1: completá el formulario a mano.";return}
+  TP.vals={};TP.count={};TP.codes={};TP.slots={};let n=0;
+  const pick=(q,raw)=>{
+    if(raw==null||typeof raw==="object")return"";
+    if(q.type==="Sí / No")return raw===true||/^(s|si|sí|true|1)$/i.test(String(raw))?"Sí":"No";
+    if(q.type==="Casilla de aceptación")return raw===true||/^(s|si|sí|true|1|x)$/i.test(String(raw));
+    if(/opción/.test(q.type)&&q.opts.length){const s=fbSlug(String(raw));const o=q.opts.find(o=>fbSlug(o.label)===s)||q.opts.find(o=>s.length>=2&&fbSlug(o.label).startsWith(s))||q.opts.find(o=>fbSlug(o.label).startsWith(s.slice(0,3)));if(o){TP.codes[q.id+"|"+o.label]=raw;return o.label}return""}
+    if(q.type==="Fecha"){const t=String(raw);if(/^\d{4}-\d{2}-\d{2}/.test(t))return t.slice(0,10);const d=/^(\d{2})\/(\d{2})\/(\d{4})$/.exec(t);return d?`${d[3]}-${d[2]}-${d[1]}`:""}
+    return String(raw);
+  };
+  ST.Q.forEach(q=>{
+    if(!q.json||tpParts(q).length)return;
+    const raw=tpGet(ST.json,q.json);
+    if(q.rep){if(!Array.isArray(raw))return;const arr=raw.slice(0,q.rep).map(x=>pick(q,x));TP.vals[q.id]=arr;const key=tpRepKey(q);TP.count[key]=Math.max(TP.count[key]||1,arr.length);n+=arr.filter(Boolean).length;return}
+    const v=pick(q,raw);if(v!==""&&v!==false){TP.vals[q.id]=v;n++}
+  });
+  m.textContent=n?`Listo: ${n} respuestas cargadas desde el JSON del cliente. Lo que quedó vacío no tiene dato unido en el paso 2.`:"No se cargó nada: ninguna pregunta tiene un dato del JSON unido. Volvé al paso 2 y confirmá las uniones.";
+  tpForm();tpUpdate();
+}
+function tpRead(el){
+  const id=+el.dataset.q,k=+el.dataset.k;let v=el.type==="checkbox"?el.checked:el.value;
+  if(el.dataset.s!=null){const q=fbQ(id);const sv=TP.slots[id]=TP.slots[id]||(q?tpSlotVals(q,TP.vals[id]).slice():[]);sv[+el.dataset.s]=v;TP.vals[id]=sv.filter(Boolean).join(" ");return}
+  if(k>=0){TP.vals[id]=TP.vals[id]||[];TP.vals[id][k]=v}else TP.vals[id]=v;
+}
+$("#tp-form").addEventListener("input",e=>{if(e.target.dataset.q){tpRead(e.target);tpUpdate()}});
+$("#tp-form").addEventListener("change",e=>{if(e.target.dataset.q){tpRead(e.target);tpUpdate()}});
+$("#tp-form").addEventListener("click",e=>{const b=e.target.closest("[data-rep]");if(!b)return;const key=b.dataset.rep;const n=(TP.count[key]??1)+(+b.dataset.d);TP.count[key]=Math.max(1,n);
+  if(+b.dataset.d<0)ST.Q.forEach(q=>{if(q.rep&&tpRepKey(q)===key&&TP.vals[q.id])TP.vals[q.id].length=TP.count[key]});tpForm();tpUpdate()});
+$("#tp-fill").addEventListener("click",tpPrefill);
+$("#tp-clear").addEventListener("click",()=>{TP.vals={};TP.count={};TP.slots={};tpForm();tpUpdate();$("#tp-msg").textContent=""});
+$("#tp-json-dl").addEventListener("click",()=>rnSave(rnBase()+"_salida.json",JSON.stringify(tpJson(),null,2)).then(()=>{$("#tp-msg").textContent=$("#rn-msg").textContent}));
+$("#tp-pdf-dl").addEventListener("click",async()=>{
+  const m=$("#tp-msg");if(!window.PDFLib){m.textContent="No se pudo cargar el editor de PDF. Recargá la página.";return}
+  m.textContent="Armando el PDF completado…";
+  try{
+    const map={};rn.rows.forEach(r=>map[r.old]=r.nuevo);const ren=await rnRename(rn.bytes,map);
+    const doc=await PDFLib.PDFDocument.load(ren.bytes);const form=doc.getForm();const pv=tpPdfValues();let n=0;
+    Object.entries(pv).forEach(([i,v])=>{const nm=rn.rows[+i].nuevo;try{const f=form.getField(nm);
+      if(f instanceof PDFLib.PDFCheckBox){f.check();n++}else if(f instanceof PDFLib.PDFTextField){f.setText(String(v));n++}else if(f instanceof PDFLib.PDFDropdown){f.select(String(v));n++}}catch(e){}});
+    try{form.updateFieldAppearances()}catch(e){}
+    await rnSave(rnBase()+"_completado.pdf",await doc.save());
+    m.textContent=/^Listo/.test($("#rn-msg").textContent)?`Listo: PDF completado con ${n} casilleros.`:$("#rn-msg").textContent;
+  }catch(e){m.textContent="No se pudo completar este PDF."}
+});
+$("#go3").addEventListener("click",()=>goStep(3));
+function tpView(v){ST.view3=v;const show={all:[1,1,1],fp:[1,1,0],fj:[1,0,1],pj:[0,1,1]}[v];["tp-cf","tp-cp","tp-cj"].forEach((id,k)=>{$("#"+id).hidden=!show[k]});$("#tp-grid").className="fb-grid tp-grid v-"+v;document.querySelectorAll("#st3 .vsel button").forEach(b=>b.classList.toggle("on",b.dataset.v===v));if(show[1])tpRender();else tpUpdate()}
+document.querySelectorAll("#st3 .vsel button").forEach(b=>b.addEventListener("click",()=>tpView(b.dataset.v)));
+$("#tp-xlsx").addEventListener("click",()=>f2Excel($("#tp-msg")));
+$("#back2").addEventListener("click",()=>goStep(2));
+let tpRT;window.addEventListener("resize",()=>{clearTimeout(tpRT);tpRT=setTimeout(()=>{if(ST.cur===3&&rn.pdf)tpRender()},250)});
+
+$("#js-in").value=JS_SAMPLE;
+rnLoad(rnB64(RN_SAMPLE),"prueba_original.pdf (ejemplo)").then(()=>{if(location.hash==="#matriz"){jsRead();goStep("m")}});
+
+;
+  // Las funciones que usan los botones viven en window. Si dos herramientas comparten un nombre,
+  // la que está en pantalla vuelve a ponerlas al reaparecer (LegacyTool llama a lo que devuelve mount).
+  const __exposed = {  };
+  Object.assign(window, __exposed);
+  return () => Object.assign(window, __exposed);
+}

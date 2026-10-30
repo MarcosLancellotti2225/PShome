@@ -1,0 +1,1531 @@
+/* GENERADO por scripts/legacy/convert.mjs desde legacy-src/email-templates (ex repo HTMLgenerator) (index.html, styles.css, app.js) (CSS). La lógica es la original. */
+.lg-email-templates { font-family: var(--font-family); }
+.lg-email-templates * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.lg-email-templates {
+    font-family: var(--font-family);
+    background: #f0f3f8;
+    min-height: 100vh;
+    padding: 0;
+}
+
+.lg-email-templates .view {
+    min-height: 100vh;
+}
+
+/* ═══════════════════════════════════ */
+/* LOGIN                               */
+/* ═══════════════════════════════════ */
+.lg-email-templates .login-wrapper {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #012825 0%, #013c38 50%, #01504c 100%);
+    padding: 20px;
+}
+
+.lg-email-templates .login-card {
+    background: white;
+    padding: 40px 36px;
+    border-radius: 16px;
+    max-width: 420px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    text-align: center;
+}
+
+.lg-email-templates .login-logo {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    background: #047c76;
+    color: white;
+    font-size: 24px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+}
+
+.lg-email-templates .login-card h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #012825;
+    margin-bottom: 8px;
+}
+
+.lg-email-templates .login-subtitle {
+    color: #636f6f;
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 28px;
+}
+
+.lg-email-templates .login-card .form-group {
+    text-align: left;
+    margin-bottom: 16px;
+}
+
+.lg-email-templates .btn-login {
+    background: #047c76;
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    transition: background 0.15s;
+    margin-top: 8px;
+}
+
+.lg-email-templates .btn-login:hover {
+    background: #006660;
+}
+
+.lg-email-templates .btn-login:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.lg-email-templates .login-error {
+    margin-top: 16px;
+    padding: 10px 14px;
+    background: #ffe8e7;
+    border: 1px solid #ffc8c5;
+    border-radius: 8px;
+    color: #952f33;
+    font-size: 13px;
+    text-align: left;
+}
+
+/* ═══════════════════════════════════ */
+/* DASHBOARD                           */
+/* ═══════════════════════════════════ */
+.lg-email-templates .dashboard {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 32px 24px;
+}
+
+.lg-email-templates .dashboard-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.lg-email-templates .dashboard-header h1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #012825;
+    margin-bottom: 4px;
+}
+
+.lg-email-templates .dashboard-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #636f6f;
+}
+
+.lg-email-templates .status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #198446;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+.lg-email-templates .dashboard-header-right {
+    display: flex;
+    gap: 8px;
+}
+
+.lg-email-templates .btn-new-branding {
+    background: #047c76;
+    color: white;
+    padding: 9px 18px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.lg-email-templates .btn-new-branding:hover {
+    background: #006660;
+}
+
+.lg-email-templates .btn-disconnect {
+    background: white;
+    color: #ad4546;
+    padding: 9px 18px;
+    border: 1px solid #f58683;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.lg-email-templates .btn-disconnect:hover {
+    background: #ad4546;
+    color: white;
+    border-color: #ad4546;
+}
+
+/* Brandings Grid */
+.lg-email-templates .brandings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+}
+
+.lg-email-templates .branding-card {
+    background: white;
+    border: 1px solid #cddbdb;
+    border-radius: 12px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.lg-email-templates .branding-card:hover {
+    border-color: #73f0e5;
+    box-shadow: 0 4px 16px rgba(4, 124, 118, 0.1);
+    transform: translateY(-2px);
+}
+
+.lg-email-templates .branding-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.lg-email-templates .branding-card-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: #defffb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+    color: #047c76;
+    flex-shrink: 0;
+}
+
+.lg-email-templates .branding-card-title {
+    flex: 1;
+    min-width: 0;
+}
+
+.lg-email-templates .branding-card-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #012825;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lg-email-templates .branding-card-id {
+    font-size: 11px;
+    color: #8b9898;
+    font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+    margin-top: 2px;
+    word-break: break-all;
+}
+
+.lg-email-templates .branding-card-templates {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.lg-email-templates .template-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 500;
+    font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+}
+
+.lg-email-templates .template-badge.has-content {
+    background: #dfffe6;
+    color: #006d36;
+}
+
+.lg-email-templates .template-badge.empty {
+    background: #e9ebf0;
+    color: #8b9898;
+}
+
+.lg-email-templates .branding-card-footer {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid #e9ebf0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.lg-email-templates .branding-card-meta {
+    font-size: 11px;
+    color: #8b9898;
+}
+
+.lg-email-templates .branding-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.lg-email-templates .branding-card-action {
+    font-size: 12px;
+    font-weight: 500;
+    color: #047c76;
+}
+
+.lg-email-templates .branding-card-action-btn {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.lg-email-templates .branding-card-action-btn.rename {
+    color: #636f6f;
+    background: #e9ebf0;
+    border: 1px solid #cddbdb;
+}
+
+.lg-email-templates .branding-card-action-btn.rename:hover {
+    color: #2a3535;
+    background: #cddbdb;
+    border-color: #b7c4c4;
+}
+
+/* Pagination */
+.lg-email-templates .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 28px;
+}
+
+.lg-email-templates .pagination-btn {
+    padding: 8px 14px;
+    border: 1px solid #b7c4c4;
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    color: #2a3535;
+    transition: all 0.15s;
+}
+
+.lg-email-templates .pagination-btn:hover:not(:disabled) {
+    background: #e9ebf0;
+    border-color: #8b9898;
+}
+
+.lg-email-templates .pagination-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.lg-email-templates .pagination-btn.active {
+    background: #047c76;
+    color: white;
+    border-color: #047c76;
+}
+
+.lg-email-templates .pagination-info {
+    font-size: 13px;
+    color: #636f6f;
+    padding: 0 8px;
+}
+
+/* ═══════════════════════════════════ */
+/* EDITOR                              */
+/* ═══════════════════════════════════ */
+.lg-email-templates .editor-container {
+    max-width: 1800px;
+    width: 100%;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 440px 1fr;
+    gap: 0;
+    background: white;
+    min-height: 100vh;
+}
+
+.lg-email-templates .controls {
+    background: #f0f3f8;
+    padding: 20px 24px 28px;
+    overflow-y: auto;
+    max-height: 100vh;
+    border-right: 1px solid #cddbdb;
+}
+
+.lg-email-templates .editor-topbar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+    padding: 14px 16px;
+    background: #012825;
+    border-radius: 10px;
+}
+
+.lg-email-templates .btn-back {
+    background: rgba(255,255,255,0.1);
+    color: #cddbdb;
+    padding: 7px 14px;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.15s;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.lg-email-templates .btn-back:hover {
+    background: rgba(255,255,255,0.18);
+    color: #ffffff;
+}
+
+.lg-email-templates .editor-branding-info {
+    min-width: 0;
+    flex: 1;
+}
+
+.lg-email-templates .editor-branding-name-input {
+    display: block;
+    width: 100%;
+    font-size: 16px;
+    font-weight: 600;
+    color: #ffffff;
+    background: rgba(255,255,255,0.06);
+    border: 1px dashed rgba(255,255,255,0.25);
+    border-radius: 6px;
+    padding: 4px 8px;
+    margin: -4px -8px;
+    transition: all 0.2s;
+    outline: none;
+    cursor: text;
+}
+
+.lg-email-templates .editor-branding-name-input::placeholder {
+    color: rgba(255,255,255,0.4);
+}
+
+.lg-email-templates .editor-branding-name-input:hover {
+    background: rgba(255,255,255,0.08);
+    border-color: rgba(255,255,255,0.15);
+}
+
+.lg-email-templates .editor-branding-name-input:focus {
+    background: rgba(255,255,255,0.12);
+    border-color: #047c76;
+    box-shadow: 0 0 0 3px rgba(4, 124, 118, 0.2);
+}
+
+.lg-email-templates .editor-branding-id {
+    display: inline-block;
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+    font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+    margin-top: 4px;
+    background: rgba(255,255,255,0.06);
+    padding: 3px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    user-select: all;
+    transition: all 0.2s;
+}
+
+.lg-email-templates .editor-branding-id:hover {
+    background: rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.7);
+}
+
+/* ── Preview ── */
+.lg-email-templates .preview-section {
+    display: flex;
+    flex-direction: column;
+    background: #f0f3f8;
+}
+
+.lg-email-templates .preview-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 20px;
+    background: #012825;
+    border-bottom: 1px solid #cddbdb;
+}
+
+.lg-email-templates .preview-toolbar-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #ffffff;
+    letter-spacing: 0.3px;
+}
+
+.lg-email-templates .preview-toolbar-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.lg-email-templates .toolbar-btn {
+    padding: 7px 14px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.08);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    color: #cddbdb;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.lg-email-templates .toolbar-btn:hover {
+    background: rgba(255,255,255,0.15);
+    border-color: rgba(255,255,255,0.3);
+    color: #ffffff;
+}
+
+.lg-email-templates .toolbar-btn-primary {
+    background: #047c76;
+    border-color: #047c76;
+    color: white;
+}
+
+.lg-email-templates .toolbar-btn-primary:hover {
+    background: #006660;
+    border-color: #006660;
+    color: white;
+}
+
+.lg-email-templates .preview {
+    padding: 24px;
+    background: #f0f3f8;
+    overflow-y: auto;
+    flex: 1;
+    position: relative;
+    max-height: 100vh;
+}
+
+.lg-email-templates .preview-frame {
+    border: 1px solid #cddbdb;
+    border-radius: 8px;
+    padding: 20px;
+    background: white;
+    width: 100%;
+    overflow: auto;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+/* ── Tipografia ── */
+.lg-email-templates h1 {
+    color: #012825;
+    margin-bottom: 10px;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.lg-email-templates h2 {
+    color: #2a3535;
+    margin: 0 0 12px 0;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.lg-email-templates .subtitle {
+    color: #636f6f;
+    margin-bottom: 20px;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+/* ── Secciones Colapsables ── */
+.lg-email-templates .collapsible-section {
+    margin-bottom: 12px;
+}
+
+.lg-email-templates .collapsible-header {
+    background: white;
+    color: #2a3535;
+    padding: 9px 12px;
+    cursor: pointer;
+    border-radius: 8px;
+    border: 1px solid #cddbdb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.15s;
+    user-select: none;
+}
+
+.lg-email-templates .collapsible-header:hover {
+    border-color: #047c76;
+    background: #f0f3f8;
+}
+
+.lg-email-templates .collapsible-header h2 {
+    margin: 0;
+    color: #2a3535;
+    font-size: 13px;
+}
+
+.lg-email-templates .collapsible-icon {
+    font-size: 14px;
+    transition: transform 0.2s;
+    color: #8b9898;
+}
+
+.lg-email-templates .collapsible-header.active {
+    border-color: #047c76;
+    background: #047c76;
+    color: white;
+    border-radius: 8px 8px 0 0;
+}
+
+.lg-email-templates .collapsible-header.active h2 {
+    color: white;
+}
+
+.lg-email-templates .collapsible-header.active .collapsible-icon {
+    transform: rotate(180deg);
+    color: white;
+}
+
+.lg-email-templates .collapsible-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+}
+
+.lg-email-templates .collapsible-content.active {
+    max-height: 2000px;
+    transition: max-height 0.5s ease-in;
+}
+
+.lg-email-templates .collapsible-inner {
+    padding: 12px;
+    border: 1px solid #cddbdb;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    background: white;
+}
+
+/* ── Formularios ── */
+.lg-email-templates select {
+    width: 100%;
+    padding: 7px 10px;
+    border: 1px solid #b7c4c4;
+    border-radius: 5px;
+    font-size: 12px;
+    background: white;
+    cursor: pointer;
+    transition: border-color 0.15s;
+    color: #2a3535;
+}
+
+.lg-email-templates select:focus {
+    outline: none;
+    border-color: #047c76;
+    box-shadow: 0 0 0 3px rgba(4, 124, 118, 0.1);
+}
+
+.lg-email-templates .form-group {
+    margin-bottom: 10px;
+}
+
+.lg-email-templates label {
+    display: block;
+    margin-bottom: 4px;
+    color: #2a3535;
+    font-weight: 500;
+    font-size: 12px;
+}
+
+.lg-email-templates input[type="text"],
+.lg-email-templates input[type="url"],
+.lg-email-templates input[type="number"],
+.lg-email-templates input[type="password"],
+.lg-email-templates textarea,
+.lg-email-templates input[type="color"] {
+    width: 100%;
+    padding: 7px 10px;
+    border: 1px solid #b7c4c4;
+    border-radius: 5px;
+    font-size: 12px;
+    transition: border-color 0.15s;
+    color: #2a3535;
+}
+
+.lg-email-templates input[type="text"]:focus,
+.lg-email-templates input[type="url"]:focus,
+.lg-email-templates input[type="number"]:focus,
+.lg-email-templates input[type="password"]:focus,
+.lg-email-templates textarea:focus {
+    outline: none;
+    border-color: #047c76;
+    box-shadow: 0 0 0 3px rgba(4, 124, 118, 0.1);
+}
+
+.lg-email-templates input[type="number"]::placeholder {
+    font-size: 11px;
+    color: #8b9898;
+}
+
+.lg-email-templates input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    background: #cddbdb;
+    outline: none;
+}
+
+.lg-email-templates input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #047c76;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.lg-email-templates input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #047c76;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.lg-email-templates textarea {
+    resize: vertical;
+    min-height: 80px;
+    font-family: inherit;
+}
+
+/* ── Colores ── */
+.lg-email-templates .color-input {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.lg-email-templates input[type="color"] {
+    width: 48px;
+    height: 36px;
+    cursor: pointer;
+    border: 1px solid #b7c4c4;
+    border-radius: 6px;
+    padding: 2px;
+}
+
+.lg-email-templates .color-value {
+    flex: 1;
+    padding: 9px 12px;
+    border: 1px solid #b7c4c4;
+    border-radius: 6px;
+    font-size: 12px;
+    font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+    background: #f0f3f8;
+    color: #2a3535;
+}
+
+/* ── Botones ── */
+.lg-email-templates .button-group {
+    display: flex;
+    gap: 8px;
+    margin-top: 24px;
+}
+
+.lg-email-templates button {
+    flex: 1;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 13px;
+}
+
+.lg-email-templates .btn-primary {
+    background: #047c76;
+    color: white;
+}
+
+.lg-email-templates .btn-primary:hover {
+    background: #006660;
+}
+
+.lg-email-templates .btn-secondary {
+    background: #e9ebf0;
+    color: #2a3535;
+    border: 1px solid #b7c4c4;
+}
+
+.lg-email-templates .btn-secondary:hover {
+    background: #cddbdb;
+}
+
+/* ── Info Box ── */
+.lg-email-templates .info-box {
+    background: #defffb;
+    border-left: 3px solid #047c76;
+    padding: 8px 10px;
+    margin-bottom: 10px;
+    border-radius: 0 6px 6px 0;
+    font-size: 11px;
+    color: #636f6f;
+    line-height: 1.4;
+}
+
+/* ── Variables ── */
+.lg-email-templates .variables-inline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 12px;
+    background: #f0f3f8;
+    border: 1px solid #cddbdb;
+    border-radius: 6px;
+    min-height: 50px;
+    margin-bottom: 8px;
+}
+
+.lg-email-templates .variable-btn {
+    background: #047c76;
+    color: white;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 500;
+    transition: all 0.15s;
+    font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+}
+
+.lg-email-templates .variable-btn:hover {
+    background: #006660;
+}
+
+.lg-email-templates .btn-manage-vars {
+    background: #e9ebf0;
+    color: #2a3535;
+    padding: 7px 14px;
+    border: 1px solid #b7c4c4;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    width: 100%;
+    transition: all 0.15s;
+}
+
+.lg-email-templates .btn-manage-vars:hover {
+    background: #cddbdb;
+}
+
+.lg-email-templates .btn-open-modal {
+    background: #047c76;
+    color: white;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 13px;
+    width: 100%;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.lg-email-templates .btn-open-modal:hover {
+    background: #006660;
+}
+
+.lg-email-templates .btn-logo {
+    background: #c15757;
+    color: white;
+    padding: 9px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 13px;
+    transition: all 0.15s;
+    white-space: nowrap;
+}
+
+.lg-email-templates .btn-logo:hover {
+    background: #ad4546;
+}
+
+/* ── API Buttons ── */
+.lg-email-templates .api-button-row {
+    display: flex;
+    gap: 8px;
+    margin: 12px 0;
+}
+
+.lg-email-templates .btn-api-action {
+    flex: 1;
+    padding: 9px 14px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 12px;
+    transition: all 0.15s;
+}
+
+.lg-email-templates .btn-api-action:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.lg-email-templates .btn-api-load {
+    background: #047c76;
+    color: white;
+}
+
+.lg-email-templates .btn-api-load:hover:not(:disabled) {
+    background: #006660;
+}
+
+.lg-email-templates .btn-api-save {
+    background: #198446;
+    color: white;
+}
+
+.lg-email-templates .btn-api-save:hover:not(:disabled) {
+    background: #006d36;
+}
+
+/* ── Toast ── */
+.lg-email-templates .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: #012825;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    z-index: 10000;
+    animation: slideIn 0.3s, slideOut 0.3s 2.7s;
+    display: none;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.lg-email-templates .toast.show {
+    display: block;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(400px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(400px); opacity: 0; }
+}
+
+/* ── Modales ── */
+.lg-email-templates .modal {
+    display: none;
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.4);
+    animation: fadeIn 0.2s;
+}
+
+.lg-email-templates .modal.show {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.lg-email-templates .modal-content {
+    background: white;
+    padding: 24px;
+    border-radius: 12px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    animation: slideUp 0.2s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { transform: translateY(30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.lg-email-templates .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.lg-email-templates .modal-header h2 {
+    margin: 0;
+    color: #012825;
+    font-size: 16px;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+.lg-email-templates .close-modal {
+    font-size: 24px;
+    font-weight: bold;
+    color: #8b9898;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.15s;
+}
+
+.lg-email-templates .close-modal:hover {
+    color: #2a3535;
+    background: #e9ebf0;
+}
+
+/* ── Confirm Push Modal ── */
+.lg-email-templates .confirm-push-details {
+    background: #f0f3f8;
+    border: 1px solid #cddbdb;
+    border-radius: 8px;
+    padding: 16px;
+    margin: 12px 0 20px;
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+.lg-email-templates .confirm-push-details .confirm-label {
+    font-weight: 600;
+    color: #2a3535;
+}
+
+.lg-email-templates .confirm-push-details .confirm-value {
+    color: #636f6f;
+    font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+    font-size: 12px;
+    background: #cddbdb;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.lg-email-templates .confirm-push-details .confirm-method {
+    display: inline-block;
+    font-weight: 700;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.lg-email-templates .confirm-method.post {
+    background: #dfffe6;
+    color: #006d36;
+}
+
+.lg-email-templates .confirm-method.patch {
+    background: #ffecce;
+    color: #745102;
+}
+
+.lg-email-templates .confirm-push-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.lg-email-templates .btn-confirm-push {
+    background: #047c76;
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.lg-email-templates .btn-confirm-push:hover {
+    background: #006660;
+}
+
+.lg-email-templates .variables-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding: 14px;
+    background: #f0f3f8;
+    border: 1px solid #cddbdb;
+    border-radius: 8px;
+    min-height: 50px;
+}
+
+.lg-email-templates .variable-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #047c76;
+    color: white;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 12px;
+    font-weight: 500;
+    position: relative;
+}
+
+.lg-email-templates .variable-pill:hover {
+    background: #006660;
+}
+
+.lg-email-templates .variable-pill .delete-var {
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    transition: background 0.15s;
+}
+
+.lg-email-templates .variable-pill .delete-var:hover {
+    background: rgba(255,255,255,0.4);
+}
+
+.lg-email-templates .variable-tooltip {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-6px);
+    background: #012825;
+    color: white;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    white-space: normal;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s;
+    z-index: 1000;
+    max-width: 260px;
+    text-align: center;
+}
+
+.lg-email-templates .variable-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 4px solid transparent;
+    border-top-color: #012825;
+}
+
+.lg-email-templates .variable-pill:hover .variable-tooltip {
+    opacity: 1;
+}
+
+.lg-email-templates .add-variable-form {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.lg-email-templates .add-variable-form input {
+    flex: 1;
+    padding: 9px 12px;
+    border: 1px solid #b7c4c4;
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+.lg-email-templates .add-variable-form input:focus {
+    outline: none;
+    border-color: #047c76;
+    box-shadow: 0 0 0 3px rgba(4, 124, 118, 0.1);
+}
+
+.lg-email-templates .btn-small {
+    padding: 7px 12px;
+    font-size: 12px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+}
+
+.lg-email-templates .btn-add {
+    background: #198446;
+    color: white;
+}
+
+.lg-email-templates .btn-add:hover {
+    background: #006d36;
+}
+
+.lg-email-templates .variable-hint {
+    background: #ffecce;
+    border: 1px solid #fcd086;
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    font-size: 12px;
+    color: #745102;
+    line-height: 1.5;
+}
+
+.lg-email-templates .empty-state {
+    text-align: center;
+    color: #8b9898;
+    padding: 16px;
+    font-size: 13px;
+}
+
+/* ── Preset Template Row ── */
+.lg-email-templates .preset-template-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.lg-email-templates .preset-template-row select {
+    flex: 1;
+}
+
+.lg-email-templates .btn-preset-load {
+    background: #00a69d;
+    color: white;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.lg-email-templates .btn-preset-load:hover:not(:disabled) {
+    background: #03948c;
+}
+
+/* ── Preview Tabs ── */
+.lg-email-templates .preview-tabs {
+    display: flex;
+    gap: 4px;
+}
+
+.lg-email-templates .preview-tab {
+    padding: 7px 16px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.05);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    color: #8b9898;
+    transition: all 0.15s;
+}
+
+.lg-email-templates .preview-tab:hover {
+    background: rgba(255,255,255,0.1);
+    color: #cddbdb;
+}
+
+.lg-email-templates .preview-tab.active {
+    background: #047c76;
+    border-color: #047c76;
+    color: white;
+}
+
+/* ── Branding Preview ── */
+.lg-email-templates .branding-preview-frame {
+    padding: 0;
+    overflow: hidden;
+}
+
+.lg-email-templates .btn-branding-preview {
+    width: 100%;
+    padding: 10px 16px;
+    background: #00a69d;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.15s;
+    margin-top: 4px;
+}
+
+.lg-email-templates .btn-branding-preview:hover {
+    background: #03948c;
+}
+
+/* ── Responsive ── */
+@media (max-width: 1200px) {
+    .lg-email-templates .editor-container {
+        grid-template-columns: 1fr;
+    }
+
+    .lg-email-templates .controls, .lg-email-templates .preview {
+        max-height: none;
+    }
+
+    .lg-email-templates .modal-content {
+        width: 95%;
+        padding: 20px;
+    }
+
+    .lg-email-templates .brandings-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ── Editor tabs ── */
+.lg-email-templates .editor-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    margin-bottom: 16px;
+    background: #e9ebf0;
+    border-radius: 8px;
+}
+
+.lg-email-templates .editor-tab {
+    flex: 1;
+    padding: 8px 6px;
+    white-space: nowrap;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    color: #4f5b5b;
+    transition: background 0.15s, color 0.15s;
+}
+
+.lg-email-templates .editor-tab:hover {
+    color: #012825;
+}
+
+.lg-email-templates .editor-tab.active {
+    background: #ffffff;
+    color: #012825;
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+}
+
+/* ── Cargar / Exportar cards ── */
+.lg-email-templates .file-card {
+    background: #ffffff;
+    border: 1px solid #cddbdb;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+}
+
+.lg-email-templates .file-card h3 {
+    margin: 0 0 4px;
+    font-size: 14px;
+    color: #012825;
+}
+
+.lg-email-templates .file-card p {
+    margin: 0 0 10px;
+    font-size: 12px;
+    color: #636f6f;
+}
+
+.lg-email-templates .file-card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.lg-email-templates .file-card button {
+    font-size: 12px;
+    padding: 7px 12px;
+}
+
+.lg-email-templates .file-card-check {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.lg-email-templates .file-card-check input {
+    width: auto;
+}
+
+.lg-email-templates .file-card-danger {
+    border-color: #ffc8c5;
+}
+
+/* ── Sticky save bar ── */
+.lg-email-templates .editor-savebar {
+    position: sticky;
+    bottom: -28px;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 20px -24px -28px;
+    padding: 12px 24px;
+    flex-shrink: 0;
+    background: #ffffff;
+    border-top: 1px solid #cddbdb;
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.05);
+}
+
+.lg-email-templates .savebar-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.lg-email-templates .savebar-label {
+    font-size: 11px;
+    color: #636f6f;
+}
+
+.lg-email-templates .savebar-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: #012825;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lg-email-templates .btn-savebar {
+    flex-shrink: 0;
+    padding: 9px 18px;
+    background: #047c76;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.lg-email-templates .btn-savebar:hover {
+    background: #006660;
+}
+
+@media (max-width: 1200px) {
+    .lg-email-templates .controls {
+        overflow: visible;
+    }
+
+    .lg-email-templates .editor-savebar {
+        bottom: 0;
+    }
+}
+
+.lg-email-templates .controls {
+    display: flex;
+    flex-direction: column;
+}
+
+.lg-email-templates .controls > * {
+    flex-shrink: 0;
+}
+
+.lg-email-templates .controls > .editor-savebar {
+    margin-top: auto;
+}
+
+
+
+
+/* Ajustes para correr dentro de la app */
+.lg-email-templates { min-height: 0; border-radius: 12px; overflow: hidden; border: 1px solid var(--color-border); }
+.lg-email-templates .view, .lg-email-templates .login-wrapper { min-height: 640px; }
+.lg-email-templates .controls, .lg-email-templates .preview { max-height: calc(100vh - 80px); }

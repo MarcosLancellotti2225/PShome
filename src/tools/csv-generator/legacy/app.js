@@ -1,0 +1,3494 @@
+/* eslint-disable */
+// GENERADO por scripts/legacy/convert.mjs desde legacy-src/csv-generator (ex repo toolsImport) (index.html, styles.css, formatLoaders.js, transformations.js, app.js) (JS). La lógica es la original.
+// Ruta base de la app (para archivos de public/, como docs/ o mapear.html).
+const __PSTOOLS_BASE__ = import.meta.env.BASE_URL;
+export const EXPOSED = [];
+
+export function mount() {
+// ============================================
+// FORMAT LOADERS v4.0.0
+// Soporte para XLSX, CSV, JSON, XML
+// ============================================
+
+const FormatLoaders = {
+    
+    // ============================================
+    // XLSX LOADER (ya existente, mejorado)
+    // ============================================
+    async loadXLSX(file, hasHeader = true) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const rawData = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: '' });
+                    
+                    const result = this._processTabularData(rawData, hasHeader);
+                    resolve(result);
+                } catch (error) {
+                    reject(new Error('Error al procesar XLSX: ' + error.message));
+                }
+            };
+            
+            reader.onerror = () => reject(new Error('Error al leer el archivo'));
+            reader.readAsArrayBuffer(file);
+        });
+    },
+    
+    // ============================================
+    // CSV LOADER (nuevo)
+    // ============================================
+    async loadCSV(file, options = {}) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                try {
+                    const text = e.target.result;
+                    
+                    // Auto-detectar configuración
+                    const config = this._detectCSVConfig(text, options);
+                    
+                    // Parsear con PapaParse
+                    Papa.parse(text, {
+                        delimiter: config.delimiter,
+                        header: false,
+                        skipEmptyLines: true,
+                        encoding: config.encoding,
+                        complete: (results) => {
+                            try {
+                                const result = this._processTabularData(
+                                    results.data, 
+                                    config.hasHeader
+                                );
+                                resolve(result);
+                            } catch (error) {
+                                reject(error);
+                            }
+                        },
+                        error: (error) => {
+                            reject(new Error('Error al parsear CSV: ' + error.message));
+                        }
+                    });
+                } catch (error) {
+                    reject(new Error('Error al procesar CSV: ' + error.message));
+                }
+            };
+            
+            reader.onerror = () => reject(new Error('Error al leer el archivo'));
+            reader.readAsText(file, options.encoding || 'UTF-8');
+        });
+    },
+    
+    // Auto-detectar configuración CSV
+    _detectCSVConfig(text, userOptions = {}) {
+        const lines = text.split('\n').slice(0, 5); // Primeras 5 líneas
+        const sample = lines.join('\n');
+        
+        // Detectar separador
+        let delimiter = userOptions.delimiter;
+        if (!delimiter) {
+            const delimiters = [',', ';', '\t', '|'];
+            let maxCount = 0;
+            
+            delimiters.forEach(d => {
+                const count = (sample.match(new RegExp('\\' + d, 'g')) || []).length;
+                if (count > maxCount) {
+                    maxCount = count;
+                    delimiter = d;
+                }
+            });
+        }
+        
+        // Detectar si tiene headers
+        let hasHeader = userOptions.hasHeader !== undefined ? userOptions.hasHeader : true;
+        
+        return {
+            delimiter,
+            hasHeader,
+            encoding: userOptions.encoding || 'UTF-8'
+        };
+    },
+    
+    // ============================================
+    // JSON LOADER (nuevo)
+    // ============================================
+    async loadJSON(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                try {
+                    const text = e.target.result;
+                    const json = JSON.parse(text);
+                    
+                    // Detectar estructura
+                    const result = this._processJSON(json);
+                    resolve(result);
+                } catch (error) {
+                    reject(new Error('Error al procesar JSON: ' + error.message));
+                }
+            };
+            
+            reader.onerror = () => reject(new Error('Error al leer el archivo'));
+            reader.readAsText(file, 'UTF-8');
+        });
+    },
+    
+    _processJSON(json) {
+        // Caso 1: Array de objetos
+        if (Array.isArray(json) && json.length > 0 && typeof json[0] === 'object') {
+            const columns = Object.keys(json[0]);
+            const data = json.map(row => {
+                const obj = {};
+                columns.forEach(col => {
+                    obj[col] = row[col] !== undefined ? String(row[col]) : '';
+                });
+                return obj;
+            });
+            
+            return { columns, data };
+        }
+        
+        // Caso 2: Objeto con arrays
+        if (typeof json === 'object' && !Array.isArray(json)) {
+            const columns = Object.keys(json);
+            
+            // Verificar que todos sean arrays
+            const allArrays = columns.every(col => Array.isArray(json[col]));
+            if (!allArrays) {
+                throw new Error('JSON debe ser un array de objetos o un objeto con arrays');
+            }
+            
+            // Obtener longitud máxima
+            const maxLength = Math.max(...columns.map(col => json[col].length));
+            
+            // Convertir a formato estándar
+            const data = [];
+            for (let i = 0; i < maxLength; i++) {
+                const obj = {};
+                columns.forEach(col => {
+                    obj[col] = json[col][i] !== undefined ? String(json[col][i]) : '';
+                });
+                data.push(obj);
+            }
+            
+            return { columns, data };
+        }
+        
+        throw new Error('Formato JSON no soportado. Usa: [{col1:val}, {col1:val}] o {col1:[val,val], col2:[val,val]}');
+    },
+    
+    // ============================================
+    // XML LOADER (nuevo)
+    // ============================================
+    async loadXML(file, options = {}) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                try {
+                    const text = e.target.result;
+                    const result = this._processXML(text, options);
+                    resolve(result);
+                } catch (error) {
+                    reject(new Error('Error al procesar XML: ' + error.message));
+                }
+            };
+            
+            reader.onerror = () => reject(new Error('Error al leer el archivo'));
+            reader.readAsText(file, 'UTF-8');
+        });
+    },
+    
+    _processXML(xmlText, options = {}) {
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+        
+        // Verificar errores de parseo
+        const parseError = xmlDoc.querySelector('parsererror');
+        if (parseError) {
+            throw new Error('XML mal formado');
+        }
+        
+        // Auto-detectar estructura si no se especifica
+        let rowPath = options.rowPath;
+        
+        if (!rowPath) {
+            // Buscar el primer elemento que se repite
+            const root = xmlDoc.documentElement;
+            const children = Array.from(root.children);
+            
+            if (children.length > 0) {
+                const firstChildName = children[0].tagName;
+                const count = children.filter(c => c.tagName === firstChildName).length;
+                
+                if (count > 1) {
+                    rowPath = firstChildName;
+                }
+            }
+        }
+        
+        if (!rowPath) {
+            throw new Error('No se pudo detectar la estructura del XML. Especifica rowPath.');
+        }
+        
+        // Obtener todas las filas
+        const rows = xmlDoc.querySelectorAll(rowPath);
+        
+        if (rows.length === 0) {
+            throw new Error(`No se encontraron elementos con el path: ${rowPath}`);
+        }
+        
+        // Extraer columnas del primer elemento
+        const firstRow = rows[0];
+        const columns = [];
+        
+        // Obtener elementos hijos (no atributos por ahora)
+        Array.from(firstRow.children).forEach(child => {
+            if (!columns.includes(child.tagName)) {
+                columns.push(child.tagName);
+            }
+        });
+        
+        // Convertir a formato estándar
+        const data = Array.from(rows).map(row => {
+            const obj = {};
+            columns.forEach(col => {
+                const element = row.querySelector(col);
+                obj[col] = element ? (element.textContent || '').trim() : '';
+            });
+            return obj;
+        });
+        
+        return { columns, data };
+    },
+    
+    // ============================================
+    // PROCESADOR COMÚN (tabular data)
+    // ============================================
+    _processTabularData(rawData, hasHeader = true) {
+        if (!rawData || rawData.length === 0) {
+            throw new Error('No hay datos para procesar');
+        }
+        
+        let columns, dataRows;
+        
+        if (hasHeader) {
+            columns = rawData[0].map(h => String(h).trim());
+            dataRows = rawData.slice(1);
+        } else {
+            // Generar nombres de columnas: A, B, C, ... Z, AA, AB, ...
+            const numColumns = rawData[0].length;
+            columns = Array.from({ length: numColumns }, (_, i) => {
+                let columnLetter = '';
+                let num = i;
+                while (num >= 0) {
+                    columnLetter = String.fromCharCode(65 + (num % 26)) + columnLetter;
+                    num = Math.floor(num / 26) - 1;
+                }
+                return `Columna ${columnLetter}`;
+            });
+            dataRows = rawData;
+        }
+        
+        // Convertir a objetos
+        const data = dataRows.map(row => {
+            const obj = {};
+            columns.forEach((col, idx) => {
+                obj[col] = row[idx] !== undefined ? String(row[idx]).trim() : '';
+            });
+            return obj;
+        });
+        
+        return { columns, data };
+    }
+};
+;
+// ============================================
+// TRANSFORMATIONS ENGINE v4.0.0
+// Sistema completo de transformaciones
+// ============================================
+
+const Transformations = {
+    
+    // ============================================
+    // DIVISIÓN SIMPLE
+    // ============================================
+    split(data, sourceColumn, separator, partNames) {
+        const newColumns = partNames.map(name => `${sourceColumn}_${name}`);
+        
+        // Procesar datos
+        data.forEach(row => {
+            const value = row[sourceColumn] || '';
+            const parts = String(value).split(separator);
+            
+            partNames.forEach((name, idx) => {
+                const newColName = `${sourceColumn}_${name}`;
+                row[newColName] = parts[idx] || '';
+            });
+        });
+        
+        return {
+            newColumns,
+            data
+        };
+    },
+    
+    // ============================================
+    // DIVISIÓN MÚLTIPLE (nuevo)
+    // ============================================
+    splitMultiple(data, sourceColumn, config) {
+        /*
+        config = {
+            separators: [',', ' '],  // Separadores en orden
+            partNames: ['apellido1', 'apellido2', 'nombre1', 'nombre2']
+        }
+        
+        Ejemplo: "GARCIA,PEREZ JUAN CARLOS"
+        separators[0] = ',' → ["GARCIA", "PEREZ JUAN CARLOS"]
+        separators[1] = ' ' en parte 1 → ["GARCIA", "PEREZ JUAN CARLOS"]
+                              en parte 2 → ["GARCIA", "PEREZ", "JUAN", "CARLOS"]
+        */
+        
+        const newColumns = config.partNames.map(name => `${sourceColumn}_${name}`);
+        
+        data.forEach(row => {
+            const value = row[sourceColumn] || '';
+            let parts = [value];
+            
+            // Aplicar separadores secuencialmente
+            config.separators.forEach((sep, sepIdx) => {
+                const newParts = [];
+                parts.forEach(part => {
+                    const subParts = String(part).split(sep);
+                    newParts.push(...subParts);
+                });
+                parts = newParts;
+            });
+            
+            // Asignar a las columnas
+            config.partNames.forEach((name, idx) => {
+                const newColName = `${sourceColumn}_${name}`;
+                row[newColName] = parts[idx] || '';
+            });
+        });
+        
+        return {
+            newColumns,
+            data
+        };
+    },
+    
+    // ============================================
+    // DIVISIÓN CON LÍMITE (nuevo)
+    // ============================================
+    splitLimit(data, sourceColumn, separator, limit, partNames) {
+        /*
+        Ejemplo: "marcos,lancellotti,quagliardi" con limit=2
+        → ["marcos", "lancellotti,quagliardi"]
+        */
+        
+        const newColumns = partNames.map(name => `${sourceColumn}_${name}`);
+        
+        data.forEach(row => {
+            const value = row[sourceColumn] || '';
+            const parts = String(value).split(separator, limit);
+            
+            // Si hay más texto después del límite, agregarlo a la última parte
+            if (limit > 0) {
+                const fullSplit = String(value).split(separator);
+                if (fullSplit.length > limit) {
+                    parts[limit - 1] = fullSplit.slice(limit - 1).join(separator);
+                }
+            }
+            
+            partNames.forEach((name, idx) => {
+                const newColName = `${sourceColumn}_${name}`;
+                row[newColName] = parts[idx] || '';
+            });
+        });
+        
+        return {
+            newColumns,
+            data
+        };
+    },
+    
+    // ============================================
+    // COMBINAR COLUMNAS (nuevo)
+    // ============================================
+    combine(data, sourceColumns, targetColumn, separator = ' ') {
+        data.forEach(row => {
+            const values = sourceColumns.map(col => row[col] || '');
+            row[targetColumn] = values.filter(v => v).join(separator);
+        });
+        
+        return {
+            newColumns: [targetColumn],
+            data
+        };
+    },
+    
+    // ============================================
+    // EXTRACCIÓN CON REGEX (nuevo)
+    // ============================================
+    extractRegex(data, sourceColumn, pattern, groupNames) {
+        /*
+        Ejemplo: pattern = /(\w+)@(\w+\.com)/
+        groupNames = ['usuario', 'dominio']
+        */
+        
+        const regex = new RegExp(pattern);
+        const newColumns = groupNames.map(name => `${sourceColumn}_${name}`);
+        
+        data.forEach(row => {
+            const value = row[sourceColumn] || '';
+            const match = String(value).match(regex);
+            
+            groupNames.forEach((name, idx) => {
+                const newColName = `${sourceColumn}_${name}`;
+                // match[0] es el match completo, match[1] es el primer grupo
+                row[newColName] = match && match[idx + 1] ? match[idx + 1] : '';
+            });
+        });
+        
+        return {
+            newColumns,
+            data
+        };
+    },
+    
+    // ============================================
+    // REEMPLAZAR TEXTO (nuevo)
+    // ============================================
+    replace(data, sourceColumn, find, replaceWith, targetColumn = null) {
+        const target = targetColumn || sourceColumn;
+        const isRegex = find instanceof RegExp;
+        
+        data.forEach(row => {
+            const value = row[sourceColumn] || '';
+            
+            if (isRegex) {
+                row[target] = String(value).replace(find, replaceWith);
+            } else {
+                row[target] = String(value).split(find).join(replaceWith);
+            }
+        });
+        
+        return {
+            newColumns: targetColumn ? [targetColumn] : [],
+            data
+        };
+    },
+    
+    // ============================================
+    // TRANSFORMAR MAYÚSCULAS/MINÚSCULAS (nuevo)
+    // ============================================
+    changeCase(data, sourceColumn, caseType, targetColumn = null) {
+        /*
+        caseType: 'upper', 'lower', 'title', 'sentence'
+        */
+        
+        const target = targetColumn || sourceColumn;
+        
+        data.forEach(row => {
+            const value = row[sourceColumn] || '';
+            let transformed = value;
+            
+            switch (caseType) {
+                case 'upper':
+                    transformed = String(value).toUpperCase();
+                    break;
+                case 'lower':
+                    transformed = String(value).toLowerCase();
+                    break;
+                case 'title':
+                    transformed = String(value)
+                        .toLowerCase()
+                        .split(' ')
+                        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                        .join(' ');
+                    break;
+                case 'sentence':
+                    transformed = String(value).charAt(0).toUpperCase() + 
+                                  String(value).slice(1).toLowerCase();
+                    break;
+            }
+            
+            row[target] = transformed;
+        });
+        
+        return {
+            newColumns: targetColumn ? [targetColumn] : [],
+            data
+        };
+    },
+    
+    // ============================================
+    // TRIM Y LIMPIEZA (nuevo)
+    // ============================================
+    clean(data, sourceColumn, options = {}, targetColumn = null) {
+        /*
+        options: {
+            trim: true,
+            removeExtraSpaces: true,
+            removeSpecialChars: false,
+            removeNumbers: false
+        }
+        */
+        
+        const target = targetColumn || sourceColumn;
+        
+        data.forEach(row => {
+            let value = row[sourceColumn] || '';
+            
+            if (options.trim) {
+                value = String(value).trim();
+            }
+            
+            if (options.removeExtraSpaces) {
+                value = String(value).replace(/\s+/g, ' ');
+            }
+            
+            if (options.removeSpecialChars) {
+                value = String(value).replace(/[^a-zA-Z0-9\s]/g, '');
+            }
+            
+            if (options.removeNumbers) {
+                value = String(value).replace(/\d/g, '');
+            }
+            
+            row[target] = value;
+        });
+        
+        return {
+            newColumns: targetColumn ? [targetColumn] : [],
+            data
+        };
+    },
+    
+    // ============================================
+    // SUBSTRING / SLICE (nuevo)
+    // ============================================
+    substring(data, sourceColumn, start, length, targetColumn) {
+        data.forEach(row => {
+            const value = row[sourceColumn] || '';
+            row[targetColumn] = String(value).substring(start, start + length);
+        });
+        
+        return {
+            newColumns: [targetColumn],
+            data
+        };
+    },
+    
+    // ============================================
+    // PADDING (nuevo)
+    // ============================================
+    pad(data, sourceColumn, totalLength, padChar = '0', padLeft = true, targetColumn = null) {
+        const target = targetColumn || sourceColumn;
+        
+        data.forEach(row => {
+            const value = String(row[sourceColumn] || '');
+            
+            if (padLeft) {
+                row[target] = value.padStart(totalLength, padChar);
+            } else {
+                row[target] = value.padEnd(totalLength, padChar);
+            }
+        });
+        
+        return {
+            newColumns: targetColumn ? [targetColumn] : [],
+            data
+        };
+    },
+    
+    // ============================================
+    // CONDICIONAL (nuevo)
+    // ============================================
+    conditional(data, sourceColumn, conditions, targetColumn) {
+        /*
+        conditions = [
+            { if: (value) => value > 100, then: 'Alto' },
+            { if: (value) => value > 50, then: 'Medio' },
+            { else: 'Bajo' }
+        ]
+        */
+        
+        data.forEach(row => {
+            const value = row[sourceColumn];
+            let result = '';
+            
+            for (const condition of conditions) {
+                if (condition.else) {
+                    result = condition.else;
+                    break;
+                }
+                
+                if (condition.if(value)) {
+                    result = condition.then;
+                    break;
+                }
+            }
+            
+            row[targetColumn] = result;
+        });
+        
+        return {
+            newColumns: [targetColumn],
+            data
+        };
+    }
+};
+;
+// ============================================
+// CSV Generator v5.1.2
+// Multi-format + Range config + Transformations
+// + Audit Report (KeyController XML → XLSX)
+// + Audit Personalizado: custom columns + multi-format + XLSX output
+// ============================================
+
+(function() {
+    'use strict';
+
+    // ============================================
+    // UTILIDADES
+    // ============================================
+    function sanitizeHTML(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    // ============================================
+    // ESTADO GLOBAL
+    // ============================================
+    const state = {
+        selectedProduct: null,
+        selectedCommand: null,
+        selectedFormat: 'xlsx',  // NUEVO: formato seleccionado
+        currentWorkbook: null,   // NUEVO: workbook para hojas múltiples
+        excelColumns: [],
+        excelData: [],
+        mapping: {},
+        customDefaults: {},      // v4.5.1: valores por defecto del usuario
+        transformations: {},     // v4.5.1: transformaciones aplicadas por columna
+        hasHeaderRow: true,
+        // v5.0.0: Audit Report state
+        auditRawEntries: [],     // all parsed entries from XML
+        auditProcessedData: [],  // entries after filtering + transformation
+        auditXmlFileName: '',    // original XML filename for output naming
+        // v5.1.0: Audit Personalizado
+        auditCustomColumns: [],  // user-defined columns for personalizado mode
+        isCustomMapping: false,  // flag for custom mapping mode
+        customMappingRows: []    // { source, output, included } for custom mapping
+    };
+
+    // ============================================
+    // TEMPLATES (IvSign + IvNeos + Audit)
+    // ============================================
+    const templates = {
+        ivsign: {
+            'users-add': {
+                columns: ['userid', 'email', 'nombre', 'apellidos', 'dni', 'telefono', 'rol', 'password'],
+                defaults: {}
+            },
+            'users-modify': {
+                columns: ['userid', 'email', 'nombre', 'apellidos', 'dni', 'telefono', 'rol'],
+                defaults: {}
+            },
+            'users-delete': {
+                columns: ['userid'],
+                defaults: {}
+            },
+            'certs-add': {
+                columns: ['userid', 'certType', 'p12File', 'p12Pass'],
+                defaults: {}
+            },
+            'certs-modify': {
+                columns: ['userid', 'certType', 'p12File', 'p12Pass'],
+                defaults: {}
+            },
+            'certs-delegate': {
+                columns: ['userid', 'certType', 'certSerial', 'certOwner'],
+                defaults: {}
+            },
+            'delegs-add': {
+                columns: ['userid', 'delegType', 'delegUser', 'delegStart', 'delegEnd'],
+                defaults: {}
+            },
+            'delegs-modify': {
+                columns: ['userid', 'delegType', 'delegUser', 'delegStart', 'delegEnd'],
+                defaults: {}
+            },
+            'delegs-delete': {
+                columns: ['userid', 'delegUser'],
+                defaults: {}
+            },
+            'rules-add': {
+                columns: ['userid', 'ruleType', 'ruleValue'],
+                defaults: {}
+            },
+            'rules-modify': {
+                columns: ['userid', 'ruleType', 'ruleValue'],
+                defaults: {}
+            }
+        },
+        ivneos: {
+            'clientes': {
+                columns: ['identificador', 'razon_social', 'nif', 'email', 'telefono'],
+                defaults: {}
+            },
+            'grupos': {
+                columns: ['id_grupo', 'nombre_grupo', 'descripcion'],
+                defaults: {}
+            },
+            'usuarios': {
+                columns: ['id', 'nombre', 'apellidos', 'tipo de perfil', 'email', 'contraseña'],
+                defaults: {},
+                options: {
+                    'tipo de perfil': ['superadministrador', 'descargador', 'lector', 'editor', 'sincronizador', 'administrador']
+                }
+            }
+        },
+        audit: {
+            'reporte-ntg': {
+                columns: ['date', 'date_utc', 'oper', 'userid', 'host', 'app', 'domain', 'certnameorig', 'subjectcn', 'data'],
+                defaults: {},
+                autoXml: true,
+                label: 'Reporte NTG'
+            },
+            'personalizado': {
+                columns: [],
+                defaults: {},
+                custom: true,
+                label: 'Personalizado'
+            }
+        }
+    };
+
+    // ============================================
+    // INICIALIZACIÓN
+    // ============================================
+    queueMicrotask(init); /* antes: DOMContentLoaded */
+
+    function init() {
+        setupProductSelection();
+        setupFormatSelection();  // NUEVO
+        setupFileUpload();
+        setupHeaderOptions();
+        setupDownload();
+        setupReset();
+        setupAuditReport();  // v5.0.0
+        setupColumnBuilder();  // v5.1.0
+    }
+
+    // ============================================
+    // PASO 1: SELECCIÓN DE PRODUCTO Y COMANDO
+    // ============================================
+    function setupProductSelection() {
+        // Product cards
+        document.querySelectorAll('.product-card').forEach(card => {
+            card.onclick = () => {
+                const product = card.dataset.product;
+                selectProduct(product);
+            };
+        });
+
+        // Template buttons
+        document.getElementById('createTemplateBtn').onclick = () => {
+            if (!state.selectedCommand) {
+                alert('⚠️ Primero selecciona un comando');
+                return;
+            }
+            createEmptyTemplate();
+        };
+
+        document.getElementById('loadExcelBtn').onclick = () => {
+            if (!state.selectedCommand) {
+                alert('⚠️ Primero selecciona un comando');
+                return;
+            }
+            // Show format selector
+            document.getElementById('formatSelector').style.display = 'block';
+            document.getElementById('formatSelector').scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        };
+
+        document.getElementById('downloadTemplateBtn').onclick = () => {
+            if (!state.selectedCommand) {
+                alert('⚠️ Primero selecciona un comando');
+                return;
+            }
+            downloadTemplate();
+        };
+    }
+
+    function selectProduct(product) {
+        state.selectedProduct = product;
+        state.selectedCommand = null;
+
+        // Update UI
+        document.querySelectorAll('.product-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+        const selectedCard = document.querySelector(`[data-product="${product}"]`);
+        if (selectedCard) {
+            selectedCard.classList.add('selected');
+        }
+
+        // v5.1.0: Always hide audit sections and column builder when switching products
+        hideAuditSections();
+        document.getElementById('columnBuilderSection').style.display = 'none';
+
+        // Reset CSV flow sections visibility
+        document.getElementById('fileLoadStep').style.display = '';
+        document.getElementById('previewSection').style.display = 'none';
+        document.getElementById('mappingSection').style.display = 'none';
+        document.getElementById('formatSelector').style.display = 'none';
+        document.getElementById('uploadArea').style.display = 'none';
+        document.getElementById('headerOption').style.display = 'none';
+        document.getElementById('templateCreated').style.display = 'none';
+        document.getElementById('columnsInfo').style.display = 'none';
+        const rangeDiv = document.getElementById('rangeConfigDiv');
+        if (rangeDiv) rangeDiv.remove();
+        const sheetDiv = document.getElementById('sheetSelectorDiv');
+        if (sheetDiv) sheetDiv.remove();
+
+        // Show command selection
+        const commandSelection = document.getElementById('commandSelection');
+        if (!commandSelection) {
+            console.error('commandSelection element not found');
+            return;
+        }
+        commandSelection.style.display = 'block';
+
+        // Generate command buttons dynamically
+        const commandGrid = document.getElementById('commandGrid');
+        if (!commandGrid) {
+            console.error('commandGrid element not found');
+            return;
+        }
+        commandGrid.innerHTML = '';
+
+        const productTemplates = templates[product];
+        if (!productTemplates) {
+            console.error('No templates found for product:', product);
+            return;
+        }
+
+        Object.keys(productTemplates).forEach(cmdKey => {
+            const tmpl = productTemplates[cmdKey];
+            const btn = document.createElement('button');
+            btn.className = 'command-item';
+            btn.dataset.command = cmdKey;
+            btn.textContent = tmpl.label || cmdKey;
+            btn.onclick = () => selectCommand(cmdKey);
+            commandGrid.appendChild(btn);
+        });
+
+        // Scroll
+        commandSelection.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+        });
+    }
+
+    // v5.1.0: Helper functions for section visibility
+    function hideAuditSections() {
+        document.getElementById('auditUploadSection').style.display = 'none';
+        document.getElementById('auditFiltersSection').style.display = 'none';
+        document.getElementById('auditStatsSection').style.display = 'none';
+        document.getElementById('auditPreviewSection').style.display = 'none';
+    }
+
+    function selectCommand(command) {
+        state.selectedCommand = command;
+
+        // Update UI
+        document.querySelectorAll('.command-item').forEach(item => {
+            item.classList.remove('selected');
+        });
+        const selectedItem = document.querySelector(`[data-command="${command}"]`);
+        if (selectedItem) {
+            selectedItem.classList.add('selected');
+        }
+
+        const template = getTemplate();
+        const columnsInfo = document.getElementById('columnsInfo');
+        const requiredColumns = document.getElementById('requiredColumns');
+
+        // v5.1.0: Audit Report branching
+        if (template.autoXml) {
+            // Reporte NTG: hide CSV flow, show audit XML upload
+            document.getElementById('fileLoadStep').style.display = 'none';
+            document.getElementById('columnBuilderSection').style.display = 'none';
+            document.getElementById('previewSection').style.display = 'none';
+            document.getElementById('mappingSection').style.display = 'none';
+            if (columnsInfo) columnsInfo.style.display = 'none';
+
+            document.getElementById('auditUploadSection').style.display = 'block';
+            document.getElementById('auditUploadSection').scrollIntoView({
+                behavior: 'smooth', block: 'center'
+            });
+            return;
+        }
+
+        if (template.custom) {
+            // Personalizado: go straight to file load (columns are detected from file)
+            hideAuditSections();
+            document.getElementById('fileLoadStep').style.display = '';
+            document.getElementById('columnBuilderSection').style.display = 'none';
+            document.getElementById('createTemplateBtn').style.display = 'none';
+            if (columnsInfo) columnsInfo.style.display = 'none';
+
+            document.getElementById('fileLoadStep').scrollIntoView({
+                behavior: 'smooth', block: 'center'
+            });
+            return;
+        }
+
+        // Standard flow for IvSign/IvNeos
+        hideAuditSections();
+        document.getElementById('columnBuilderSection').style.display = 'none';
+        document.getElementById('fileLoadStep').style.display = '';
+        document.getElementById('createTemplateBtn').style.display = '';
+
+        if (columnsInfo && requiredColumns) {
+            columnsInfo.style.display = 'block';
+            requiredColumns.textContent = template.columns.join(', ');
+        }
+
+        // Scroll to file load step
+        document.getElementById('fileLoadStep').scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+        });
+    }
+
+    // ============================================
+    // COLUMN BUILDER v5.1.0 (Audit Personalizado)
+    // ============================================
+    function setupColumnBuilder() {
+        document.getElementById('addCustomColumnBtn').onclick = () => addCustomColumn();
+        document.getElementById('customColumnInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addCustomColumn();
+        });
+        document.getElementById('applyCustomColumnsBtn').onclick = () => applyCustomColumns();
+    }
+
+    function addCustomColumn() {
+        const input = document.getElementById('customColumnInput');
+        const name = input.value.trim();
+
+        if (!name) return;
+        if (state.auditCustomColumns.includes(name)) {
+            alert('Ya existe una columna con ese nombre');
+            return;
+        }
+
+        state.auditCustomColumns.push(name);
+        input.value = '';
+        input.focus();
+        renderCustomColumns();
+    }
+
+    function removeCustomColumn(idx) {
+        state.auditCustomColumns.splice(idx, 1);
+        renderCustomColumns();
+    }
+
+    function renderCustomColumns() {
+        const list = document.getElementById('customColumnsList');
+
+        if (state.auditCustomColumns.length === 0) {
+            list.innerHTML = '<p style="color: #999; text-align: center; padding: 20px;">No hay columnas definidas</p>';
+            document.getElementById('customColumnsInfo').style.display = 'none';
+            document.getElementById('applyCustomColumnsBtn').disabled = true;
+            return;
+        }
+
+        list.innerHTML = state.auditCustomColumns.map((col, idx) => `
+            <div style="display: flex; align-items: center; gap: 10px; padding: 10px; background: ${idx % 2 === 0 ? '#f8f9ff' : 'white'}; border: 1px solid #e0e0e0; border-radius: 8px; margin-bottom: 5px;">
+                <span style="background: #667eea; color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85em; font-weight: bold; flex-shrink: 0;">${idx + 1}</span>
+                <span style="flex: 1; font-weight: 600;">${sanitizeHTML(col)}</span>
+                <button onclick="removeCustomColumn(${idx})" style="background: #dc3545; color: white; border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; font-size: 0.9em; flex-shrink: 0;">&#10006;</button>
+            </div>
+        `).join('');
+
+        document.getElementById('customColumnsInfo').style.display = 'block';
+        document.getElementById('customColumnsCount').textContent = state.auditCustomColumns.length;
+        document.getElementById('applyCustomColumnsBtn').disabled = false;
+    }
+
+    function applyCustomColumns() {
+        if (state.auditCustomColumns.length === 0) {
+            alert('Agrega al menos una columna');
+            return;
+        }
+
+        // Update template with user-defined columns
+        templates.audit.personalizado.columns = [...state.auditCustomColumns];
+
+        // Show columns info
+        const columnsInfo = document.getElementById('columnsInfo');
+        const requiredColumns = document.getElementById('requiredColumns');
+        if (columnsInfo && requiredColumns) {
+            columnsInfo.style.display = 'block';
+            requiredColumns.textContent = state.auditCustomColumns.join(', ');
+        }
+
+        // Scroll to file load step
+        document.getElementById('fileLoadStep').scrollIntoView({
+            behavior: 'smooth', block: 'center'
+        });
+    }
+
+    // Expose column builder functions to window (for onclick in dynamic HTML)
+    window.removeCustomColumn = removeCustomColumn;
+
+    // ============================================
+    // CUSTOM MAPPING v5.1.0 (Audit Personalizado - inverted flow)
+    // File is loaded first, then user edits columns from mapping view
+    // ============================================
+    function setupCustomMapping() {
+        state.isCustomMapping = true;
+
+        // Initialize: all source columns included with same output name
+        state.customMappingRows = state.excelColumns.map(col => ({
+            source: col,
+            output: col,
+            included: true
+        }));
+
+        // Reset transforms and defaults
+        state.transformations = {};
+        state.customDefaults = {};
+        state.mapping = {};
+        // Pre-set mapping so transform modal can access source data
+        state.excelColumns.forEach(col => {
+            state.mapping[col] = col;
+        });
+
+        // Show mapping section
+        const section = document.getElementById('mappingSection');
+        section.style.display = 'block';
+
+        // Update UI for custom mode
+        document.getElementById('mappingStatus').innerHTML = `
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <span style="font-size: 1.5em;">📋</span>
+                <span><strong>${state.excelColumns.length}</strong> columnas detectadas. Desmarca las que no necesites y edita los nombres de salida.</span>
+            </div>
+        `;
+
+        // Show mapping details directly (not behind toggle button)
+        document.getElementById('mappingDetails').style.display = 'block';
+        document.getElementById('manualMappingBtn').style.display = 'none';
+
+        // Render custom table
+        renderCustomMappingTable();
+
+        // Set apply button to custom handler
+        document.getElementById('applyMappingBtn').onclick = () => applyCustomMapping();
+        document.getElementById('applyMappingBtn').textContent = '✅ Aplicar y Generar Preview';
+
+        section.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function renderCustomMappingTable() {
+        // Update table headers for custom mode
+        const thead = document.querySelector('#mappingTable thead tr');
+        thead.innerHTML = `
+            <th style="width: 60px; text-align: center;">Incluir</th>
+            <th>Columna origen</th>
+            <th>Nombre en salida</th>
+            <th>Transformar</th>
+            <th>Valor por defecto</th>
+        `;
+
+        const tbody = document.getElementById('mappingBody');
+        tbody.innerHTML = '';
+
+        state.customMappingRows.forEach((row, idx) => {
+            const tr = document.createElement('tr');
+            if (!row.included) tr.style.opacity = '0.5';
+
+            // Checkbox: include/exclude
+            const tdCheck = document.createElement('td');
+            tdCheck.style.textAlign = 'center';
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.className = 'custom-include-cb';
+            cb.checked = row.included;
+            cb.dataset.idx = idx;
+            cb.style.cssText = 'width:20px;height:20px;accent-color:#667eea;cursor:pointer;';
+            cb.onchange = () => {
+                state.customMappingRows[idx].included = cb.checked;
+                tr.style.opacity = cb.checked ? '1' : '0.5';
+                updateCustomMappingStatus();
+            };
+            tdCheck.appendChild(cb);
+            tr.appendChild(tdCheck);
+
+            // Source column name (read-only)
+            const tdSource = document.createElement('td');
+            tdSource.style.fontWeight = '600';
+            tdSource.style.color = '#667eea';
+            tdSource.textContent = row.source || '(personalizada)';
+            tr.appendChild(tdSource);
+
+            // Editable output name
+            const tdOutput = document.createElement('td');
+            const outputInput = document.createElement('input');
+            outputInput.type = 'text';
+            outputInput.className = 'custom-output-name';
+            outputInput.value = row.output;
+            outputInput.dataset.idx = idx;
+            outputInput.style.cssText = 'width:100%;padding:8px;border:1px solid #e0e0e0;border-radius:5px;font-size:0.9em;';
+            outputInput.oninput = () => {
+                const oldName = state.customMappingRows[idx].output;
+                const newName = outputInput.value.trim();
+                // Transfer transforms if name changed
+                if (oldName !== newName && state.transformations[oldName]) {
+                    state.transformations[newName] = state.transformations[oldName];
+                    delete state.transformations[oldName];
+                }
+                state.customMappingRows[idx].output = newName || row.source;
+            };
+            tdOutput.appendChild(outputInput);
+            tr.appendChild(tdOutput);
+
+            // Transform button
+            const tdTransform = document.createElement('td');
+            const btnTransform = document.createElement('button');
+            btnTransform.textContent = '🔧 Transformar';
+            btnTransform.className = 'btn btn-secondary';
+            btnTransform.style.cssText = 'padding:5px 10px;font-size:0.9em;';
+            btnTransform.onclick = () => {
+                const currentOutput = state.customMappingRows[idx].output;
+                const currentSource = state.customMappingRows[idx].source;
+                // Set up mapping for transform modal to access source data
+                state.mapping[currentOutput] = currentSource;
+                openTransformModal(currentOutput);
+            };
+            tdTransform.appendChild(btnTransform);
+
+            // Show transform badge if transforms exist
+            if (state.transformations[row.output] && state.transformations[row.output].length > 0) {
+                const badge = document.createElement('span');
+                badge.style.cssText = 'display:inline-block;margin-left:8px;background:#28a745;color:white;padding:2px 8px;border-radius:10px;font-size:0.8em;';
+                badge.textContent = state.transformations[row.output].length + ' aplicada(s)';
+                tdTransform.appendChild(badge);
+            }
+            tr.appendChild(tdTransform);
+
+            // Default value
+            const tdDefault = document.createElement('td');
+            const defaultInput = document.createElement('input');
+            defaultInput.type = 'text';
+            defaultInput.className = 'custom-default-val';
+            defaultInput.value = state.customDefaults[row.output] || '';
+            defaultInput.dataset.idx = idx;
+            defaultInput.placeholder = '';
+            defaultInput.style.cssText = 'width:100%;padding:8px;border:1px solid #e0e0e0;border-radius:5px;font-size:0.9em;';
+            tdDefault.appendChild(defaultInput);
+            tr.appendChild(tdDefault);
+
+            tbody.appendChild(tr);
+        });
+
+        // "Add column" row at the bottom
+        const addRow = document.createElement('tr');
+        addRow.style.background = '#f0f7ff';
+        const addCell = document.createElement('td');
+        addCell.colSpan = 5;
+        addCell.style.cssText = 'text-align:center;padding:12px;';
+        const addBtn = document.createElement('button');
+        addBtn.className = 'btn btn-primary';
+        addBtn.style.cssText = 'padding:8px 20px;font-size:0.9em;background:#667eea;';
+        addBtn.textContent = '+ Agregar columna personalizada';
+        addBtn.onclick = () => addCustomOutputRow();
+        addCell.appendChild(addBtn);
+        addRow.appendChild(addCell);
+        tbody.appendChild(addRow);
+
+        updateCustomMappingStatus();
+    }
+
+    function updateCustomMappingStatus() {
+        const included = state.customMappingRows.filter(r => r.included).length;
+        const total = state.customMappingRows.length;
+        const withTransforms = state.customMappingRows.filter(r =>
+            state.transformations[r.output] && state.transformations[r.output].length > 0
+        ).length;
+
+        document.getElementById('mappingStatus').innerHTML = `
+            <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                <span style="font-size: 1.5em;">📋</span>
+                <strong>Columnas:</strong>
+                <span style="color: #28a745;">✅ Incluidas: ${included}/${total}</span>
+                ${withTransforms > 0 ? '<span style="color: #667eea;">🔄 Con transformaciones: ' + withTransforms + '</span>' : ''}
+            </div>
+        `;
+    }
+
+    function addCustomOutputRow() {
+        const name = prompt('Nombre de la nueva columna:');
+        if (!name || !name.trim()) return;
+
+        state.customMappingRows.push({
+            source: '',
+            output: name.trim(),
+            included: true
+        });
+
+        renderCustomMappingTable();
+    }
+
+    function applyCustomMapping() {
+        // Collect included rows from current state
+        const rows = [];
+
+        state.customMappingRows.forEach((row, idx) => {
+            if (!row.included) return;
+
+            // Read current output name from DOM (in case user edited)
+            const outputInput = document.querySelector('.custom-output-name[data-idx="' + idx + '"]');
+            const output = outputInput ? outputInput.value.trim() : row.output;
+            if (!output) return;
+
+            // Read default value from DOM
+            const defaultInput = document.querySelector('.custom-default-val[data-idx="' + idx + '"]');
+            const defaultVal = defaultInput ? defaultInput.value.trim() : '';
+
+            rows.push({
+                source: row.source,
+                output: output,
+                defaultVal: defaultVal
+            });
+        });
+
+        if (rows.length === 0) {
+            alert('Selecciona al menos una columna');
+            return;
+        }
+
+        // Check for duplicate output names
+        const outputNames = rows.map(r => r.output);
+        const uniqueNames = new Set(outputNames);
+        if (uniqueNames.size !== outputNames.length) {
+            alert('Hay nombres de columna duplicados. Revisa los nombres de salida.');
+            return;
+        }
+
+        // Build template columns
+        templates.audit.personalizado.columns = rows.map(r => r.output);
+
+        // Build mapping
+        state.mapping = {};
+        state.customDefaults = {};
+        rows.forEach(r => {
+            if (r.source) {
+                state.mapping[r.output] = r.source;
+            }
+            if (r.defaultVal) {
+                state.customDefaults[r.output] = r.defaultVal;
+            }
+        });
+
+        // Generate preview (will use template.columns + state.mapping + state.transformations)
+        generatePreview();
+    }
+
+    window.addCustomOutputRow = addCustomOutputRow;
+
+    // ============================================
+    // TEMPLATES
+    // ============================================
+    function createEmptyTemplate() {
+        const template = getTemplate();
+        // Create template with 100 empty rows (so data validation applies)
+        const rows = [template.columns];
+        for (let i = 0; i < 100; i++) {
+            rows.push(template.columns.map(() => ''));
+        }
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        addDataValidation(ws, template);
+        XLSX.utils.book_append_sheet(wb, ws, 'Template');
+        XLSX.writeFile(wb, `template_${state.selectedCommand}.xlsx`);
+    }
+
+    function downloadTemplate() {
+        const template = getTemplate();
+        const sampleRow = template.columns.map(col => template.defaults[col] || `ejemplo_${col}`);
+        const rows = [template.columns, sampleRow];
+        for (let i = 0; i < 99; i++) {
+            rows.push(template.columns.map(() => ''));
+        }
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        addDataValidation(ws, template);
+        XLSX.utils.book_append_sheet(wb, ws, 'Template');
+        XLSX.writeFile(wb, `template_${state.selectedCommand}_con_ejemplo.xlsx`);
+    }
+
+    // Add Excel data validation (dropdowns) for columns with predefined options
+    function addDataValidation(ws, template) {
+        if (!template.options) return;
+
+        Object.keys(template.options).forEach(colName => {
+            const colIdx = template.columns.indexOf(colName);
+            if (colIdx === -1) return;
+
+            const options = template.options[colName];
+            // Convert column index to Excel letter (A, B, C, ..., Z, AA, AB, ...)
+            let colLetter = '';
+            let n = colIdx;
+            while (n >= 0) {
+                colLetter = String.fromCharCode(65 + (n % 26)) + colLetter;
+                n = Math.floor(n / 26) - 1;
+            }
+
+            // Apply data validation to rows 2-101 (row 1 is header)
+            if (!ws['!dataValidation']) ws['!dataValidation'] = [];
+            ws['!dataValidation'].push({
+                sqref: colLetter + '2:' + colLetter + '101',
+                type: 'list',
+                formula1: '"' + options.join(',') + '"'
+            });
+        });
+    }
+
+    function getTemplate() {
+        return templates[state.selectedProduct][state.selectedCommand];
+    }
+
+    // ============================================
+    // PASO 2: SELECCIÓN DE FORMATO (NUEVO)
+    // ============================================
+    function setupFormatSelection() {
+        const formatCards = document.querySelectorAll('.format-card');
+        
+        formatCards.forEach(card => {
+            card.onclick = () => {
+                const format = card.dataset.format;
+                selectFormat(format);
+            };
+        });
+    }
+
+    function selectFormat(format) {
+        state.selectedFormat = format;
+        
+        // Update UI
+        document.querySelectorAll('.format-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+        document.querySelector(`[data-format="${format}"]`).classList.add('selected');
+
+        // Show/hide format options
+        document.getElementById('csvOptions').style.display = 'none';
+        document.getElementById('xmlOptions').style.display = 'none';
+
+        if (format === 'csv') {
+            document.getElementById('csvOptions').style.display = 'block';
+        } else if (format === 'xml') {
+            document.getElementById('xmlOptions').style.display = 'block';
+        }
+
+        // Update file input accept
+        const accepts = {
+            xlsx: '.xlsx,.xls',
+            csv: '.csv',
+            json: '.json',
+            xml: '.xml'
+        };
+        document.getElementById('fileInput').accept = accepts[format];
+
+        // Show upload area
+        document.getElementById('uploadArea').style.display = 'block';
+    }
+
+    // ============================================
+    // CARGA DE ARCHIVOS (MULTI-FORMATO)
+    // ============================================
+    function setupFileUpload() {
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+
+        // Evitar que el click del fileInput burbujee al uploadArea
+        // (sino fileInput.click() burbujea → uploadArea.onclick → fileInput.click() → loop)
+        fileInput.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+
+        // Click en el area abre el selector de archivo
+        uploadArea.addEventListener('click', () => {
+            fileInput.value = ''; // Reset para permitir re-subir el mismo archivo
+            fileInput.click();
+        });
+
+        // Drag & drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                handleFileUpload(file);
+            }
+        });
+
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleFileUpload(file);
+            }
+        });
+    }
+
+    async function handleFileUpload(file) {
+        if (!state.selectedCommand) {
+            alert('⚠️ Primero selecciona un comando');
+            return;
+        }
+
+        try {
+            let result;
+            
+            // Cargar según formato seleccionado
+            switch (state.selectedFormat) {
+                case 'xlsx':
+                    result = await loadXLSXFile(file);
+                    break;
+                    
+                case 'csv':
+                    const csvOptions = {
+                        delimiter: document.getElementById('csvDelimiter').value === 'auto' ? null : document.getElementById('csvDelimiter').value,
+                        encoding: document.getElementById('csvEncoding').value,
+                        hasHeader: document.getElementById('csvHasHeader').checked
+                    };
+                    result = await FormatLoaders.loadCSV(file, csvOptions);
+                    break;
+                    
+                case 'json':
+                    result = await FormatLoaders.loadJSON(file);
+                    break;
+                    
+                case 'xml':
+                    const xmlOptions = {
+                        rowPath: document.getElementById('xmlRowPath').value || null
+                    };
+                    result = await FormatLoaders.loadXML(file, xmlOptions);
+                    break;
+            }
+            
+            // v4.5.2: Si result es null, el flujo multi-hoja se encarga solo
+            if (!result) return;
+
+            // Guardar datos
+            state.excelColumns = result.columns;
+            state.excelData = result.data;
+
+            // Mostrar opciones de header (solo para XLSX)
+            if (state.selectedFormat === 'xlsx') {
+                document.getElementById('headerOption').style.display = 'block';
+                document.getElementById('headerOption').scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+            } else {
+                // Para otros formatos, ir directo al mapeo
+                setupMapping();
+            }
+            
+        } catch (error) {
+            alert('❌ Error al procesar archivo:\n' + error.message);
+            console.error(error);
+        }
+    }
+
+    // v4.5.3: Cargar XLSX - siempre muestra configurador de rango
+    async function loadXLSXFile(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+
+            reader.onload = (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    state.currentWorkbook = workbook;
+
+                    if (workbook.SheetNames.length > 1) {
+                        // Multi-hoja: mostrar selector primero
+                        showSheetSelector(workbook);
+                    } else {
+                        // Una sola hoja: ir directo al configurador de rango
+                        showRangeConfigurator(workbook, [0]);
+                    }
+                    resolve(null); // El flujo continúa desde el configurador de rango
+                } catch (error) {
+                    reject(error);
+                }
+            };
+
+            reader.onerror = () => reject(new Error('Error al leer el archivo'));
+            reader.readAsArrayBuffer(file);
+        });
+    }
+
+    // v4.5.2: Selector multi-hoja con checkboxes
+    function showSheetSelector(workbook) {
+        // Limpiar selector previo si existe
+        const prev = document.getElementById('sheetSelectorDiv');
+        if (prev) prev.remove();
+
+        const html = `
+            <div style="margin: 20px 0; padding: 20px; background: #f8f9ff; border: 2px solid #667eea; border-radius: 10px;">
+                <h4 style="color: #667eea; margin-bottom: 15px;">
+                    📑 Este archivo tiene ${workbook.SheetNames.length} hojas
+                </h4>
+                <p style="margin-bottom: 10px; color: #666;">
+                    Selecciona una o varias hojas. Si seleccionas varias, las columnas se combinan con prefijo de hoja.
+                </p>
+                <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px;">
+                    ${workbook.SheetNames.map((name, idx) => {
+                        const sheet = workbook.Sheets[name];
+                        const raw = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+                        const rowCount = raw.length > 0 ? raw.length - 1 : 0;
+                        const colCount = raw.length > 0 ? raw[0].length : 0;
+                        return `<label style="display:flex;align-items:center;gap:10px;padding:12px;border:2px solid #e0e0e0;border-radius:8px;cursor:pointer;transition:all 0.3s;" class="sheet-checkbox-label">
+                            <input type="checkbox" class="sheet-checkbox" value="${idx}" style="width:18px;height:18px;">
+                            <div>
+                                <strong>${sanitizeHTML(name)}</strong>
+                                <span style="color:#666;font-size:0.85em;margin-left:8px;">${colCount} columnas, ${rowCount} filas</span>
+                            </div>
+                        </label>`;
+                    }).join('')}
+                </div>
+                <button id="loadSheetsBtn" class="btn btn-primary" style="width: 100%;" disabled>
+                    ✅ Cargar Hojas Seleccionadas
+                </button>
+            </div>
+        `;
+
+        const container = document.getElementById('headerOption');
+        container.insertAdjacentHTML('beforebegin', `<div id="sheetSelectorDiv">${html}</div>`);
+
+        // Habilitar botón cuando hay al menos un checkbox marcado
+        document.querySelectorAll('.sheet-checkbox').forEach(cb => {
+            cb.onchange = () => {
+                const checked = document.querySelectorAll('.sheet-checkbox:checked').length;
+                document.getElementById('loadSheetsBtn').disabled = checked === 0;
+
+                // Highlight labels
+                document.querySelectorAll('.sheet-checkbox-label').forEach(label => {
+                    const isChecked = label.querySelector('input').checked;
+                    label.style.borderColor = isChecked ? '#667eea' : '#e0e0e0';
+                    label.style.background = isChecked ? '#f0f2ff' : 'white';
+                });
+            };
+        });
+
+        document.getElementById('loadSheetsBtn').onclick = () => {
+            console.log('🟢 loadSheetsBtn clicked');
+            const selectedIndexes = Array.from(document.querySelectorAll('.sheet-checkbox:checked')).map(cb => parseInt(cb.value));
+            console.log('🟢 selectedIndexes:', selectedIndexes);
+
+            if (selectedIndexes.length === 0) return;
+
+            // Guardar selección y mostrar configurador de rango
+            document.getElementById('sheetSelectorDiv').remove();
+            showRangeConfigurator(workbook, selectedIndexes);
+        };
+
+        // Mostrar y hacer scroll al selector
+        document.getElementById('sheetSelectorDiv').scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+        });
+    }
+
+    // v4.5.3: Configurador de rango - muestra preview crudo y deja elegir header y rango
+    function showRangeConfigurator(workbook, selectedIndexes) {
+        // Limpiar previo
+        const prev = document.getElementById('rangeConfigDiv');
+        if (prev) prev.remove();
+
+        // Obtener raw data de la primera hoja seleccionada para preview
+        const firstSheetName = workbook.SheetNames[selectedIndexes[0]];
+        const firstSheet = workbook.Sheets[firstSheetName];
+        const rawPreview = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: '' });
+
+        // Auto-detectar: buscar la primera fila donde la mayoría de celdas tienen contenido
+        let autoHeaderRow = 0;
+        for (let i = 0; i < Math.min(rawPreview.length, 30); i++) {
+            const filledCells = rawPreview[i].filter(cell => String(cell).trim() !== '').length;
+            if (filledCells >= 2) {
+                autoHeaderRow = i;
+                break;
+            }
+        }
+
+        // Generar tabla preview (primeras 25 filas)
+        const previewRows = rawPreview.slice(0, 25);
+        const maxCols = Math.max(...previewRows.map(r => r.length), 1);
+
+        const tableHTML = previewRows.map((row, idx) => {
+            const isHeader = idx === autoHeaderRow;
+            const rowStyle = isHeader
+                ? 'background:#667eea;color:white;font-weight:bold;'
+                : (idx % 2 === 0 ? 'background:#f8f9ff;' : 'background:white;');
+            const cells = Array.from({ length: maxCols }, (_, c) => {
+                const val = row[c] !== undefined ? String(row[c]).trim() : '';
+                return `<td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:0.85em;white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis;">${sanitizeHTML(val) || '<span style="color:#ccc;">-</span>'}</td>`;
+            }).join('');
+            return `<tr style="${rowStyle}" data-row-idx="${idx}">
+                <td style="padding:4px 8px;border:1px solid #e0e0e0;font-weight:bold;color:#667eea;text-align:center;min-width:40px;cursor:pointer;" class="row-number-cell" title="Click para marcar como encabezado">${idx + 1}</td>
+                ${cells}
+            </tr>`;
+        }).join('');
+
+        const html = `
+            <div style="margin: 20px 0; padding: 20px; background: #f8f9ff; border: 2px solid #667eea; border-radius: 10px;">
+                <h4 style="color: #667eea; margin-bottom: 10px;">
+                    📋 Configurar rango de datos ${selectedIndexes.length > 1 ? '(preview de: ' + sanitizeHTML(firstSheetName) + ')' : ''}
+                </h4>
+                <p style="margin-bottom: 15px; color: #666;">
+                    Hacé click en el número de fila para marcarla como <strong>encabezado</strong>. Los datos se tomarán desde la fila siguiente.
+                </p>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:15px;">
+                    <div>
+                        <label style="display:block;margin-bottom:5px;font-weight:600;font-size:0.9em;">Fila de encabezados:</label>
+                        <input type="number" id="headerRowInput" value="${autoHeaderRow + 1}" min="1" max="${rawPreview.length}"
+                            style="width:100%;padding:10px;border:2px solid #667eea;border-radius:8px;font-size:1em;text-align:center;">
+                    </div>
+                    <div>
+                        <label style="display:block;margin-bottom:5px;font-weight:600;font-size:0.9em;">Datos desde fila:</label>
+                        <input type="number" id="dataStartInput" value="${autoHeaderRow + 2}" min="1" max="${rawPreview.length}"
+                            style="width:100%;padding:10px;border:2px solid #667eea;border-radius:8px;font-size:1em;text-align:center;">
+                    </div>
+                    <div>
+                        <label style="display:block;margin-bottom:5px;font-weight:600;font-size:0.9em;">Datos hasta fila: <span style="color:#999;">(vacío = todas)</span></label>
+                        <input type="number" id="dataEndInput" value="" min="1" max="${rawPreview.length}" placeholder="Última"
+                            style="width:100%;padding:10px;border:2px solid #667eea;border-radius:8px;font-size:1em;text-align:center;">
+                    </div>
+                </div>
+
+                <div style="overflow-x:auto;max-height:400px;overflow-y:auto;border:2px solid #e0e0e0;border-radius:8px;margin-bottom:15px;">
+                    <table style="border-collapse:collapse;width:100%;">
+                        <tbody id="rangePreviewBody">
+                            ${tableHTML}
+                        </tbody>
+                    </table>
+                </div>
+                ${rawPreview.length > 25 ? `<p style="color:#666;font-size:0.85em;margin-bottom:10px;">Mostrando 25 de ${rawPreview.length} filas</p>` : ''}
+
+                <button id="applyRangeBtn" class="btn btn-primary" style="width: 100%;">
+                    ✅ Aplicar y Continuar al Mapeo
+                </button>
+            </div>
+        `;
+
+        const container = document.getElementById('headerOption');
+        container.insertAdjacentHTML('beforebegin', `<div id="rangeConfigDiv">${html}</div>`);
+
+        // Click en número de fila = marcar como header
+        document.querySelectorAll('.row-number-cell').forEach(cell => {
+            cell.onclick = () => {
+                const rowIdx = parseInt(cell.parentElement.dataset.rowIdx);
+                document.getElementById('headerRowInput').value = rowIdx + 1;
+                document.getElementById('dataStartInput').value = rowIdx + 2;
+                highlightHeaderRow(rowIdx);
+            };
+        });
+
+        // Cambio manual del input de header
+        document.getElementById('headerRowInput').oninput = () => {
+            const val = parseInt(document.getElementById('headerRowInput').value);
+            if (val >= 1) {
+                document.getElementById('dataStartInput').value = val + 1;
+                highlightHeaderRow(val - 1);
+            }
+        };
+
+        function highlightHeaderRow(rowIdx) {
+            document.querySelectorAll('#rangePreviewBody tr').forEach(tr => {
+                const idx = parseInt(tr.dataset.rowIdx);
+                if (idx === rowIdx) {
+                    tr.style.background = '#667eea';
+                    tr.style.color = 'white';
+                    tr.style.fontWeight = 'bold';
+                } else {
+                    tr.style.background = idx % 2 === 0 ? '#f8f9ff' : 'white';
+                    tr.style.color = '';
+                    tr.style.fontWeight = '';
+                }
+            });
+        }
+
+        // Botón aplicar
+        document.getElementById('applyRangeBtn').onclick = () => {
+            const headerRow = parseInt(document.getElementById('headerRowInput').value) - 1;
+            const dataStart = parseInt(document.getElementById('dataStartInput').value) - 1;
+            const dataEndVal = document.getElementById('dataEndInput').value;
+            const dataEnd = dataEndVal ? parseInt(dataEndVal) : null; // null = hasta el final
+
+            console.log('🟢 Range config: headerRow=', headerRow, 'dataStart=', dataStart, 'dataEnd=', dataEnd);
+
+            const rangeConfig = { headerRow, dataStart, dataEnd };
+
+            try {
+                if (selectedIndexes.length === 1) {
+                    const sheetName = workbook.SheetNames[selectedIndexes[0]];
+                    const result = processSheet(workbook, sheetName, rangeConfig);
+                    console.log('🟢 Sheet result - columns:', result.columns, 'rows:', result.data.length);
+                    state.excelColumns = result.columns;
+                    state.excelData = result.data;
+                } else {
+                    const merged = mergeSheets(workbook, selectedIndexes, rangeConfig);
+                    console.log('🟢 Merged result - columns:', merged.columns, 'rows:', merged.data.length);
+                    state.excelColumns = merged.columns;
+                    state.excelData = merged.data;
+                }
+
+                document.getElementById('rangeConfigDiv').remove();
+                console.log('🟢 Calling setupMapping...');
+                setupMapping();
+                console.log('🟢 setupMapping completed');
+            } catch (err) {
+                console.error('🔴 Error processing sheets:', err);
+                alert('Error al procesar: ' + err.message);
+            }
+        };
+
+        document.getElementById('rangeConfigDiv').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // v4.5.3: Mergear columnas de múltiples hojas
+    function mergeSheets(workbook, sheetIndexes, rangeConfig) {
+        const sheetsData = sheetIndexes.map(idx => {
+            const name = workbook.SheetNames[idx];
+            const result = processSheet(workbook, name, rangeConfig);
+            return { name, ...result };
+        });
+
+        const allColumns = [];
+        sheetsData.forEach(sheet => {
+            sheet.columns.forEach(col => {
+                const prefixed = `[${sheet.name}] ${col}`;
+                allColumns.push(prefixed);
+            });
+        });
+
+        const maxRows = Math.max(...sheetsData.map(s => s.data.length));
+        const mergedData = [];
+        for (let i = 0; i < maxRows; i++) {
+            const row = {};
+            sheetsData.forEach(sheet => {
+                const sourceRow = sheet.data[i] || {};
+                sheet.columns.forEach(col => {
+                    const prefixed = `[${sheet.name}] ${col}`;
+                    row[prefixed] = sourceRow[col] || '';
+                });
+            });
+            mergedData.push(row);
+        }
+
+        return { columns: allColumns, data: mergedData };
+    }
+
+    // v4.5.3: processSheet con rango configurable
+    function processSheet(workbook, sheetName, rangeConfig) {
+        console.log('🟡 processSheet called for:', sheetName, 'rangeConfig:', rangeConfig);
+        const sheet = workbook.Sheets[sheetName];
+        const rawData = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+        console.log('🟡 rawData rows:', rawData.length);
+
+        if (rawData.length === 0) {
+            throw new Error('La hoja "' + sheetName + '" está vacía');
+        }
+
+        let headerRow, dataStart, dataEnd;
+
+        if (rangeConfig) {
+            headerRow = rangeConfig.headerRow;
+            dataStart = rangeConfig.dataStart;
+            dataEnd = rangeConfig.dataEnd || rawData.length;
+        } else {
+            // Auto-detect: primera fila con al menos 2 celdas con contenido
+            headerRow = 0;
+            for (let i = 0; i < Math.min(rawData.length, 30); i++) {
+                const filled = rawData[i].filter(cell => String(cell).trim() !== '').length;
+                if (filled >= 2) {
+                    headerRow = i;
+                    break;
+                }
+            }
+            dataStart = headerRow + 1;
+            dataEnd = rawData.length;
+        }
+
+        console.log('🟡 Using headerRow:', headerRow, 'dataStart:', dataStart, 'dataEnd:', dataEnd);
+
+        // Extraer columnas del header row
+        const columns = rawData[headerRow].map(h => {
+            const val = String(h).trim();
+            return val || null;
+        });
+
+        // Filtrar columnas vacías y generar nombres para las que no tienen
+        const finalColumns = columns.map((col, idx) => {
+            if (col) return col;
+            let letter = '';
+            let n = idx;
+            while (n >= 0) {
+                letter = String.fromCharCode(65 + (n % 26)) + letter;
+                n = Math.floor(n / 26) - 1;
+            }
+            return `Columna ${letter}`;
+        });
+
+        console.log('🟡 final columns:', finalColumns);
+
+        // Extraer datos del rango
+        const dataRows = rawData.slice(dataStart, dataEnd);
+        const data = dataRows.map(row => {
+            const obj = {};
+            finalColumns.forEach((col, idx) => {
+                obj[col] = row[idx] !== undefined ? String(row[idx]).trim() : '';
+            });
+            return obj;
+        });
+
+        console.log('🟡 Processed', data.length, 'data rows');
+        return { columns: finalColumns, data };
+    }
+
+    // ============================================
+    // OPCIONES DE HEADER
+    // ============================================
+    function setupHeaderOptions() {
+        document.getElementById('processFileBtn').onclick = () => {
+            const hasHeader = document.getElementById('hasHeaderRow').value === 'true';
+            
+            if (!hasHeader) {
+                // Regenerar columnas como A, B, C...
+                const numCols = state.excelData[0] ? Object.keys(state.excelData[0]).length : 0;
+                state.excelColumns = Array.from({ length: numCols }, (_, i) => {
+                    let col = '';
+                    let n = i;
+                    while (n >= 0) {
+                        col = String.fromCharCode(65 + (n % 26)) + col;
+                        n = Math.floor(n / 26) - 1;
+                    }
+                    return `Columna ${col}`;
+                });
+            }
+            
+            setupMapping();
+        };
+
+        // Header option cards
+        document.getElementById('optionWithHeader').onclick = function() {
+            document.getElementById('hasHeaderRow').value = 'true';
+            this.style.background = '#f8f9ff';
+            this.style.borderColor = '#667eea';
+            this.querySelector('h4').style.color = '#667eea';
+            
+            document.getElementById('optionWithoutHeader').style.background = 'white';
+            document.getElementById('optionWithoutHeader').style.borderColor = '#e0e0e0';
+            document.getElementById('optionWithoutHeader').querySelector('h4').style.color = '#666';
+        };
+
+        document.getElementById('optionWithoutHeader').onclick = function() {
+            document.getElementById('hasHeaderRow').value = 'false';
+            this.style.background = '#fff8e1';
+            this.style.borderColor = '#ffc107';
+            this.querySelector('h4').style.color = '#f57c00';
+            
+            document.getElementById('optionWithHeader').style.background = 'white';
+            document.getElementById('optionWithHeader').style.borderColor = '#e0e0e0';
+            document.getElementById('optionWithHeader').querySelector('h4').style.color = '#666';
+        };
+    }
+
+    // ============================================
+    // MAPEO DE COLUMNAS
+    // ============================================
+    function setupMapping() {
+        console.log('🔵 setupMapping called');
+        console.log('🔵 state.excelColumns:', state.excelColumns);
+        console.log('🔵 state.excelData length:', state.excelData.length);
+        const template = getTemplate();
+        console.log('🔵 template columns:', template.columns);
+
+        // v5.1.0: Custom mapping for audit personalizado
+        if (template.custom) {
+            setupCustomMapping();
+            return;
+        }
+
+        state.isCustomMapping = false;
+
+        // Auto-mapeo
+        state.mapping = {};
+        let autoMappedCount = 0;
+
+        template.columns.forEach(reqCol => {
+            const match = state.excelColumns.find(excelCol => 
+                excelCol.toLowerCase().includes(reqCol.toLowerCase()) ||
+                reqCol.toLowerCase().includes(excelCol.toLowerCase())
+            );
+            
+            if (match) {
+                state.mapping[reqCol] = match;
+                autoMappedCount++;
+            } else {
+                state.mapping[reqCol] = '';
+            }
+        });
+
+        // Mostrar sección de mapeo
+        document.getElementById('mappingSection').style.display = 'block';
+
+        // Restore standard mapping UI (in case custom mode changed it)
+        document.getElementById('manualMappingBtn').style.display = '';
+        document.getElementById('mappingDetails').style.display = 'none';
+        document.getElementById('applyMappingBtn').textContent = '✅ Aplicar Mapeo y Continuar';
+        const thead = document.querySelector('#mappingTable thead tr');
+        thead.innerHTML = '<th>Columna Requerida (CSV)</th><th>Columna de tu Excel</th><th>Transformar</th><th>Valor por defecto (opcional)</th>';
+
+        // Actualizar UI
+        renderMappingTable();
+
+        // Setup manual mapping toggle button
+        document.getElementById('manualMappingBtn').onclick = () => {
+            const details = document.getElementById('mappingDetails');
+            if (details.style.display === 'none') {
+                details.style.display = 'block';
+            } else {
+                details.style.display = 'none';
+            }
+        };
+
+        // Setup apply button
+        document.getElementById('applyMappingBtn').onclick = () => {
+            updateMapping();
+            generatePreview();
+        };
+
+        // Scroll
+        document.getElementById('mappingSection').scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+        });
+    }
+
+    function renderMappingTable() {
+        // v5.1.0: redirect to custom rendering if in custom mapping mode
+        if (state.isCustomMapping) {
+            renderCustomMappingTable();
+            return;
+        }
+        const template = getTemplate();
+        const tbody = document.querySelector('#mappingTable tbody');
+        tbody.innerHTML = '';
+
+        template.columns.forEach(reqCol => {
+            const tr = document.createElement('tr');
+
+            // Columna requerida
+            const tdReq = document.createElement('td');
+            tdReq.textContent = reqCol;
+            tdReq.style.fontWeight = '600';
+            tr.appendChild(tdReq);
+
+            // Dropdown de mapeo
+            const tdMap = document.createElement('td');
+            const select = document.createElement('select');
+            select.className = 'mapping-select';
+            select.dataset.column = reqCol;
+
+            const optionEmpty = document.createElement('option');
+            optionEmpty.value = '';
+            optionEmpty.textContent = '-- Seleccionar --';
+            select.appendChild(optionEmpty);
+
+            state.excelColumns.forEach(excelCol => {
+                const option = document.createElement('option');
+                option.value = excelCol;
+                option.textContent = excelCol;
+                if (state.mapping[reqCol] === excelCol) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+            });
+
+            tdMap.appendChild(select);
+            tr.appendChild(tdMap);
+
+            // Botón transformar (reemplaza "Dividir")
+            const tdAction = document.createElement('td');
+            const btnTransform = document.createElement('button');
+            btnTransform.textContent = '🔧 Transformar';
+            btnTransform.className = 'btn btn-secondary';
+            btnTransform.style.padding = '5px 10px';
+            btnTransform.style.fontSize = '0.9em';
+            btnTransform.onclick = () => openTransformModal(reqCol);
+            tdAction.appendChild(btnTransform);
+
+            // Mostrar badge de transformaciones aplicadas
+            if (state.transformations[reqCol] && state.transformations[reqCol].length > 0) {
+                const badge = document.createElement('span');
+                badge.style.cssText = 'display:inline-block;margin-left:8px;background:#28a745;color:white;padding:2px 8px;border-radius:10px;font-size:0.8em;';
+                badge.textContent = state.transformations[reqCol].length + ' aplicada(s)';
+                tdAction.appendChild(badge);
+            }
+
+            tr.appendChild(tdAction);
+
+            // Valor por defecto (editable - dropdown if template has options)
+            const tdDefault = document.createElement('td');
+            const colOptions = template.options && template.options[reqCol];
+
+            if (colOptions && colOptions.length > 0) {
+                // Dropdown with predefined options
+                const selectDefault = document.createElement('select');
+                selectDefault.className = 'default-value-input';
+                selectDefault.dataset.column = reqCol;
+                selectDefault.style.cssText = 'width:100%;padding:8px;border:1px solid #e0e0e0;border-radius:5px;font-size:0.9em;background:white;';
+
+                const emptyOpt = document.createElement('option');
+                emptyOpt.value = '';
+                emptyOpt.textContent = '-- Sin valor por defecto --';
+                selectDefault.appendChild(emptyOpt);
+
+                colOptions.forEach(optVal => {
+                    const opt = document.createElement('option');
+                    opt.value = optVal;
+                    opt.textContent = optVal;
+                    if (state.customDefaults[reqCol] === optVal) {
+                        opt.selected = true;
+                    }
+                    selectDefault.appendChild(opt);
+                });
+
+                selectDefault.onchange = function() {
+                    state.customDefaults[reqCol] = this.value;
+                };
+
+                tdDefault.appendChild(selectDefault);
+            } else {
+                // Free text input
+                const defaultInput = document.createElement('input');
+                defaultInput.type = 'text';
+                defaultInput.className = 'default-value-input';
+                defaultInput.dataset.column = reqCol;
+                defaultInput.placeholder = '';
+                defaultInput.value = state.customDefaults[reqCol] || '';
+                defaultInput.style.cssText = 'width:100%;padding:8px;border:1px solid #e0e0e0;border-radius:5px;font-size:0.9em;';
+
+                defaultInput.oninput = function() {
+                    state.customDefaults[reqCol] = this.value;
+                };
+
+                tdDefault.appendChild(defaultInput);
+            }
+
+            tr.appendChild(tdDefault);
+
+            tbody.appendChild(tr);
+        });
+
+        // Mostrar estado
+        updateMappingStatus();
+    }
+
+    function updateMapping() {
+        document.querySelectorAll('.mapping-select').forEach(select => {
+            const reqCol = select.dataset.column;
+            state.mapping[reqCol] = select.value;
+        });
+
+        // v4.5.1: Recoger valores por defecto del usuario
+        document.querySelectorAll('.default-value-input').forEach(input => {
+            const reqCol = input.dataset.column;
+            state.customDefaults[reqCol] = input.value.trim();
+        });
+
+        updateMappingStatus();
+    }
+
+    function updateMappingStatus() {
+        const template = getTemplate();
+        const mapped = template.columns.filter(col => state.mapping[col]).length;
+        const withDefault = template.columns.filter(col =>
+            !state.mapping[col] && (state.customDefaults[col] || template.defaults[col] !== undefined)
+        ).length;
+        const unmapped = template.columns.filter(col =>
+            !state.mapping[col] && !state.customDefaults[col] && template.defaults[col] === undefined
+        ).length;
+        const withTransform = template.columns.filter(col =>
+            state.transformations[col] && state.transformations[col].length > 0
+        ).length;
+
+        const statusDiv = document.getElementById('mappingStatus');
+        statusDiv.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 5px;">
+                    <span style="font-size: 1.5em;">📊</span>
+                    <strong>Estado del mapeo:</strong>
+                </div>
+                <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                    <span style="color: #28a745;">✅ Mapeadas: ${mapped}/${template.columns.length}</span>
+                    <span style="color: #ffc107;">🔧 Con valor por defecto: ${withDefault}</span>
+                    <span style="color: #dc3545;">⚠️ Sin mapear: ${unmapped} (quedarán vacías)</span>
+                    ${withTransform > 0 ? `<span style="color: #667eea;">🔄 Con transformaciones: ${withTransform}</span>` : ''}
+                </div>
+            </div>
+        `;
+    }
+
+    // ============================================
+    // DIVISIÓN DE COLUMNAS
+    // ============================================
+    let divisionState = {
+        currentColumn: null,
+        sourceColumn: null,
+        sourceData: [],
+        separator: '',
+        columnNames: []
+    };
+
+    function openDivisionModal(columnName) {
+        divisionState.currentColumn = columnName;
+        divisionState.sourceColumn = state.mapping[columnName];
+        
+        if (!divisionState.sourceColumn) {
+            alert('⚠️ Primero mapea esta columna a una columna de tu archivo');
+            return;
+        }
+        
+        // Obtener datos
+        divisionState.sourceData = state.excelData.map(row => row[divisionState.sourceColumn] || '');
+        
+        // Mostrar modal
+        document.getElementById('divisionModal').style.display = 'flex';
+        document.getElementById('divisionColumnName').textContent = divisionState.sourceColumn;
+
+        // Mostrar datos originales
+        const previewHTML = divisionState.sourceData.slice(0, 5).map((val, idx) =>
+            `<div style="padding: 8px; border-bottom: 1px solid #e0e0e0;">
+                <strong>Fila ${idx + 1}:</strong> "${sanitizeHTML(val)}"
+            </div>`
+        ).join('');
+
+        document.getElementById('originalData').innerHTML = previewHTML;
+
+        // Limpiar
+        document.getElementById('separatorInput').value = '';
+        document.getElementById('livePreview').innerHTML = '<span style="color: #999;">Ingresa un separador para ver el preview...</span>';
+        document.getElementById('namingSection').style.display = 'none';
+    }
+
+    function closeDivisionModal() {
+        document.getElementById('divisionModal').style.display = 'none';
+    }
+
+    function setDivisionSeparator(sep) {
+        document.getElementById('separatorInput').value = sep;
+        updateDivisionPreview();
+    }
+
+    function updateDivisionPreview() {
+        const separator = document.getElementById('separatorInput').value;
+
+        if (!separator) {
+            document.getElementById('livePreview').innerHTML = '<span style="color: #999;">Ingresa un separador...</span>';
+            document.getElementById('namingSection').style.display = 'none';
+            document.getElementById('applyBtn').disabled = true;
+            return;
+        }
+        
+        divisionState.separator = separator;
+        
+        // Preview
+        const previewData = divisionState.sourceData.slice(0, 5).map((val, rowIdx) => {
+            const parts = String(val).split(separator);
+            return `
+                <div style="padding: 10px; border: 1px solid #28a745; border-radius: 5px; margin-bottom: 10px; background: white;">
+                    <strong>Fila ${rowIdx + 1}:</strong> "${sanitizeHTML(val)}"
+                    <div style="margin-top: 5px; padding-left: 20px;">
+                        ${parts.map((part, idx) => `
+                            <div style="color: #667eea;">
+                                → Parte ${idx + 1}: "<strong>${sanitizeHTML(part)}</strong>"
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        document.getElementById('livePreview').innerHTML = previewData;
+
+        // Detectar número de partes
+        const maxParts = Math.max(...divisionState.sourceData.map(val => String(val).split(separator).length));
+
+        // Mostrar inputs de nombres
+        showDivisionNaming(maxParts);
+
+        document.getElementById('applyBtn').disabled = false;
+        document.getElementById('applyBtn').style.opacity = '1';
+    }
+
+    function showDivisionNaming(numParts) {
+        const html = Array.from({ length: numParts }, (_, i) => `
+            <div style="margin-bottom: 10px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: 600;">
+                    Nombre para Parte ${i + 1}:
+                </label>
+                <input 
+                    type="text" 
+                    class="division-part-name" 
+                    data-index="${i}"
+                    placeholder="Ej: apellidos, nombre, etc."
+                    style="width: 100%; padding: 10px; border: 2px solid #667eea; border-radius: 5px;">
+            </div>
+        `).join('');
+        
+        document.getElementById('namingInputs').innerHTML = html;
+        document.getElementById('namingSection').style.display = 'block';
+    }
+
+    function applyDivision() {
+        // Obtener nombres
+        const names = Array.from(document.querySelectorAll('.division-part-name')).map(input => {
+            return input.value.trim() || `parte${input.dataset.index}`;
+        });
+        
+        divisionState.columnNames = names;
+        
+        // Crear nuevas columnas
+        const newColumns = names.map(name => `${divisionState.sourceColumn}_${name}`);
+        
+        // Procesar datos
+        state.excelData.forEach(row => {
+            const value = row[divisionState.sourceColumn] || '';
+            const parts = String(value).split(divisionState.separator);
+            
+            names.forEach((name, idx) => {
+                const newColName = `${divisionState.sourceColumn}_${name}`;
+                row[newColName] = parts[idx] || '';
+            });
+        });
+        
+        // Agregar a columnas disponibles
+        newColumns.forEach(col => {
+            if (!state.excelColumns.includes(col)) {
+                state.excelColumns.push(col);
+            }
+        });
+        
+        // Auto-mapear si coincide
+        newColumns.forEach((newCol, idx) => {
+            const partName = names[idx];
+            const matchingRequired = Object.keys(state.mapping).find(req => 
+                req.toLowerCase().includes(partName.toLowerCase()) ||
+                partName.toLowerCase().includes(req.toLowerCase())
+            );
+            
+            if (matchingRequired) {
+                state.mapping[matchingRequired] = newCol;
+            }
+        });
+        
+        // Refrescar tabla
+        renderMappingTable();
+        
+        // Cerrar modal
+        closeDivisionModal();
+        
+        alert(`✅ División exitosa!\n\nColumnas creadas:\n${newColumns.join('\n')}`);
+    }
+
+    // Eventos del modal de división
+    window.closeDivisionModal = closeDivisionModal;
+    window.setDivisionSeparator = setDivisionSeparator;
+    window.updateDivisionPreview = updateDivisionPreview;
+    window.applyDivision = applyDivision;
+
+    // ============================================
+    // MODAL DE TRANSFORMACIONES v4.5.1
+    // ============================================
+    let transformState = {
+        currentColumn: null,       // columna requerida
+        sourceColumn: null,        // columna del archivo mapeada
+        sourceData: [],            // datos originales
+        selectedTransform: null,   // tipo de transformación seleccionada
+        config: {}                 // configuración de la transformación
+    };
+
+    function openTransformModal(columnName) {
+        transformState.currentColumn = columnName;
+        transformState.sourceColumn = state.mapping[columnName];
+        transformState.selectedTransform = null;
+        transformState.config = {};
+
+        if (!transformState.sourceColumn) {
+            alert('⚠️ Primero mapea esta columna a una columna de tu archivo');
+            return;
+        }
+
+        // Obtener datos
+        transformState.sourceData = state.excelData.map(row => row[transformState.sourceColumn] || '');
+
+        // Mostrar modal
+        document.getElementById('transformModal').style.display = 'flex';
+        document.getElementById('transformColumnName').textContent = transformState.sourceColumn;
+
+        // Mostrar datos originales
+        const previewHTML = transformState.sourceData.slice(0, 5).map((val, idx) =>
+            `<div style="padding: 6px; border-bottom: 1px solid #e0e0e0;">
+                <strong>Fila ${idx + 1}:</strong> "${sanitizeHTML(String(val))}"
+            </div>`
+        ).join('');
+        document.getElementById('transformOriginalData').innerHTML = previewHTML;
+
+        // Mostrar transformaciones aplicadas si hay
+        renderAppliedTransforms();
+
+        // Resetear áreas
+        document.getElementById('transformConfigArea').style.display = 'none';
+        document.getElementById('transformPreviewArea').style.display = 'none';
+        document.getElementById('transformNamingSection').style.display = 'none';
+        document.getElementById('applyTransformBtn').disabled = true;
+        document.getElementById('applyTransformBtn').style.opacity = '0.5';
+
+        // Deseleccionar botones
+        document.querySelectorAll('.transform-option-btn').forEach(b => b.classList.remove('selected'));
+    }
+
+    function closeTransformModal() {
+        document.getElementById('transformModal').style.display = 'none';
+    }
+
+    function renderAppliedTransforms() {
+        const col = transformState.currentColumn;
+        const transforms = state.transformations[col] || [];
+
+        const listDiv = document.getElementById('appliedTransformsList');
+        const contentDiv = document.getElementById('appliedTransformsContent');
+        const clearBtn = document.getElementById('clearTransformsBtn');
+
+        if (transforms.length === 0) {
+            listDiv.style.display = 'none';
+            clearBtn.style.display = 'none';
+            return;
+        }
+
+        listDiv.style.display = 'block';
+        clearBtn.style.display = 'inline-block';
+
+        const labels = {
+            uppercase: '🔠 MAYÚSCULAS',
+            lowercase: '🔡 minúsculas',
+            titlecase: '🔤 Título',
+            trim: '🧹 Limpiar espacios',
+            prefix: '➡️ Prefijo',
+            suffix: '⬅️ Sufijo',
+            replace: '🔄 Reemplazar',
+            removeSpecial: '🚫 Quitar especiales',
+            removeTildes: '🔤 Quitar tildes'
+        };
+
+        contentDiv.innerHTML = transforms.map((t, idx) => {
+            let detail = '';
+            if (t.type === 'prefix') detail = ` → "${sanitizeHTML(t.value)}"`;
+            if (t.type === 'suffix') detail = ` → "${sanitizeHTML(t.value)}"`;
+            if (t.type === 'replace') detail = ` → "${sanitizeHTML(t.find)}" → "${sanitizeHTML(t.replaceWith)}"`;
+            return `<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #c8e6c9;">
+                <span>${labels[t.type] || t.type}${detail}</span>
+                <button onclick="removeTransform(${idx})" style="background:#dc3545;color:white;border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:0.8em;">✖</button>
+            </div>`;
+        }).join('');
+    }
+
+    function removeTransform(idx) {
+        const col = transformState.currentColumn;
+        state.transformations[col].splice(idx, 1);
+        renderAppliedTransforms();
+        renderMappingTable();
+    }
+
+    function clearTransformations() {
+        const col = transformState.currentColumn;
+        state.transformations[col] = [];
+        renderAppliedTransforms();
+        renderMappingTable();
+    }
+
+    function selectTransform(type) {
+        transformState.selectedTransform = type;
+
+        // Marcar botón seleccionado
+        document.querySelectorAll('.transform-option-btn').forEach(b => b.classList.remove('selected'));
+        event.currentTarget.classList.add('selected');
+
+        // Si es "divide", abrir el modal de división directamente
+        if (type === 'divide') {
+            closeTransformModal();
+            openDivisionModal(transformState.currentColumn);
+            return;
+        }
+
+        // Mostrar configuración según tipo
+        const configArea = document.getElementById('transformConfigArea');
+        const configTitle = document.getElementById('transformConfigTitle');
+        const configContent = document.getElementById('transformConfigContent');
+        configArea.style.display = 'block';
+
+        switch (type) {
+            case 'uppercase':
+                configTitle.textContent = '🔠 Convertir a MAYÚSCULAS';
+                configContent.innerHTML = '<p style="color:#666;">Se convertirá todo el texto a mayúsculas.</p>';
+                enableTransformApply();
+                showTransformPreview(type);
+                break;
+
+            case 'lowercase':
+                configTitle.textContent = '🔡 Convertir a minúsculas';
+                configContent.innerHTML = '<p style="color:#666;">Se convertirá todo el texto a minúsculas.</p>';
+                enableTransformApply();
+                showTransformPreview(type);
+                break;
+
+            case 'titlecase':
+                configTitle.textContent = '🔤 Convertir a Título';
+                configContent.innerHTML = '<p style="color:#666;">Primera letra de cada palabra en mayúscula.</p>';
+                enableTransformApply();
+                showTransformPreview(type);
+                break;
+
+            case 'trim':
+                configTitle.textContent = '🧹 Limpiar espacios';
+                configContent.innerHTML = '<p style="color:#666;">Se eliminarán espacios al inicio, al final y espacios dobles internos.</p>';
+                enableTransformApply();
+                showTransformPreview(type);
+                break;
+
+            case 'prefix':
+                configTitle.textContent = '➡️ Agregar Prefijo';
+                configContent.innerHTML = `
+                    <input type="text" id="transformPrefixInput" placeholder="Texto a agregar al inicio..."
+                        style="width:100%;padding:12px;border:2px solid #667eea;border-radius:8px;font-size:1.1em;font-family:monospace;"
+                        oninput="onTransformConfigChange('prefix')">
+                `;
+                disableTransformApply();
+                break;
+
+            case 'suffix':
+                configTitle.textContent = '⬅️ Agregar Sufijo';
+                configContent.innerHTML = `
+                    <input type="text" id="transformSuffixInput" placeholder="Texto a agregar al final..."
+                        style="width:100%;padding:12px;border:2px solid #667eea;border-radius:8px;font-size:1.1em;font-family:monospace;"
+                        oninput="onTransformConfigChange('suffix')">
+                `;
+                disableTransformApply();
+                break;
+
+            case 'replace':
+                configTitle.textContent = '🔄 Buscar y Reemplazar';
+                configContent.innerHTML = `
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                        <div>
+                            <label style="display:block;margin-bottom:5px;font-weight:600;">Buscar:</label>
+                            <input type="text" id="transformFindInput" placeholder="Texto a buscar..."
+                                style="width:100%;padding:10px;border:2px solid #667eea;border-radius:8px;font-family:monospace;"
+                                oninput="onTransformConfigChange('replace')">
+                        </div>
+                        <div>
+                            <label style="display:block;margin-bottom:5px;font-weight:600;">Reemplazar con:</label>
+                            <input type="text" id="transformReplaceInput" placeholder="Texto de reemplazo..."
+                                style="width:100%;padding:10px;border:2px solid #667eea;border-radius:8px;font-family:monospace;"
+                                oninput="onTransformConfigChange('replace')">
+                        </div>
+                    </div>
+                `;
+                disableTransformApply();
+                break;
+
+            case 'removeSpecial':
+                configTitle.textContent = '🚫 Quitar caracteres especiales';
+                configContent.innerHTML = '<p style="color:#666;">Se eliminarán todos los caracteres que no sean letras, números o espacios.</p>';
+                enableTransformApply();
+                showTransformPreview(type);
+                break;
+
+            case 'removeTildes':
+                configTitle.textContent = '🔤 Quitar tildes';
+                configContent.innerHTML = '<p style="color:#666;">Se reemplazarán todas las vocales acentuadas por sus equivalentes sin tilde (á→a, é→e, í→i, ó→o, ú→u, ñ se mantiene).</p>';
+                enableTransformApply();
+                showTransformPreview(type);
+                break;
+        }
+    }
+
+    function onTransformConfigChange(type) {
+        switch (type) {
+            case 'prefix': {
+                const val = document.getElementById('transformPrefixInput').value;
+                if (val) {
+                    transformState.config = { value: val };
+                    enableTransformApply();
+                    showTransformPreview('prefix');
+                } else {
+                    disableTransformApply();
+                    document.getElementById('transformPreviewArea').style.display = 'none';
+                }
+                break;
+            }
+            case 'suffix': {
+                const val = document.getElementById('transformSuffixInput').value;
+                if (val) {
+                    transformState.config = { value: val };
+                    enableTransformApply();
+                    showTransformPreview('suffix');
+                } else {
+                    disableTransformApply();
+                    document.getElementById('transformPreviewArea').style.display = 'none';
+                }
+                break;
+            }
+            case 'replace': {
+                const find = document.getElementById('transformFindInput').value;
+                const replaceWith = document.getElementById('transformReplaceInput').value;
+                if (find) {
+                    transformState.config = { find, replaceWith: replaceWith || '' };
+                    enableTransformApply();
+                    showTransformPreview('replace');
+                } else {
+                    disableTransformApply();
+                    document.getElementById('transformPreviewArea').style.display = 'none';
+                }
+                break;
+            }
+        }
+    }
+
+    function applyTransformToValue(value, transform) {
+        let v = String(value);
+        switch (transform.type) {
+            case 'uppercase':
+                return v.toUpperCase();
+            case 'lowercase':
+                return v.toLowerCase();
+            case 'titlecase':
+                return v.toLowerCase().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+            case 'trim':
+                return v.trim().replace(/\s+/g, ' ');
+            case 'prefix':
+                return transform.value + v;
+            case 'suffix':
+                return v + transform.value;
+            case 'replace':
+                return v.split(transform.find).join(transform.replaceWith);
+            case 'removeSpecial':
+                return v.replace(/[^a-zA-Z0-9\sáéíóúÁÉÍÓÚñÑüÜ]/g, '');
+            case 'removeTildes':
+                return v.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            default:
+                return v;
+        }
+    }
+
+    function showTransformPreview(type) {
+        const previewArea = document.getElementById('transformPreviewArea');
+        const previewContent = document.getElementById('transformLivePreview');
+        previewArea.style.display = 'block';
+
+        const transform = { type, ...transformState.config };
+
+        // Calcular el valor acumulado con transformaciones previas + la nueva
+        const col = transformState.currentColumn;
+        const existingTransforms = state.transformations[col] || [];
+
+        const previewHTML = transformState.sourceData.slice(0, 5).map((val, idx) => {
+            // Aplicar transformaciones existentes primero
+            let current = String(val);
+            existingTransforms.forEach(t => {
+                current = applyTransformToValue(current, t);
+            });
+            const before = current;
+            // Aplicar la nueva transformación
+            const after = applyTransformToValue(current, transform);
+
+            return `<div style="padding:8px;border-bottom:1px solid #c8e6c9;">
+                <strong>Fila ${idx + 1}:</strong> "${sanitizeHTML(before)}" → "<strong style="color:#28a745;">${sanitizeHTML(after)}</strong>"
+            </div>`;
+        }).join('');
+
+        previewContent.innerHTML = previewHTML;
+    }
+
+    function enableTransformApply() {
+        document.getElementById('applyTransformBtn').disabled = false;
+        document.getElementById('applyTransformBtn').style.opacity = '1';
+    }
+
+    function disableTransformApply() {
+        document.getElementById('applyTransformBtn').disabled = true;
+        document.getElementById('applyTransformBtn').style.opacity = '0.5';
+    }
+
+    function applyCurrentTransform() {
+        const type = transformState.selectedTransform;
+        if (!type) return;
+
+        const col = transformState.currentColumn;
+        if (!state.transformations[col]) {
+            state.transformations[col] = [];
+        }
+
+        const transform = { type, ...transformState.config };
+        state.transformations[col].push(transform);
+
+        // Resetear UI del modal
+        transformState.selectedTransform = null;
+        transformState.config = {};
+        document.querySelectorAll('.transform-option-btn').forEach(b => b.classList.remove('selected'));
+        document.getElementById('transformConfigArea').style.display = 'none';
+        document.getElementById('transformPreviewArea').style.display = 'none';
+        disableTransformApply();
+
+        // Refrescar lista de aplicadas
+        renderAppliedTransforms();
+        renderMappingTable();
+    }
+
+    // Eventos del modal de transformaciones
+    window.openTransformModal = openTransformModal;
+    window.closeTransformModal = closeTransformModal;
+    window.selectTransform = selectTransform;
+    window.onTransformConfigChange = onTransformConfigChange;
+    window.applyCurrentTransform = applyCurrentTransform;
+    window.removeTransform = removeTransform;
+    window.clearTransformations = clearTransformations;
+
+    // ============================================
+    // PREVIEW Y GENERACIÓN
+    // ============================================
+    function generatePreview() {
+        const template = getTemplate();
+
+        // Generar CSV data
+        const csvData = state.excelData.map(row => {
+            const csvRow = {};
+            template.columns.forEach(col => {
+                if (state.mapping[col]) {
+                    csvRow[col] = row[state.mapping[col]] || '';
+                } else if (state.customDefaults[col]) {
+                    // v4.5.1: Prioridad a custom defaults del usuario
+                    csvRow[col] = state.customDefaults[col];
+                } else if (template.defaults[col] !== undefined) {
+                    csvRow[col] = template.defaults[col];
+                } else {
+                    csvRow[col] = '';
+                }
+
+                // v4.5.1: Aplicar transformaciones
+                if (state.transformations[col] && state.transformations[col].length > 0) {
+                    state.transformations[col].forEach(t => {
+                        csvRow[col] = applyTransformToValue(csvRow[col], t);
+                    });
+                }
+            });
+            return csvRow;
+        });
+        
+        // Mostrar preview
+        document.getElementById('previewSection').style.display = 'block';
+        
+        const previewHTML = `
+            <p style="margin-bottom: 10px; color: #333; font-weight: 600;">
+                Total: ${csvData.length} filas
+            </p>
+            <div style="overflow-x: auto; max-height: 500px; overflow-y: auto; border: 1px solid #e0e0e0; border-radius: 8px;">
+                <table class="preview-table" style="margin:0;">
+                    <thead style="position: sticky; top: 0; z-index: 1;">
+                        <tr>
+                            <th style="background:#667eea;color:white;padding:8px;text-align:center;min-width:40px;">#</th>
+                            ${template.columns.map(col => `<th style="background:#667eea;color:white;padding:8px;">${sanitizeHTML(col)}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${csvData.map((row, idx) => `
+                            <tr style="background:${idx % 2 === 0 ? '#f8f9ff' : 'white'};">
+                                <td style="padding:6px 8px;text-align:center;color:#999;font-size:0.85em;border-right:1px solid #e0e0e0;">${idx + 1}</td>
+                                ${template.columns.map(col => `<td style="padding:6px 8px;">${sanitizeHTML(row[col])}</td>`).join('')}
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+        document.getElementById('previewTable').innerHTML = previewHTML;
+        
+        // Guardar para descarga
+        window.generatedCSVData = csvData;
+
+        // v5.1.0: Update download labels for audit product (XLSX)
+        if (state.selectedProduct === 'audit') {
+            document.getElementById('downloadBtn').innerHTML = '📥 Procesar y Descargar XLSX';
+            document.getElementById('outputFileLabel').textContent = 'Nombre del archivo XLSX:';
+            document.getElementById('outputFileExtension').textContent = '.xlsx';
+            document.getElementById('includeHeadersLabel').innerHTML = '📋 Incluir encabezados (nombres de columnas) en el XLSX';
+        } else {
+            document.getElementById('downloadBtn').innerHTML = '🚀 Procesar y Descargar CSV';
+            document.getElementById('outputFileLabel').textContent = 'Nombre del archivo CSV:';
+            document.getElementById('outputFileExtension').textContent = '.csv';
+            document.getElementById('includeHeadersLabel').innerHTML = '📋 Incluir encabezados (nombres de columnas) en el CSV';
+        }
+
+        // Scroll
+        document.getElementById('previewSection').scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+        });
+    }
+
+    // ============================================
+    // AUDIT REPORT v5.0.0
+    // ============================================
+    const AUDIT_COLUMNS = ['date', 'date_utc', 'oper', 'userid', 'host', 'app', 'domain', 'certnameorig', 'subjectcn', 'data'];
+    const AUDIT_COL_WIDTHS = [26, 26, 12, 12, 18, 20, 30, 60, 40, 80];
+
+    function setupAuditReport() {
+        // Audit file upload
+        const auditUploadArea = document.getElementById('auditUploadArea');
+        const auditFileInput = document.getElementById('auditFileInput');
+
+        auditFileInput.addEventListener('click', (e) => e.stopPropagation());
+
+        auditUploadArea.addEventListener('click', () => {
+            auditFileInput.value = '';
+            auditFileInput.click();
+        });
+
+        auditUploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            auditUploadArea.classList.add('dragover');
+        });
+
+        auditUploadArea.addEventListener('dragleave', () => {
+            auditUploadArea.classList.remove('dragover');
+        });
+
+        auditUploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            auditUploadArea.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                if (!file.name.toLowerCase().endsWith('.xml')) {
+                    alert('⚠️ Solo se aceptan archivos .xml');
+                    return;
+                }
+                handleAuditFileUpload(file);
+            }
+        });
+
+        auditFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) handleAuditFileUpload(file);
+        });
+
+        // Apply filters button
+        document.getElementById('auditApplyFiltersBtn').onclick = () => {
+            applyAuditFilters();
+        };
+
+        // Download XLSX
+        document.getElementById('auditDownloadBtn').onclick = () => {
+            downloadAuditXLSX();
+        };
+
+        // Reset
+        document.getElementById('auditResetBtn').onclick = () => {
+            if (confirm('¿Seguro que quieres reiniciar? Se perderán todos los datos.')) {
+                location.reload();
+            }
+        };
+
+        // XLSX name preview
+        const auditNameInput = document.getElementById('auditXlsxNameInput');
+        auditNameInput.addEventListener('input', () => {
+            document.getElementById('auditXlsxNamePreview').textContent =
+                auditNameInput.value.trim() || state.auditXmlFileName + '_converted';
+        });
+    }
+
+    function handleAuditFileUpload(file) {
+        state.auditXmlFileName = file.name.replace(/\.xml$/i, '');
+        const progressDiv = document.getElementById('auditProgress');
+        const progressBar = document.getElementById('auditProgressBar');
+        const progressText = document.getElementById('auditProgressText');
+
+        progressDiv.style.display = 'block';
+        progressBar.style.width = '10%';
+        progressText.textContent = 'Leyendo archivo... ' + (file.size / (1024 * 1024)).toFixed(1) + ' MB';
+
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+            progressBar.style.width = '40%';
+            progressText.textContent = 'Parseando entries...';
+
+            // Use setTimeout to let UI update
+            setTimeout(() => {
+                try {
+                    const xmlText = e.target.result;
+                    const entries = parseAuditXML(xmlText, progressBar, progressText);
+                    state.auditRawEntries = entries;
+
+                    progressBar.style.width = '100%';
+                    progressText.textContent = 'Encontrados ' + entries.length + ' entries';
+
+                    // Show filters section
+                    document.getElementById('auditFiltersSection').style.display = 'block';
+                    document.getElementById('auditFiltersSection').scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+
+                    // Set default XLSX name
+                    document.getElementById('auditXlsxNameInput').value = state.auditXmlFileName + '_converted';
+                    document.getElementById('auditXlsxNamePreview').textContent = state.auditXmlFileName + '_converted';
+
+                } catch (err) {
+                    alert('❌ Error al parsear XML: ' + err.message);
+                    console.error(err);
+                    progressDiv.style.display = 'none';
+                }
+            }, 50);
+        };
+
+        reader.onerror = () => {
+            alert('❌ Error al leer el archivo');
+            progressDiv.style.display = 'none';
+        };
+
+        reader.readAsText(file, 'UTF-8');
+    }
+
+    function parseAuditXML(xmlText, progressBar, progressText) {
+        const entryRegex = /<entry>([\s\S]*?)<\/entry>/g;
+        const entries = [];
+        let match;
+        let count = 0;
+
+        // First pass: count approximate entries
+        const approxCount = (xmlText.match(/<entry>/g) || []).length;
+        if (progressText) progressText.textContent = 'Encontrados ~' + approxCount + ' entries. Procesando...';
+
+        while ((match = entryRegex.exec(xmlText)) !== null) {
+            const entryXml = match[1];
+            entries.push(parseAuditEntry(entryXml));
+            count++;
+
+            if (count % 5000 === 0 && progressBar && progressText) {
+                const pct = 40 + Math.round((count / approxCount) * 50);
+                progressBar.style.width = Math.min(pct, 90) + '%';
+                progressText.textContent = 'Procesando ' + count + ' / ' + approxCount + ' entries...';
+            }
+        }
+
+        return entries;
+    }
+
+    function parseAuditEntry(entryXml) {
+        // Extract <data>...</data> block first (critical for disambiguating fields)
+        const dataMatch = entryXml.match(/<data>([\s\S]*?)<\/data>/);
+        const dataContent = dataMatch ? dataMatch[1] : '';
+
+        // For root-level fields, search in the part BEFORE <data>
+        const beforeData = dataMatch ? entryXml.substring(0, dataMatch.index) : entryXml;
+
+        // Helper to extract a tag value from a specific string
+        function getTag(str, tagName) {
+            const m = str.match(new RegExp('<' + tagName + '>([\\s\\S]*?)<\\/' + tagName + '>'));
+            return m ? m[1] : '';
+        }
+
+        // Check for self-closing tags too
+        function getTagOrEmpty(str, tagName) {
+            // First try normal tag
+            const m = str.match(new RegExp('<' + tagName + '>([\\s\\S]*?)<\\/' + tagName + '>'));
+            if (m) return m[1];
+            // Check self-closing
+            const selfClose = str.match(new RegExp('<' + tagName + '\\s*/>'));
+            if (selfClose) return '';
+            return '';
+        }
+
+        // Root-level fields (from beforeData to avoid <data> duplicates)
+        const date = getTag(beforeData, 'date');
+        const oper = getTag(beforeData, 'oper');
+        const userid = getTag(beforeData, 'userid');
+        const host = getTag(beforeData, 'host');
+        const app = getTag(beforeData, 'app');
+        const orgaid = getTag(beforeData, 'orgaid');
+
+        // Info field (always at root level, after <data>)
+        const info = getTag(entryXml, 'info');
+
+        // Data-level fields
+        const dataLocation = getTagOrEmpty(dataContent, 'location');
+        const dataCertname = getTag(dataContent, 'certname');
+        const dataCertnameorig = getTag(dataContent, 'certnameorig');
+        const dataUserid = getTag(dataContent, 'userid');
+
+        return {
+            date,
+            oper,
+            userid,
+            host,
+            app,
+            orgaid,
+            info,
+            dataContent,        // raw inner content of <data>
+            dataLocation,       // location from inside <data>
+            dataCertname,
+            dataCertnameorig,
+            dataUserid
+        };
+    }
+
+    // Timezone: determine CET (+1) or CEST (+2) for a given date
+    function getSpainOffset(dateStr, tzMode) {
+        if (tzMode === 'cet') return 1;
+        if (tzMode === 'cest') return 2;
+
+        // Auto: CEST is from last Sunday of March to last Sunday of October
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return 1; // fallback CET
+
+        const year = d.getFullYear();
+        const month = d.getMonth(); // 0-indexed
+
+        // Last Sunday of March
+        const marchLast = new Date(year, 2, 31);
+        while (marchLast.getDay() !== 0) marchLast.setDate(marchLast.getDate() - 1);
+        marchLast.setHours(2, 0, 0, 0); // transition at 02:00 UTC
+
+        // Last Sunday of October
+        const octLast = new Date(year, 9, 31);
+        while (octLast.getDay() !== 0) octLast.setDate(octLast.getDate() - 1);
+        octLast.setHours(3, 0, 0, 0); // transition at 03:00 CEST = 01:00 UTC
+
+        if (d >= marchLast && d < octLast) return 2; // CEST
+        return 1; // CET
+    }
+
+    function formatAuditDate(dateStr) {
+        // Input: 2026-01-10T23:57:22.9607760
+        // Output: 2026-01-10 23:57:22.960000 (6 digits microseconds, padded)
+        if (!dateStr) return '';
+
+        const tMatch = dateStr.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2})\.?(\d*)$/);
+        if (!tMatch) return dateStr;
+
+        const datePart = tMatch[1];
+        const timePart = tMatch[2];
+        let fracPart = tMatch[3] || '0';
+
+        // Take first 6 digits, pad to 6
+        fracPart = fracPart.substring(0, 6).padEnd(6, '0');
+
+        return datePart + ' ' + timePart + '.' + fracPart;
+    }
+
+    function addOffsetToDate(dateStr, offsetHours) {
+        // Parse the date string and add offset hours
+        if (!dateStr) return '';
+
+        const tMatch = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})\.?(\d*)$/);
+        if (!tMatch) return dateStr;
+
+        const year = parseInt(tMatch[1]);
+        const month = parseInt(tMatch[2]) - 1;
+        const day = parseInt(tMatch[3]);
+        const hours = parseInt(tMatch[4]);
+        const minutes = parseInt(tMatch[5]);
+        const seconds = parseInt(tMatch[6]);
+        let fracPart = tMatch[7] || '0';
+
+        // Preserve original fractional part (up to 6 digits)
+        fracPart = fracPart.substring(0, 6).padEnd(6, '0');
+
+        const d = new Date(year, month, day, hours + offsetHours, minutes, seconds);
+
+        const pad = (n, len) => String(n).padStart(len || 2, '0');
+        return pad(d.getFullYear(), 4) + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) +
+            ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()) +
+            '.' + fracPart;
+    }
+
+    function extractDomain(locationStr) {
+        if (!locationStr || !locationStr.trim()) return '';
+
+        // Decode XML entities
+        let url = locationStr.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+
+        try {
+            // Try to parse as URL
+            if (url.startsWith('http://') || url.startsWith('https://')) {
+                const parsed = new URL(url);
+                return parsed.hostname;
+            }
+        } catch (e) {
+            // Not a valid URL
+        }
+        return '';
+    }
+
+    function extractSubjectCN(infoStr) {
+        if (!infoStr) return '';
+        const m = infoStr.match(/subjectcn='(.*?)'/);
+        return m ? m[1] : '';
+    }
+
+    function buildCertnameorig(entry) {
+        // Concatenate raw XML tags from <data>
+        const parts = [];
+        if (entry.dataCertname) parts.push('<certname>' + entry.dataCertname + '</certname>');
+        if (entry.dataCertnameorig) parts.push('<certnameorig>' + entry.dataCertnameorig + '</certnameorig>');
+        if (entry.dataUserid) parts.push('<userid>' + entry.dataUserid + '</userid>');
+        return parts.join('');
+    }
+
+    function applyAuditFilters() {
+        const dateFrom = document.getElementById('auditDateFrom').value;
+        const dateTo = document.getElementById('auditDateTo').value;
+        const userIdFilter = document.getElementById('auditUserIdFilter').value.trim();
+        const orgaIdFilter = document.getElementById('auditOrgaIdFilter').value.trim().toLowerCase();
+        const tzMode = document.getElementById('auditTimezone').value;
+
+        const totalEntries = state.auditRawEntries.length;
+        let filtered = state.auditRawEntries;
+
+        // Apply date filter
+        if (dateFrom) {
+            const fromStr = dateFrom.replace('T', ' ');
+            filtered = filtered.filter(e => {
+                const entryDate = e.date.replace('T', ' ');
+                return entryDate >= fromStr;
+            });
+        }
+        if (dateTo) {
+            const toStr = dateTo.replace('T', ' ');
+            filtered = filtered.filter(e => {
+                const entryDate = e.date.replace('T', ' ');
+                return entryDate <= toStr;
+            });
+        }
+
+        // Apply userid filter (exact match)
+        if (userIdFilter) {
+            filtered = filtered.filter(e => e.userid === userIdFilter);
+        }
+
+        // Apply orgaid filter (case-insensitive)
+        if (orgaIdFilter) {
+            filtered = filtered.filter(e => e.orgaid.toLowerCase() === orgaIdFilter);
+        }
+
+        // Transform to output rows
+        const processedData = filtered.map(entry => {
+            const offset = getSpainOffset(entry.date, tzMode);
+            return {
+                date: formatAuditDate(entry.date),
+                date_utc: addOffsetToDate(entry.date, offset),
+                oper: entry.oper,
+                userid: entry.userid,
+                host: entry.host,
+                app: entry.app,
+                domain: extractDomain(entry.dataLocation),
+                certnameorig: buildCertnameorig(entry),
+                subjectcn: extractSubjectCN(entry.info),
+                data: entry.dataContent.trim()
+            };
+        });
+
+        state.auditProcessedData = processedData;
+
+        // Stats
+        const uniqueUsers = new Set(filtered.map(e => e.userid)).size;
+        const uniqueOrgas = new Set(filtered.map(e => e.orgaid)).size;
+
+        document.getElementById('statTotalEntries').textContent = totalEntries.toLocaleString();
+        document.getElementById('statFilteredEntries').textContent = processedData.length.toLocaleString();
+        document.getElementById('statUniqueUsers').textContent = uniqueUsers.toLocaleString();
+        document.getElementById('statUniqueOrgas').textContent = uniqueOrgas.toLocaleString();
+
+        document.getElementById('auditStatsSection').style.display = 'block';
+
+        // Generate preview
+        generateAuditPreview(processedData);
+    }
+
+    function generateAuditPreview(data) {
+        const previewData = data.slice(0, 50);
+
+        // Header
+        const thead = document.getElementById('auditPreviewHead');
+        thead.innerHTML = '<tr>' +
+            '<th style="background:#667eea;color:white;padding:8px;text-align:center;min-width:40px;">#</th>' +
+            AUDIT_COLUMNS.map(col =>
+                '<th style="background:#667eea;color:white;padding:8px;white-space:nowrap;">' + sanitizeHTML(col) + '</th>'
+            ).join('') +
+            '</tr>';
+
+        // Body
+        const tbody = document.getElementById('auditPreviewBody');
+        const longCols = ['certnameorig', 'data'];
+
+        tbody.innerHTML = previewData.map((row, idx) => {
+            return '<tr style="background:' + (idx % 2 === 0 ? '#f8f9ff' : 'white') + ';">' +
+                '<td style="padding:6px 8px;text-align:center;color:#999;font-size:0.85em;border-right:1px solid #e0e0e0;">' + (idx + 1) + '</td>' +
+                AUDIT_COLUMNS.map(col => {
+                    const val = row[col] || '';
+                    const isLong = longCols.includes(col);
+                    const style = isLong
+                        ? 'padding:6px 8px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'
+                        : 'padding:6px 8px;white-space:nowrap;';
+                    const title = isLong ? ' title="' + sanitizeHTML(val).replace(/"/g, '&quot;') + '"' : '';
+                    return '<td style="' + style + '"' + title + '>' + sanitizeHTML(val) + '</td>';
+                }).join('') +
+                '</tr>';
+        }).join('');
+
+        // Row count
+        document.getElementById('auditRowCount').textContent = data.length + ' filas procesadas' +
+            (data.length > 50 ? ' (mostrando primeras 50)' : '');
+
+        // Show preview section
+        document.getElementById('auditPreviewSection').style.display = 'block';
+        document.getElementById('auditPreviewSection').scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+        });
+    }
+
+    async function downloadAuditXLSX() {
+        const data = state.auditProcessedData;
+        if (!data || data.length === 0) {
+            alert('⚠️ No hay datos para descargar');
+            return;
+        }
+
+        const rowCount = data.length;
+        showExportProgress('Exportando XLSX (Reporte NTG)');
+        updateExportProgress(5, 'Preparando ' + rowCount.toLocaleString() + ' filas...');
+
+        const timeout = setTimeout(() => {
+            exportCancelled = true;
+            hideExportProgress();
+            alert('La exportacion tardo demasiado y fue cancelada. Intenta con menos datos.');
+        }, EXPORT_TIMEOUT_MS);
+
+        try {
+            const aoa = [AUDIT_COLUMNS];
+
+            const rows = await processInChunks(data, 5000,
+                (row) => AUDIT_COLUMNS.map(col => row[col] || ''),
+                (pct, done, total) => {
+                    updateExportProgress(10 + pct * 0.5, 'Procesando fila ' + done.toLocaleString() + ' / ' + total.toLocaleString());
+                }
+            );
+
+            if (exportCancelled) return;
+            rows.forEach(r => aoa.push(r));
+
+            updateExportProgress(65, 'Generando archivo XLSX...');
+            await new Promise(r => setTimeout(r, 0));
+
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(aoa);
+            ws['!cols'] = AUDIT_COL_WIDTHS.map(w => ({ wch: w }));
+            XLSX.utils.book_append_sheet(wb, ws, 'Resultado consulta');
+
+            updateExportProgress(90, 'Descargando...');
+            await new Promise(r => setTimeout(r, 0));
+
+            const customName = document.getElementById('auditXlsxNameInput').value.trim();
+            const fileName = customName
+                ? customName + '.xlsx'
+                : state.auditXmlFileName + '_converted.xlsx';
+            XLSX.writeFile(wb, fileName);
+
+            updateExportProgress(100, 'Listo!');
+            setTimeout(() => hideExportProgress(), 800);
+
+        } catch (err) {
+            if (err.message !== 'Cancelado por el usuario') {
+                alert('Error al exportar: ' + err.message);
+            }
+            hideExportProgress();
+        } finally {
+            clearTimeout(timeout);
+        }
+    }
+
+    // ============================================
+    // EXPORT PROGRESS v5.1.2
+    // ============================================
+    const EXPORT_TIMEOUT_MS = 120000; // 2 minutes max
+    let exportCancelled = false;
+    let exportTimerInterval = null;
+
+    function showExportProgress(title) {
+        exportCancelled = false;
+        const overlay = document.getElementById('exportOverlay');
+        overlay.style.display = 'flex';
+        document.getElementById('exportTitle').textContent = title || 'Exportando...';
+        document.getElementById('exportStatus').textContent = 'Preparando datos...';
+        document.getElementById('exportProgressBar').style.width = '0%';
+        document.getElementById('exportTimer').textContent = '0s';
+
+        // Start timer display
+        const startTime = Date.now();
+        exportTimerInterval = setInterval(() => {
+            const elapsed = Math.round((Date.now() - startTime) / 1000);
+            document.getElementById('exportTimer').textContent = elapsed + 's';
+        }, 1000);
+    }
+
+    function updateExportProgress(pct, statusText) {
+        document.getElementById('exportProgressBar').style.width = Math.min(pct, 100) + '%';
+        if (statusText) {
+            document.getElementById('exportStatus').textContent = statusText;
+        }
+    }
+
+    function hideExportProgress() {
+        document.getElementById('exportOverlay').style.display = 'none';
+        if (exportTimerInterval) {
+            clearInterval(exportTimerInterval);
+            exportTimerInterval = null;
+        }
+    }
+
+    function cancelExport() {
+        exportCancelled = true;
+        hideExportProgress();
+    }
+    window.cancelExport = cancelExport;
+
+    // Chunked async processing: splits work into batches so UI doesn't freeze
+    function processInChunks(data, chunkSize, processFn, progressFn) {
+        return new Promise((resolve, reject) => {
+            const results = [];
+            let idx = 0;
+            const total = data.length;
+
+            function next() {
+                if (exportCancelled) {
+                    reject(new Error('Cancelado por el usuario'));
+                    return;
+                }
+                const end = Math.min(idx + chunkSize, total);
+                for (let i = idx; i < end; i++) {
+                    results.push(processFn(data[i], i));
+                }
+                idx = end;
+                const pct = Math.round((idx / total) * 100);
+                if (progressFn) progressFn(pct, idx, total);
+
+                if (idx < total) {
+                    setTimeout(next, 0);
+                } else {
+                    resolve(results);
+                }
+            }
+            next();
+        });
+    }
+
+    // ============================================
+    // DESCARGA Y RESET
+    // ============================================
+    function setupDownload() {
+        document.getElementById('downloadBtn').onclick = () => {
+            if (!window.generatedCSVData) {
+                alert('⚠️ Primero genera el preview');
+                return;
+            }
+
+            const template = getTemplate();
+            const includeHeaders = document.getElementById('includeHeadersCheckbox').checked;
+
+            // v5.1.0: XLSX download for audit personalizado
+            if (state.selectedProduct === 'audit') {
+                downloadCustomAuditXLSXAsync(template, includeHeaders);
+                return;
+            }
+
+            // Standard CSV download with progress
+            downloadCSVAsync(template, includeHeaders);
+        };
+    }
+
+    async function downloadCSVAsync(template, includeHeaders) {
+        const data = window.generatedCSVData;
+        const rowCount = data.length;
+        showExportProgress('Exportando CSV');
+        updateExportProgress(5, 'Generando ' + rowCount.toLocaleString() + ' filas...');
+
+        const timeout = setTimeout(() => {
+            exportCancelled = true;
+            hideExportProgress();
+            alert('La exportacion tardo demasiado y fue cancelada. Intenta con menos datos.');
+        }, EXPORT_TIMEOUT_MS);
+
+        try {
+            const dataRows = await processInChunks(data, 5000,
+                (row) => {
+                    return template.columns.map(col => {
+                        const val = String(row[col] || '').replace(/"/g, '""');
+                        return '"' + val + '"';
+                    }).join(',');
+                },
+                (pct, done, total) => {
+                    updateExportProgress(10 + pct * 0.7, 'Procesando fila ' + done.toLocaleString() + ' / ' + total.toLocaleString());
+                }
+            );
+
+            if (exportCancelled) return;
+
+            updateExportProgress(85, 'Construyendo archivo...');
+            await new Promise(r => setTimeout(r, 0));
+
+            const csvContent = includeHeaders
+                ? [template.columns.join(','), ...dataRows].join('\n')
+                : dataRows.join('\n');
+
+            updateExportProgress(95, 'Descargando...');
+            await new Promise(r => setTimeout(r, 0));
+
+            const BOM = '\uFEFF';
+            const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            const customName = document.getElementById('csvNameInput').value.trim();
+            link.download = customName
+                ? customName + '.csv'
+                : state.selectedProduct + '_' + state.selectedCommand + '_' + Date.now() + '.csv';
+            link.click();
+
+            updateExportProgress(100, 'Listo!');
+            setTimeout(() => hideExportProgress(), 800);
+
+        } catch (err) {
+            if (err.message !== 'Cancelado por el usuario') {
+                alert('Error al exportar: ' + err.message);
+            }
+            hideExportProgress();
+        } finally {
+            clearTimeout(timeout);
+        }
+    }
+
+    async function downloadCustomAuditXLSXAsync(template, includeHeaders) {
+        const data = window.generatedCSVData;
+        const rowCount = data.length;
+        showExportProgress('Exportando XLSX');
+        updateExportProgress(5, 'Preparando ' + rowCount.toLocaleString() + ' filas...');
+
+        const timeout = setTimeout(() => {
+            exportCancelled = true;
+            hideExportProgress();
+            alert('La exportacion tardo demasiado y fue cancelada. Intenta con menos datos.');
+        }, EXPORT_TIMEOUT_MS);
+
+        try {
+            const aoa = [];
+            if (includeHeaders) {
+                aoa.push(template.columns);
+            }
+
+            const rows = await processInChunks(data, 5000,
+                (row) => template.columns.map(col => row[col] || ''),
+                (pct, done, total) => {
+                    updateExportProgress(10 + pct * 0.5, 'Procesando fila ' + done.toLocaleString() + ' / ' + total.toLocaleString());
+                }
+            );
+
+            if (exportCancelled) return;
+            rows.forEach(r => aoa.push(r));
+
+            updateExportProgress(65, 'Generando archivo XLSX...');
+            await new Promise(r => setTimeout(r, 0));
+
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(aoa);
+            ws['!cols'] = template.columns.map(col => ({ wch: Math.max(String(col).length + 5, 15) }));
+            XLSX.utils.book_append_sheet(wb, ws, 'Resultado consulta');
+
+            updateExportProgress(90, 'Descargando...');
+            await new Promise(r => setTimeout(r, 0));
+
+            const customName = document.getElementById('csvNameInput').value.trim();
+            const fileName = customName
+                ? customName + '.xlsx'
+                : 'audit_personalizado_' + Date.now() + '.xlsx';
+            XLSX.writeFile(wb, fileName);
+
+            updateExportProgress(100, 'Listo!');
+            setTimeout(() => hideExportProgress(), 800);
+
+        } catch (err) {
+            if (err.message !== 'Cancelado por el usuario') {
+                alert('Error al exportar: ' + err.message);
+            }
+            hideExportProgress();
+        } finally {
+            clearTimeout(timeout);
+        }
+    }
+
+    function setupReset() {
+        document.getElementById('resetBtn').onclick = () => {
+            if (confirm('¿Seguro que quieres reiniciar? Se perderán todos los datos.')) {
+                location.reload();
+            }
+        };
+    }
+
+})();
+;
+  // Las funciones que usan los botones viven en window. Si dos herramientas comparten un nombre,
+  // la que está en pantalla vuelve a ponerlas al reaparecer (LegacyTool llama a lo que devuelve mount).
+  const __exposed = {  };
+  Object.assign(window, __exposed);
+  return () => Object.assign(window, __exposed);
+}

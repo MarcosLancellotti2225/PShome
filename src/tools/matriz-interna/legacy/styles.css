@@ -1,0 +1,45 @@
+/* GENERADO por scripts/legacy/convert.mjs desde legacy-src/ficha-formulario (ex repo SingaframeFormBuilder) (interno.html) (CSS). La lógica es la original. */
+.lg-matriz-interna { font-family: var(--font-family); }
+
+/* Página interna: arma la matriz «Formulario Signaframe» desde la ficha cerrada + el main + el diccionario */
+.lg-matriz-interna{
+  --bg:#f0f3f8; --paper:#ffffff; --ink:#0a1111; --muted:#4f5b5b; --line:#cddbdb; --soft:#e9ebf0;
+  --acc:#047c76; --acc-bg:#defffb; --blue:#2b5cd1; --warn:#ad4546; --warn-bg:#ffe8e7; --ok:#198446;
+  --sans:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+.lg-matriz-interna *{box-sizing:border-box}
+.lg-matriz-interna{background:var(--bg);color:var(--ink);font:15px/1.6 var(--sans);margin:0;padding:28px 16px 64px}
+.lg-matriz-interna .wrap{max-width:980px;margin:0 auto;display:grid;gap:28px}
+.lg-matriz-interna h1{font-size:30px;line-height:1.15;margin:0 0 6px;font-weight:600}
+.lg-matriz-interna h2{font-size:19px;margin:0 0 8px;font-weight:600}
+.lg-matriz-interna p{margin:0}
+.lg-matriz-interna .lead{color:var(--muted);max-width:70ch}
+.lg-matriz-interna .eyebrow{font:500 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.lg-matriz-interna .card{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:18px}
+.lg-matriz-interna .inputs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:760px){.lg-matriz-interna .inputs{grid-template-columns:1fr}}
+.lg-matriz-interna .in{border:1px dashed var(--line);border-radius:8px;padding:12px;display:grid;gap:6px}
+.lg-matriz-interna .in b{font-size:14px}
+.lg-matriz-interna .in small{color:var(--muted);font-size:13px}
+.lg-matriz-interna .in .st{font:12px var(--mono);color:var(--muted);word-break:break-all}
+.lg-matriz-interna .in .st.ok{color:var(--ok)}
+.lg-matriz-interna .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.lg-matriz-interna button.btn{font:500 14px var(--sans);border-radius:8px;padding:9px 16px;border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer}
+.lg-matriz-interna button.btn.pri{background:var(--acc);border-color:var(--acc);color:#fff}
+.lg-matriz-interna button.btn:disabled{opacity:.45;cursor:not-allowed}
+.lg-matriz-interna .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.lg-matriz-interna .kpi{border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.lg-matriz-interna .kpi b{display:block;font-size:22px;font-variant-numeric:tabular-nums}
+.lg-matriz-interna .kpi span{color:var(--muted);font-size:13px}
+.lg-matriz-interna .kpi.bad b{color:var(--warn)} .lg-matriz-interna .kpi.good b{color:var(--ok)}
+.lg-matriz-interna ul.lst{margin:6px 0 0;padding-left:18px;font-size:14px}
+.lg-matriz-interna ul.lst li{margin:2px 0;overflow-wrap:anywhere}
+.lg-matriz-interna .mono{font-family:var(--mono);font-size:13px}
+.lg-matriz-interna .warn{background:var(--warn-bg);color:var(--warn);border-radius:8px;padding:10px 12px;font-size:14px}
+.lg-matriz-interna details summary{cursor:pointer;font-weight:600}
+.lg-matriz-interna input[type=file]{font:13px var(--sans);max-width:100%}
+
+
+/* Ajustes para correr dentro de la app */
+.lg-matriz-interna { background: var(--color-bg); padding-block: 8px 48px; padding-inline: 0; }

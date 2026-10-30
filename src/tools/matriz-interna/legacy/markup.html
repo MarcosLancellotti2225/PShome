@@ -1,0 +1,30 @@
+<!-- GENERADO por scripts/legacy/convert.mjs desde legacy-src/ficha-formulario (ex repo SingaframeFormBuilder) (interno.html) (HTML). La lógica es la original. -->
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Uso interno · Signaframe</div>
+    <h1>Matriz interna</h1>
+    <p class="lead">Junta la ficha cerrada del cliente con los campos que Signaframe necesita. Sale un Excel con la hoja «Formulario Signaframe» (una fila por paso, subsección y campo) y la hoja «Opciones», listo para <span class="mono">matriz_io.py build</span>.</p>
+  </header>
+
+  <section class="card">
+    <h2>1 · Archivos</h2>
+    <div class="inputs">
+      <label class="in"><b>Ficha cerrada (.xlsx)</b><small>La que baja el paso «Armar». Obligatoria.</small>
+        <input type="file" id="in-ficha" accept=".xlsx"><span class="st" id="st-ficha">Sin archivo</span></label>
+      <label class="in"><b>Main de Signaframe (.json)</b><small>Para controlar que estén todos los casilleros del PDF.</small>
+        <input type="file" id="in-main" accept=".json"><span class="st" id="st-main">Sin archivo</span></label>
+      <label class="in"><b>Matriz del INS (.xlsx)</b><small>Opcional. De acá sale el texto legal de Declaraciones.</small>
+        <input type="file" id="in-ins" accept=".xlsx"><span class="st" id="st-ins">Sin archivo</span></label>
+    </div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn pri" id="go" disabled>Armar matriz</button>
+      <button class="btn" id="dl" disabled>Bajar matriz (.xlsx)</button>
+    </div>
+  </section>
+
+  <section class="card" id="res" hidden>
+    <h2>2 · Resultado</h2>
+    <div class="kpis" id="kpis"></div>
+    <div id="msgs" style="margin-top:14px;display:grid;gap:12px"></div>
+  </section>
+</div>

@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Plantillas HTML - Signaturit</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- ═══════════════════════════════════ -->
+    <!-- Vista 1: LOGIN                      -->
+    <!-- ═══════════════════════════════════ -->
+    <div id="viewLogin" class="view">
+        <div class="login-wrapper">
+            <div class="login-card">
+                <div class="login-logo">S</div>
+                <h1>Signaturit Template Generator</h1>
+                <p class="login-subtitle">Conecta tu cuenta para gestionar los brandings y templates de email</p>
+
+                <div class="form-group">
+                    <label>Entorno</label>
+                    <select id="apiEnvironment">
+                        <option value="sandbox">Sandbox (pruebas)</option>
+                        <option value="production">Production</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Access Token</label>
+                    <input type="password" id="apiToken" placeholder="Pega aquí tu bearer token de Signaturit">
+                </div>
+
+                <button class="btn-login" id="btnConnect" onclick="connectAPI()">
+                    Conectar
+                </button>
+
+                <div id="loginError" class="login-error" style="display:none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════ -->
+    <!-- Vista 2: DASHBOARD                  -->
+    <!-- ═══════════════════════════════════ -->
+    <div id="viewDashboard" class="view" style="display:none;">
+        <div class="dashboard">
+            <header class="dashboard-header">
+                <div class="dashboard-header-left">
+                    <h1>Mis Brandings</h1>
+                    <div class="dashboard-status">
+                        <span class="status-dot"></span>
+                        <span id="dashboardEnv">Sandbox</span>
+                        &mdash;
+                        <span id="dashboardCount">0</span> brandings
+                        &mdash;
+                        <span style="color:#999;font-size:12px;">v54</span>
+                    </div>
+                </div>
+                <div class="dashboard-header-right">
+                    <button class="btn-new-branding" onclick="goToEditorNew()">+ Nuevo Branding</button>
+                    <button class="btn-disconnect" onclick="disconnectAPI()">Desconectar</button>
+                </div>
+            </header>
+
+            <div id="brandingsGrid" class="brandings-grid"></div>
+
+            <div id="pagination" class="pagination"></div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════ -->
+    <!-- Vista 3: EDITOR                     -->
+    <!-- ═══════════════════════════════════ -->
+    <div id="viewEditor" class="view" style="display:none;">
+        <div class="editor-container">
+            <!-- ── Panel de Controles ── -->
+            <div class="controls">
+                <div class="editor-topbar">
+                    <button class="btn-back" onclick="goToDashboard()">&larr; Brandings</button>
+                    <div class="editor-branding-info">
+                        <input type="text" class="editor-branding-name-input" id="editorBrandingName" value="Nuevo Branding" placeholder="Nombre del branding" maxlength="40">
+                        <span class="editor-branding-id" id="editorBrandingId" onclick="copyBrandingId()" title="Click para copiar ID"></span>
+                    </div>
+                </div>
+
+                <div class="editor-tabs" role="tablist">
+                    <button class="editor-tab active" data-editor-tab="email" role="tab" onclick="switchEditorTab('email')">Email</button>
+                    <button class="editor-tab" data-editor-tab="app" role="tab" onclick="switchEditorTab('app')">App de firma</button>
+                    <button class="editor-tab" data-editor-tab="file" role="tab" onclick="switchEditorTab('file')">Cargar / Exportar</button>
+                </div>
+
+                <!-- Sección: Template -->
+                <div class="collapsible-section" data-preview-tab="email">
+                    <div class="collapsible-header active" onclick="toggleCollapsible(this)">
+                        <h2>Template</h2>
+                        <span class="collapsible-icon">&#9660;</span>
+                    </div>
+                    <div class="collapsible-content active">
+                        <div class="collapsible-inner">
+                            <div class="form-group" id="newBrandingNameGroup" style="display: none;">
+                                <label>Nombre del nuevo branding (max 24 chars)</label>
+                                <input type="text" id="newBrandingName" placeholder="Mi Branding" maxlength="24">
+                            </div>
+
+                            <div class="form-group" id="templateTypeGroup">
+                                <label>Tipo de Template</label>
+                                <select id="templateType">
+                                    <option value="sign_request">sign_request (email de envio)</option>
+                                    <option value="signatures_request">signatures_request (requiere {{sign_button}})</option>
+                                    <option value="signatures_receipt">signatures_receipt</option>
+                                    <option value="request_expired">request_expired</option>
+                                    <option value="pending_sign">pending_sign (requiere {{sign_button}})</option>
+                                    <option value="document_canceled">document_canceled</option>
+                                    <option value="emails_request">emails_request (requiere {{email_button}})</option>
+                                    <option value="validation_request">validation_request (requiere {{validate_button}})</option>
+                                    <option value="signed_document">signed_document</option>
+                                    <option value="document_declined">document_declined</option>
+                                    <option value="request_expired_requester">request_expired_requester</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Plantilla predefinida (idioma)</label>
+                                <div class="preset-template-row">
+                                    <select id="templateLanguage">
+                                        <option value="">-- Seleccionar idioma --</option>
+                                        <option value="es">Espanol</option>
+                                        <option value="en">English</option>
+                                        <option value="ca">Catala</option>
+                                        <option value="signaturit">Signaturit (default)</option>
+                                    </select>
+                                    <button class="btn-api-action btn-preset-load" onclick="loadPresetTemplate()">
+                                        Cargar plantilla
+                                    </button>
+                                </div>
+                                <small style="color: #6c757d; display: block; margin-top: 3px;">Carga un template base por idioma.</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div data-preview-tab="email" style="margin-bottom: 6px;">
+                <button class="btn-open-modal" onclick="openVariableModal()" style="padding: 8px 14px; font-size: 12px;">
+                    Variables
+                    <span style="background: rgba(255,255,255,0.2); padding: 3px 7px; border-radius: 12px; font-size: 11px;" id="variableCount">14</span>
+                </button>
+                </div>
+
+                <!-- Sección: Contenido del Email -->
+                <div class="collapsible-section" data-preview-tab="email">
+                    <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                        <h2>Contenido del Email</h2>
+                        <span class="collapsible-icon">&#9660;</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <div class="collapsible-inner">
+                            <div class="form-group">
+                                <label>Asunto del Email (subject)</label>
+                                <input type="text" id="emailSubject" placeholder="Ej: Tiene un documento para firmar" value="">
+                                <small style="color: #6c757d;">Signaturit usa el <code>&lt;title&gt;</code> como subject del email.</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label>URL del Logo</label>
+                                <div style="display: flex; gap: 10px;">
+                                    <input type="url" id="logoUrl" placeholder="https://ejemplo.com/logo.png" style="flex: 1;">
+                                    <button class="btn-logo" onclick="insertLogoVariable()">Logo</button>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Ancho del Logo (px o %)</label>
+                                <input type="text" id="logoWidth" value="300px" placeholder="300px o 100%">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Alto del Logo (px, % o auto)</label>
+                                <input type="text" id="logoHeight" value="auto" placeholder="auto, 100px o 50%">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Ajuste de Imagen (object-fit)</label>
+                                <select id="logoObjectFit">
+                                    <option value="none">Ninguno (por defecto)</option>
+                                    <option value="contain">Contain - Ajustar sin recortar</option>
+                                    <option value="cover">Cover - Llenar recortando</option>
+                                    <option value="fill">Fill - Estirar para llenar</option>
+                                    <option value="scale-down">Scale Down - Reducir si es necesario</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Formato del Texto</label>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+                                    <div>
+                                        <small style="color: #6c757d;">Tamaño (px)</small>
+                                        <input type="number" id="textFontSize" value="16" min="10" max="40" style="width: 100%;">
+                                    </div>
+                                    <div>
+                                        <small style="color: #6c757d;">Interlineado (px)</small>
+                                        <input type="number" id="textLineHeight" value="24" min="12" max="60" style="width: 100%;">
+                                    </div>
+                                    <div>
+                                        <small style="color: #6c757d;">Espaciado letras (px)</small>
+                                        <input type="number" id="textLetterSpacing" value="0" min="-2" max="10" step="0.5" style="width: 100%;">
+                                    </div>
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                    <div>
+                                        <small style="color: #6c757d;">Alineacion</small>
+                                        <select id="textAlign" style="width: 100%;">
+                                            <option value="left">Izquierda</option>
+                                            <option value="center">Centro</option>
+                                            <option value="right">Derecha</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <small style="color: #6c757d;">Grosor de fuente</small>
+                                        <select id="textFontWeight" style="width: 100%;">
+                                            <option value="normal">Normal (400)</option>
+                                            <option value="500">Medium (500)</option>
+                                            <option value="600">Semi-Bold (600)</option>
+                                            <option value="bold">Bold (700)</option>
+                                            <option value="800">Extra-Bold (800)</option>
+                                            <option value="900">Black (900)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <small style="color: #6c757d; display: block; margin-top: 4px;">Alineacion global. B/I/U para formato inline.</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Contenido Completo del Email</label>
+                                <div style="display: flex; gap: 4px; margin-bottom: 6px; flex-wrap: wrap; align-items: center;">
+                                    <button type="button" onclick="wrapEmailSelection('**', '**')" title="Negrita" style="padding: 4px 10px; border: 1px solid #d1d5db; background: #f9fafb; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px;">B</button>
+                                    <button type="button" onclick="wrapEmailSelection('*', '*')" title="Cursiva" style="padding: 4px 10px; border: 1px solid #d1d5db; background: #f9fafb; border-radius: 4px; cursor: pointer; font-style: italic; font-size: 13px;">I</button>
+                                    <button type="button" onclick="wrapEmailSelection('__', '__')" title="Subrayado" style="padding: 4px 10px; border: 1px solid #d1d5db; background: #f9fafb; border-radius: 4px; cursor: pointer; text-decoration: underline; font-size: 13px;">U</button>
+                                    <span style="border-left: 1px solid #d1d5db; margin: 0 2px;"></span>
+                                    <button type="button" onclick="insertListPrefix('- ')" title="Viñeta" style="padding: 4px 10px; border: 1px solid #d1d5db; background: #f9fafb; border-radius: 4px; cursor: pointer; font-size: 13px;">&#8226;</button>
+                                    <button type="button" onclick="insertListPrefix('1. ')" title="Lista numerada" style="padding: 4px 10px; border: 1px solid #d1d5db; background: #f9fafb; border-radius: 4px; cursor: pointer; font-size: 13px;">1.</button>
+                                    <button type="button" onclick="insertLineBreak()" title="Linea separadora" style="padding: 4px 10px; border: 1px solid #d1d5db; background: #f9fafb; border-radius: 4px; cursor: pointer; font-size: 13px;">&#8213;</button>
+                                    <span style="border-left: 1px solid #d1d5db; margin: 0 2px;"></span>
+                                    <select id="lineStyleSize" style="padding: 3px 4px; border: 1px solid #d1d5db; background: #f9fafb; border-radius: 4px; font-size: 11px; width: 62px;" title="Tamaño de linea">
+                                        <option value="">px</option>
+                                        <option value="11">11px</option>
+                                        <option value="12">12px</option>
+                                        <option value="13">13px</option>
+                                        <option value="14">14px</option>
+                                        <option value="16">16px</option>
+                                        <option value="18">18px</option>
+                                        <option value="20">20px</option>
+                                        <option value="24">24px</option>
+                                    </select>
+                                    <input type="color" id="lineStyleColor" value="#333333" title="Color de linea" style="width: 28px; height: 26px; padding: 1px; border: 1px solid #d1d5db; border-radius: 4px; cursor: pointer;">
+                                    <button type="button" onclick="applyLineStyle()" title="Aplicar estilo a la linea actual" style="padding: 4px 8px; border: 1px solid #d1d5db; background: #e8f5e9; border-radius: 4px; cursor: pointer; font-size: 11px;">Aplicar</button>
+                                </div>
+                                <small style="color: #6c757d; display: block; margin-bottom: 4px;">B/I/U para inline. Selecciona px y/o color + "Aplicar" para estilar la linea actual: {s:12,c:#666}</small>
+                                <textarea id="emailContent" style="min-height: 300px;" placeholder="Escribe aquí el contenido de tu email...&#10;&#10;Ejemplo:&#10;Estimado/a {{signer_name}}, le hacemos llegar la documentación:&#10;&#10;{{filename}}&#10;&#10;Para firmar, haga clic en: {{sign_button}}&#10;&#10;{{email_body}}"></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Variables Disponibles (Haz clic para insertar)</label>
+                                <div class="variables-inline" id="variablesInline"></div>
+                                <button class="btn-manage-vars" onclick="openVariableModal()">
+                                    Gestionar Variables
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección: Footer del Email -->
+                <div class="collapsible-section" data-preview-tab="email">
+                    <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                        <h2>Footer del Email</h2>
+                        <span class="collapsible-icon">&#9660;</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <div class="collapsible-inner">
+                            <div class="info-box" style="margin-bottom: 12px;">
+                                Pie de pagina del email.
+                            </div>
+
+                            <div class="form-group">
+                                <label>Activar Footer</label>
+                                <select id="footerEnabled">
+                                    <option value="no">No</option>
+                                    <option value="yes">Si</option>
+                                </select>
+                            </div>
+
+                            <div id="footerOptions" style="display:none;">
+                                <div class="form-group">
+                                    <label>Ancho del Footer</label>
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <input type="range" id="footerWidth" min="10" max="100" step="5" value="100" style="flex: 1;">
+                                        <span id="footerWidthValue" style="font-size: 13px; min-width: 40px; font-weight: 600;">100%</span>
+                                    </div>
+                                    <small style="color: #6c757d;">Se centra automaticamente.</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Imagen del Footer</label>
+                                    <input type="url" id="footerImageUrl" placeholder="https://ejemplo.com/logo-footer.png" style="margin-bottom: 6px;">
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                        <div>
+                                            <small style="color: #6c757d;">Ancho (px o %)</small>
+                                            <input type="text" id="footerImageWidth" value="150px" placeholder="150px o 50%">
+                                        </div>
+                                        <div>
+                                            <small style="color: #6c757d;">Alto (px, % o auto)</small>
+                                            <input type="text" id="footerImageHeight" value="auto" placeholder="auto, 50px">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Texto del Footer</label>
+                                    <div style="display: flex; gap: 4px; margin-bottom: 6px;">
+                                        <button type="button" onclick="wrapFooterSelection('**', '**')" title="Negrita" style="padding: 4px 10px; border: 1px solid #d1d5db; background: #f9fafb; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px;">B</button>
+                                        <button type="button" onclick="wrapFooterSelection('*', '*')" title="Cursiva" style="padding: 4px 10px; border: 1px solid #d1d5db; background: #f9fafb; border-radius: 4px; cursor: pointer; font-style: italic; font-size: 13px;">I</button>
+                                        <button type="button" onclick="wrapFooterSelection('__', '__')" title="Subrayado" style="padding: 4px 10px; border: 1px solid #d1d5db; background: #f9fafb; border-radius: 4px; cursor: pointer; text-decoration: underline; font-size: 13px;">U</button>
+                                    </div>
+                                    <textarea id="footerContent" style="min-height: 80px;" placeholder="Ej: Powered by REVEL | www.revel.com"></textarea>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Color de Fondo del Footer</label>
+                                    <div class="color-input">
+                                        <input type="color" id="footerBgColor" value="#3d3d3d">
+                                        <input type="text" class="color-value" id="footerBgColorValue" value="#3d3d3d">
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Color del Texto del Footer</label>
+                                    <div class="color-input">
+                                        <input type="color" id="footerTextColor" value="#ffffff">
+                                        <input type="text" class="color-value" id="footerTextColorValue" value="#ffffff">
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Formato del Texto del Footer</label>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+                                        <div>
+                                            <small style="color: #6c757d;">Tamaño (px)</small>
+                                            <input type="number" id="footerFontSize" value="12" min="8" max="24" style="width: 100%;">
+                                        </div>
+                                        <div>
+                                            <small style="color: #6c757d;">Interlineado (px)</small>
+                                            <input type="number" id="footerLineHeight" value="18" min="10" max="40" style="width: 100%;">
+                                        </div>
+                                        <div>
+                                            <small style="color: #6c757d;">Alineacion</small>
+                                            <select id="footerTextAlign" style="width: 100%;">
+                                                <option value="center">Centro</option>
+                                                <option value="left">Izquierda</option>
+                                                <option value="right">Derecha</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Bordes del Footer</label>
+                                    <div style="margin-bottom: 8px;">
+                                        <div class="color-input" style="margin-bottom: 6px;">
+                                            <input type="color" id="footerBorderColor" value="#cccccc">
+                                            <input type="text" class="color-value" id="footerBorderColorValue" value="#cccccc">
+                                        </div>
+                                        <small style="color: #6c757d;">Color del borde</small>
+                                    </div>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px;">
+                                        <div>
+                                            <small style="color: #6c757d;">Arriba (px)</small>
+                                            <input type="number" id="footerBorderTop" value="0" min="0" max="10" style="width: 100%;">
+                                        </div>
+                                        <div>
+                                            <small style="color: #6c757d;">Derecha (px)</small>
+                                            <input type="number" id="footerBorderRight" value="0" min="0" max="10" style="width: 100%;">
+                                        </div>
+                                        <div>
+                                            <small style="color: #6c757d;">Abajo (px)</small>
+                                            <input type="number" id="footerBorderBottom" value="0" min="0" max="10" style="width: 100%;">
+                                        </div>
+                                        <div>
+                                            <small style="color: #6c757d;">Izquierda (px)</small>
+                                            <input type="number" id="footerBorderLeft" value="0" min="0" max="10" style="width: 100%;">
+                                        </div>
+                                    </div>
+                                    <small style="color: #6c757d; display: block; margin-top: 4px;">0 = sin borde.</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Padding del Footer</label>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px;">
+                                        <div>
+                                            <small style="color: #6c757d;">Arriba</small>
+                                            <input type="number" id="footerPaddingTop" value="15" min="0" max="60" style="width: 100%;">
+                                        </div>
+                                        <div>
+                                            <small style="color: #6c757d;">Derecha</small>
+                                            <input type="number" id="footerPaddingRight" value="25" min="0" max="60" style="width: 100%;">
+                                        </div>
+                                        <div>
+                                            <small style="color: #6c757d;">Abajo</small>
+                                            <input type="number" id="footerPaddingBottom" value="15" min="0" max="60" style="width: 100%;">
+                                        </div>
+                                        <div>
+                                            <small style="color: #6c757d;">Izquierda</small>
+                                            <input type="number" id="footerPaddingLeft" value="25" min="0" max="60" style="width: 100%;">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Redes Sociales (iconos en footer)</label>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                        <div>
+                                            <small style="color: #6c757d;">LinkedIn URL</small>
+                                            <input type="url" id="footerLinkedin" placeholder="https://linkedin.com/company/...">
+                                        </div>
+                                        <div>
+                                            <small style="color: #6c757d;">Twitter/X URL</small>
+                                            <input type="url" id="footerTwitter" placeholder="https://x.com/...">
+                                        </div>
+                                        <div>
+                                            <small style="color: #6c757d;">Instagram URL</small>
+                                            <input type="url" id="footerInstagram" placeholder="https://instagram.com/...">
+                                        </div>
+                                        <div>
+                                            <small style="color: #6c757d;">Facebook URL</small>
+                                            <input type="url" id="footerFacebook" placeholder="https://facebook.com/...">
+                                        </div>
+                                    </div>
+                                    <small style="color: #6c757d; display: block; margin-top: 4px;">Dejar vacio para no mostrar.</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección: Colores Generales (solo email) -->
+                <div class="collapsible-section" data-preview-tab="email">
+                    <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                        <h2>Colores Email</h2>
+                        <span class="collapsible-icon">&#9660;</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <div class="collapsible-inner">
+                            <div class="form-group">
+                                <label>Color de Fondo Principal</label>
+                                <div class="color-input">
+                                    <input type="color" id="bgColor" value="#ffffff">
+                                    <input type="text" class="color-value" id="bgColorValue" value="#ffffff">
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                                    <label style="margin: 0; font-size: 12px; min-width: 80px;">Opacidad:</label>
+                                    <input type="range" id="bgColorOpacity" min="0" max="1" step="0.01" value="1" style="flex: 1;">
+                                    <span id="bgColorOpacityValue" style="font-size: 12px; min-width: 35px;">100%</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Color del Contenedor</label>
+                                <div class="color-input">
+                                    <input type="color" id="containerColor" value="#ffffff">
+                                    <input type="text" class="color-value" id="containerColorValue" value="#ffffff">
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                                    <label style="margin: 0; font-size: 12px; min-width: 80px;">Opacidad:</label>
+                                    <input type="range" id="containerColorOpacity" min="0" max="1" step="0.01" value="1" style="flex: 1;">
+                                    <span id="containerColorOpacityValue" style="font-size: 12px; min-width: 35px;">100%</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Color del Borde del Contenedor</label>
+                                <div class="color-input">
+                                    <input type="color" id="borderColor" value="#cccccc">
+                                    <input type="text" class="color-value" id="borderColorValue" value="#cccccc">
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                                    <label style="margin: 0; font-size: 12px; min-width: 80px;">Opacidad:</label>
+                                    <input type="range" id="borderColorOpacity" min="0" max="1" step="0.01" value="1" style="flex: 1;">
+                                    <span id="borderColorOpacityValue" style="font-size: 12px; min-width: 35px;">100%</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Color del Texto</label>
+                                <div class="color-input">
+                                    <input type="color" id="textColor" value="#153643">
+                                    <input type="text" class="color-value" id="textColorValue" value="#153643">
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                                    <label style="margin: 0; font-size: 12px; min-width: 80px;">Opacidad:</label>
+                                    <input type="range" id="textColorOpacity" min="0" max="1" step="0.01" value="1" style="flex: 1;">
+                                    <span id="textColorOpacityValue" style="font-size: 12px; min-width: 35px;">100%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección: Estilo del Botón -->
+                <div class="collapsible-section" data-preview-tab="email">
+                    <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                        <h2>Estilo del Boton</h2>
+                        <span class="collapsible-icon">&#9660;</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <div class="collapsible-inner">
+                            <div class="form-group">
+                                <label>Leyenda del Boton (open_sign_button)</label>
+                                <input type="text" id="emailButtonText" value="" placeholder="Ej: Firmar Ahora, Sign Now, VER DOCUMENTO...">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Color de Fondo del Boton</label>
+                                <div class="color-input">
+                                    <input type="color" id="buttonColor" value="#070707">
+                                    <input type="text" class="color-value" id="buttonColorValue" value="#070707">
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                                    <label style="margin: 0; font-size: 12px; min-width: 80px;">Opacidad:</label>
+                                    <input type="range" id="buttonColorOpacity" min="0" max="1" step="0.01" value="1" style="flex: 1;">
+                                    <span id="buttonColorOpacityValue" style="font-size: 12px; min-width: 35px;">100%</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Color del Texto del Boton</label>
+                                <div class="color-input">
+                                    <input type="color" id="buttonTextColor" value="#ffffff">
+                                    <input type="text" class="color-value" id="buttonTextColorValue" value="#ffffff">
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                                    <label style="margin: 0; font-size: 12px; min-width: 80px;">Opacidad:</label>
+                                    <input type="range" id="buttonTextColorOpacity" min="0" max="1" step="0.01" value="1" style="flex: 1;">
+                                    <span id="buttonTextColorOpacityValue" style="font-size: 12px; min-width: 35px;">100%</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Color del Borde del Boton</label>
+                                <div class="color-input">
+                                    <input type="color" id="buttonBorderColor" value="#070707">
+                                    <input type="text" class="color-value" id="buttonBorderColorValue" value="#070707">
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                                    <label style="margin: 0; font-size: 12px; min-width: 80px;">Opacidad:</label>
+                                    <input type="range" id="buttonBorderColorOpacity" min="0" max="1" step="0.01" value="1" style="flex: 1;">
+                                    <span id="buttonBorderColorOpacityValue" style="font-size: 12px; min-width: 35px;">100%</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Grosor del Borde (px)</label>
+                                <input type="number" id="buttonBorderWidth" value="0" min="0" max="10">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Radio del Borde (px)</label>
+                                <input type="number" id="buttonBorderRadius" value="20" min="0" max="50">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Padding (Top, Right, Bottom, Left en px)</label>
+                                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
+                                    <input type="number" id="buttonPaddingTop" value="15" min="0" max="50" placeholder="Top">
+                                    <input type="number" id="buttonPaddingRight" value="15" min="0" max="50" placeholder="Right">
+                                    <input type="number" id="buttonPaddingBottom" value="15" min="0" max="50" placeholder="Bottom">
+                                    <input type="number" id="buttonPaddingLeft" value="15" min="0" max="50" placeholder="Left">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Margen vertical del Boton (px)</label>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                    <div>
+                                        <small style="color: #6c757d;">Arriba</small>
+                                        <input type="number" id="buttonMarginTop" value="10" min="0" max="50">
+                                    </div>
+                                    <div>
+                                        <small style="color: #6c757d;">Abajo</small>
+                                        <input type="number" id="buttonMarginBottom" value="10" min="0" max="50">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Alineacion del Boton</label>
+                                <select id="buttonAlign">
+                                    <option value="center">Centro</option>
+                                    <option value="left">Izquierda</option>
+                                    <option value="right">Derecha</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Ancho del Boton (px)</label>
+                                <input type="number" id="buttonWidth" value="200" min="100" max="400">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Formato del Texto del Boton</label>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+                                    <div>
+                                        <small style="color: #6c757d;">Tamaño (px)</small>
+                                        <input type="number" id="buttonFontSize" value="18" min="8" max="40" style="width: 100%;">
+                                    </div>
+                                    <div>
+                                        <small style="color: #6c757d;">Interlineado (px)</small>
+                                        <input type="number" id="buttonLineHeight" value="22" min="8" max="60" style="width: 100%;">
+                                    </div>
+                                    <div>
+                                        <small style="color: #6c757d;">Grosor de fuente</small>
+                                        <select id="buttonFontWeight" style="width: 100%;">
+                                            <option value="normal">Normal (400)</option>
+                                            <option value="500">Medium (500)</option>
+                                            <option value="600">Semi-Bold (600)</option>
+                                            <option value="bold">Bold (700)</option>
+                                            <option value="800">Extra-Bold (800)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Texto del Boton en 1 linea</label>
+                                <select id="buttonNoWrap">
+                                    <option value="yes">Si - Forzar 1 linea (nowrap)</option>
+                                    <option value="no">No - Permitir salto de linea</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Seccion: Optimizacion Mobile -->
+                <div class="collapsible-section" data-preview-tab="email">
+                    <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                        <h2>Optimizacion Mobile</h2>
+                        <span class="collapsible-icon">&#9660;</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <div class="collapsible-inner">
+
+                            <div class="form-group">
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="checkbox" id="mobileEnabled" checked style="width: auto; cursor: pointer;">
+                                    <span>Activar responsive mobile</span>
+                                </label>
+                            </div>
+
+                            <div id="mobileOptions">
+                                <div class="form-group">
+                                    <label>Ancho maximo del contenedor mobile (px)</label>
+                                    <input type="number" id="mobileMaxWidth" value="100" min="80" max="100">
+                                </div>
+
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label>Texto mobile (px)</label>
+                                        <input type="number" id="mobileFontSize" value="14" min="10" max="28">
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label>Interlineado mobile (px)</label>
+                                        <input type="number" id="mobileLineHeight" value="20" min="14" max="40">
+                                    </div>
+                                </div>
+
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label>Boton mobile (px)</label>
+                                        <input type="number" id="mobileButtonFontSize" value="16" min="10" max="28">
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label>Ancho boton mobile (%)</label>
+                                        <input type="number" id="mobileButtonWidth" value="100" min="50" max="100">
+                                    </div>
+                                </div>
+
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label>Padding lateral mobile (px)</label>
+                                        <input type="number" id="mobilePadding" value="10" min="0" max="30">
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label>Ancho logo mobile (px)</label>
+                                        <input type="number" id="mobileLogoWidth" value="120" min="60" max="300">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Seccion: Branding App Preview (solo app tab) -->
+                <div class="collapsible-section" data-preview-tab="app">
+                    <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                        <h2>Opciones de App (Vista de Firma)</h2>
+                        <span class="collapsible-icon">&#9660;</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <div class="collapsible-inner">
+                            <div class="form-group">
+                                <label>Subject Tag (subject_tag)</label>
+                                <input type="text" id="brandingSubjectTag" placeholder="Ej: MiEmpresa" value="">
+                                <small style="color: #6c757d;">Prefijo en el asunto de todos los emails.</small>
+                            </div>
+
+                            <div style="margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid #e5e7eb;">
+
+                                <div class="form-group">
+                                    <label>Color Header App (header_color)</label>
+                                    <div class="color-input">
+                                        <input type="color" id="brandingHeaderColor" value="#3d3d3d">
+                                        <input type="text" class="color-value" id="brandingHeaderColorValue" value="#3d3d3d">
+                                    </div>
+                                    <small style="color: #6c757d;">Header de la app</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Color Footer App (footer_color)</label>
+                                    <div class="color-input">
+                                        <input type="color" id="brandingFooterColor" value="#3d3d3d">
+                                        <input type="text" class="color-value" id="brandingFooterColorValue" value="#3d3d3d">
+                                    </div>
+                                    <small style="color: #6c757d;">Footer de la app</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Color Botones / Layout (layout_color)</label>
+                                    <div class="color-input">
+                                        <input type="color" id="brandingLayoutColor" value="#77d401">
+                                        <input type="text" class="color-value" id="brandingLayoutColorValue" value="#77d401">
+                                    </div>
+                                    <small style="color: #6c757d;">Botones app + email</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Color Texto App (text_color)</label>
+                                    <div class="color-input">
+                                        <input type="color" id="brandingTextColor" value="#333333">
+                                        <input type="text" class="color-value" id="brandingTextColorValue" value="#333333">
+                                    </div>
+                                    <small style="color: #6c757d;">Texto de la app</small>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="checkbox" id="brandingShowWelcome" checked style="width: auto; cursor: pointer;">
+                                    <span>Mostrar pantalla de bienvenida (show_welcome_page)</span>
+                                </label>
+                            </div>
+
+                            <div class="form-group">
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="checkbox" id="brandingShowCsv" checked style="width: auto; cursor: pointer;">
+                                    <span>Mostrar sello CSV en documento firmado (show_csv)</span>
+                                </label>
+                            </div>
+
+                            <div class="form-group">
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="checkbox" id="brandingShowBiometricHash" checked style="width: auto; cursor: pointer;">
+                                    <span>Mostrar Hash Biometrico (show_biometric_hash)</span>
+                                </label>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Color de firma (signature_color)</label>
+                                <select id="brandingSignatureColor" style="padding: 6px 10px;">
+                                    <option value="">Por defecto</option>
+                                    <option value="black">Negro</option>
+                                    <option value="blue">Azul</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Posicion del CSV (csv_position)</label>
+                                <select id="brandingCsvPosition" style="padding: 6px 10px;">
+                                    <option value="">Por defecto</option>
+                                    <option value="right">Derecha</option>
+                                    <option value="left">Izquierda</option>
+                                </select>
+                            </div>
+
+                            <div style="margin-top: 12px; padding-top: 10px; border-top: 1px solid #e5e7eb;">
+                                <div class="form-group">
+                                    <label>callback_url (referencia)</label>
+                                    <div style="display:flex;gap:6px;">
+                                        <input type="url" id="callbackUrlRef" placeholder="https://tuempresa.com/firma-completada" style="flex:1;">
+                                        <button type="button" onclick="copyCallbackSnippet()" style="white-space:nowrap;padding:5px 10px;background:#6c757d;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:11px;">Snippet</button>
+                                    </div>
+                                    <small style="color: #6c757d;">No se envia al branding. Solo referencia para tu integracion.</small>
+                                </div>
+
+                                <div id="callbackSnippetBox" style="display:none;margin-top:10px;background:#1e1e1e;border-radius:6px;padding:12px;position:relative;">
+                                    <pre style="margin:0;font-size:12px;color:#d4d4d4;overflow-x:auto;white-space:pre-wrap;"><code id="callbackSnippetCode"></code></pre>
+                                </div>
+
+                                <details style="margin-top: 12px;">
+                                    <summary style="cursor:pointer;font-size:13px;color:#0d6efd;font-weight:500;">Integracion con iframe (ocultar pantalla final)</summary>
+                                    <div style="margin-top:8px;padding:10px;background:#f0f4ff;border-radius:6px;font-size:13px;line-height:1.6;">
+                                        <p style="margin:0 0 8px 0;">Si usas Signaturit dentro de un <strong>iframe</strong>, podes ocultar la pantalla final de dos formas complementarias:</p>
+                                        <ol style="margin:0 0 8px 0;padding-left:20px;">
+                                            <li><strong>callback_url</strong>: Ponele una URL tuya (ej: una pagina en blanco o <code>about:blank</code>). Asi el iframe redirige a tu pagina en vez de mostrar la pantalla de Signaturit.</li>
+                                            <li><strong>postMessage events</strong>: Escucha los eventos que emite Signaturit desde el iframe para cerrar el modal al instante.</li>
+                                        </ol>
+                                        <div style="background:#1e1e1e;border-radius:6px;padding:10px;margin-top:8px;">
+                                            <pre style="margin:0;font-size:11px;color:#d4d4d4;overflow-x:auto;white-space:pre-wrap;"><code>// Escuchar eventos de Signaturit en el iframe
+window.addEventListener('message', function(event) {
+  // Verificar origen de Signaturit
+  if (event.origin.includes('signaturit.com')) {
+    var data = event.data;
+    if (typeof data === 'string') {
+      try { data = JSON.parse(data); } catch(e) {}
+    }
+    // Evento de firma completada
+    if (data.event === 'completed' || data.type === 'completed') {
+      // Cerrar el modal/iframe
+      document.getElementById('tuModalId').style.display = 'none';
+    }
+  }
+});</code></pre>
+                                        </div>
+                                        <p style="margin:8px 0 0 0;color:#6c757d;font-size:12px;">Tip: Combina ambos metodos. El callback_url evita que se muestre la pantalla final, y el postMessage te permite cerrar el modal desde tu aplicacion.</p>
+                                    </div>
+                                </details>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Seccion: Textos de la App (application_texts) -->
+                <div class="collapsible-section" data-preview-tab="app">
+                    <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                        <h2>Textos de Botones y Mensajes</h2>
+                        <span class="collapsible-icon">&#9660;</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <div class="collapsible-inner">
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;">
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label>Boton firmar (sign_button)</label>
+                                    <input type="text" id="brandingSignButton" placeholder='Ej: "FIRMAR", "Sign"...'>
+                                </div>
+
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label>Enviar (send_button)</label>
+                                    <input type="text" id="brandingSendButton" placeholder='Ej: "ENVIAR"'>
+                                </div>
+
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label>Email firma (open_sign_button)</label>
+                                    <input type="text" id="brandingOpenSignButton" placeholder='Ej: "VER DOCUMENTO"'>
+                                </div>
+
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label>Email cert. (open_email_button)</label>
+                                    <input type="text" id="brandingOpenEmailButton" placeholder='Ej: "VER EMAIL"'>
+                                </div>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 14px;">
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label>Multi-pagina (multi_page)</label>
+                                    <input type="text" id="brandingMultiPage" placeholder='Ej: "Desliza para ver mas"...'>
+                                </div>
+
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label>Foto (photo)</label>
+                                    <input type="text" id="brandingPhotoText" placeholder='Ej: "Adjunta foto"'>
+                                </div>
+
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label>Voz (voice)</label>
+                                    <input type="text" id="brandingVoiceText" placeholder='Ej: "Graba tu voz"'>
+                                </div>
+                            </div>
+
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label>Terminos y condiciones (terms_and_conditions) - Acepta HTML</label>
+                                <div style="display: flex; gap: 4px; margin-bottom: 6px;">
+                                    <button type="button" class="btn-format" onclick="insertHTMLTag('brandingTermsText', 'b')" title="Negrita" style="padding: 4px 10px; border: 1px solid #d1d5db; background: #f9fafb; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px;">B</button>
+                                    <button type="button" class="btn-format" onclick="insertHTMLTag('brandingTermsText', 'i')" title="Cursiva" style="padding: 4px 10px; border: 1px solid #d1d5db; background: #f9fafb; border-radius: 4px; cursor: pointer; font-style: italic; font-size: 13px;">I</button>
+                                    <button type="button" class="btn-format" onclick="insertHTMLTag('brandingTermsText', 'u')" title="Subrayado" style="padding: 4px 10px; border: 1px solid #d1d5db; background: #f9fafb; border-radius: 4px; cursor: pointer; text-decoration: underline; font-size: 13px;">U</button>
+                                    <button type="button" class="btn-format" onclick="insertHTMLLink('brandingTermsText')" title="Insertar link" style="padding: 4px 10px; border: 1px solid #d1d5db; background: #f9fafb; border-radius: 4px; cursor: pointer; font-size: 13px;">Link</button>
+                                    <button type="button" class="btn-format" onclick="insertHTMLTag('brandingTermsText', 'br', true)" title="Salto de linea" style="padding: 4px 10px; border: 1px solid #d1d5db; background: #f9fafb; border-radius: 4px; cursor: pointer; font-size: 13px;">BR</button>
+                                </div>
+                                <textarea id="brandingTermsText" rows="3" placeholder='Ej: Al firmar acepta los <b>terminos</b> de <a href="https://...">nuestro servicio</a>'></textarea>
+                                <div id="termsPreview" style="margin-top: 6px; padding: 8px 12px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 12px; color: #555; display: none;">
+                                    <small style="color: #999; display: block; margin-bottom: 4px;">Preview:</small>
+                                    <div id="termsPreviewContent"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pestaña: Cargar / Exportar -->
+                <div data-preview-tab="file">
+                    <div class="file-card">
+                        <h3>Desde Signaturit</h3>
+                        <p>Trae el template seleccionado tal como está guardado en este branding.</p>
+                        <button class="btn-api-action btn-api-load" onclick="loadTemplateFromAPI()">Cargar template guardado</button>
+                    </div>
+
+                    <div class="file-card">
+                        <h3>HTML del email</h3>
+                        <p>Trabaja con el HTML del template actual.</p>
+                        <div class="file-card-actions">
+                            <button class="btn-secondary" onclick="document.getElementById('importHTML').click()">Importar archivo .html</button>
+                            <button class="btn-secondary" onclick="openPasteHTMLModal()">Pegar HTML</button>
+                            <button class="btn-primary" onclick="downloadHTML()">Descargar .html</button>
+                        </div>
+                        <input type="file" id="importHTML" accept=".html,.htm" style="display:none;" onchange="importHTMLFile(event)">
+                        <label class="file-card-check">
+                            <input type="checkbox" id="minifyHTML" checked>
+                            <span>Minificar HTML al descargar</span>
+                        </label>
+                    </div>
+
+                    <div class="file-card">
+                        <h3>Branding completo (JSON)</h3>
+                        <p>Para pasar un branding de Sandbox a Producción.</p>
+                        <div class="file-card-actions">
+                            <button class="btn-secondary" onclick="exportBranding()">Exportar branding</button>
+                            <button class="btn-secondary" onclick="importBranding()">Importar branding</button>
+                        </div>
+                        <input type="file" id="importBrandingFile" accept=".json" style="display:none;" onchange="handleImportBranding(event)">
+                    </div>
+
+                    <div class="file-card file-card-danger">
+                        <h3>Empezar de cero</h3>
+                        <p>Vuelve todos los campos del editor a los valores por defecto.</p>
+                        <button class="btn-secondary" onclick="resetToDefault()">Resetear editor</button>
+                    </div>
+                </div>
+
+                <div class="editor-savebar">
+                    <div class="savebar-info">
+                        <span class="savebar-label" id="savebarLabel">Template</span>
+                        <span class="savebar-value" id="savebarValue">sign_request</span>
+                    </div>
+                    <button class="btn-savebar" onclick="saveTemplateToAPI()">Guardar en Signaturit</button>
+                </div>
+            </div>
+
+            <!-- ── Preview ── -->
+            <div class="preview-section">
+                <div class="preview-toolbar">
+                    <div class="preview-tabs">
+                        <button class="preview-tab active" id="tabEmailPreview" onclick="switchPreviewTab('email')">Email Preview</button>
+                        <button class="preview-tab" id="tabBrandingPreview" onclick="switchPreviewTab('branding')">App Branding Preview</button>
+                    </div>
+                    <div class="preview-toolbar-actions">
+                        <button class="toolbar-btn" id="btnMobilePreview" onclick="toggleMobilePreview()" title="Vista mobile 375px">Mobile</button>
+                        <button class="toolbar-btn" onclick="refreshCurrentPreview()">Refrescar</button>
+                        <button class="toolbar-btn toolbar-btn-primary" onclick="copyToClipboard()">Copiar HTML</button>
+                    </div>
+                </div>
+
+                <div class="preview" id="previewContainer">
+                    <div class="preview-frame" id="previewFrame"></div>
+                </div>
+                <div class="preview" id="brandingPreviewContainer" style="display: none;">
+                    <div class="preview-frame branding-preview-frame" id="brandingPreviewFrame"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <!-- Modal de Variables -->
+    <div class="modal" id="variableModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Gestionar Variables</h2>
+                <button class="close-modal" onclick="closeVariableModal()">&times;</button>
+            </div>
+
+            <div class="variable-hint">
+                <strong>Tip:</strong> Haz clic en una variable para insertarla. Pasa el mouse sobre cada una para ver su descripcion.
+            </div>
+
+            <div class="variables-grid" id="variablesGrid"></div>
+
+            <div class="add-variable-form">
+                <input type="text" id="newVariableName" placeholder="nombre_variable" onkeypress="handleVariableKeyPress(event)">
+                <button class="btn-small btn-add" onclick="addVariableFromModal()">Agregar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Pegar HTML -->
+    <div class="modal" id="pasteHTMLModal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2>Pegar HTML</h2>
+                <button class="close-modal" onclick="closePasteHTMLModal()">&times;</button>
+            </div>
+
+            <div class="variable-hint">
+                <strong>Pega aqui cualquier HTML de email</strong>
+                <br><br>
+                <strong>Acepta:</strong> Cualquier formato de HTML de email, con o sin estructura especifica
+                <br>
+                <strong>No pegues:</strong> El codigo del generador mismo
+            </div>
+
+            <div style="margin: 20px 0;">
+                <textarea id="pasteHTMLTextarea" placeholder="Pega aqui tu codigo HTML..." style="width: 100%; min-height: 400px; font-family: 'Courier New', monospace; font-size: 13px; padding: 15px; border: 2px solid #e9ecef; border-radius: 8px;"></textarea>
+            </div>
+
+            <div style="text-align: right; margin-top: 15px;">
+                <button class="btn-secondary" onclick="closePasteHTMLModal()" style="margin-right: 10px;">Cancelar</button>
+                <button class="btn-primary" onclick="loadPastedHTML()">Cargar HTML</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Confirmar Push a API -->
+    <div class="modal" id="confirmPushModal">
+        <div class="modal-content" style="max-width: 480px;">
+            <div class="modal-header">
+                <h2>Confirmar envio a API</h2>
+                <button class="close-modal" onclick="closeConfirmPushModal()">&times;</button>
+            </div>
+
+            <div class="confirm-push-details" id="confirmPushDetails"></div>
+
+            <div class="confirm-push-buttons">
+                <button class="btn-secondary" onclick="closeConfirmPushModal()">Cancelar</button>
+                <button class="btn-confirm-push" id="btnConfirmPush" onclick="executeConfirmedPush()">Confirmar y Enviar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js?v=51"></script>
+</body>
+</html>
