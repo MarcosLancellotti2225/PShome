@@ -5,7 +5,7 @@ import './TopBar.css';
 export default function TopBar() {
   const { pathname } = useLocation();
   const toolId = pathname.startsWith('/tools/') ? pathname.split('/')[2] : null;
-  const title = toolId ? findTool(toolId)?.name ?? 'Professional Services' : 'Inicio';
+  const title = toolId ? findTool(toolId)?.name ?? 'SE Tools' : 'Inicio';
 
   return (
     <header className="topbar">

@@ -15,7 +15,7 @@ export default function Sidebar({ collapsed, onToggle }) {
         {!collapsed && (
           <div className="sidebar-brand">
             <span className="sidebar-brand-name">Namirial</span>
-            <span className="sidebar-brand-sub">Professional Services</span>
+            <span className="sidebar-brand-sub">SE Tools</span>
           </div>
         )}
       </div>

@@ -1,6 +1,6 @@
-# PS Tools · Namirial Professional Services
+# SE Tools · Namirial
 
-Una sola app con todas las herramientas del equipo de Professional Services. Sin iframes: cada herramienta es una pantalla de la app y se descarga recién cuando la abrís.
+Una sola app con todas las herramientas del equipo. Sin iframes: cada herramienta es una pantalla de la app y se descarga recién cuando la abrís.
 
 ## Estructura
 

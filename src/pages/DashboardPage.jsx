@@ -16,7 +16,7 @@ export default function DashboardPage() {
   return (
     <div className="home-page">
       <section className="home-hero">
-        <h2>PS Tools</h2>
+        <h2>SE Tools</h2>
         <p>Todas las herramientas del equipo en un solo lugar. Buscá por lo que necesitás hacer o entrá por sección.</p>
         <label className="home-search">
           <Search size={18} aria-hidden="true" />
