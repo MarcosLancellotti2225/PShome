@@ -1,38 +1,35 @@
 # PS Tools · Namirial Professional Services
 
-Hub único con todas las herramientas del equipo de Professional Services.
-Todo el código vive en este repo: el hub (React + Vite) y cada herramienta en su propia carpeta.
+Una sola app con todas las herramientas del equipo de Professional Services. Sin iframes: cada herramienta es una pantalla de la app y se descarga recién cuando la abrís.
 
 ## Estructura
 
 ```
 src/config/tools.js      ← secciones y herramientas (único lugar a editar para el menú y el inicio)
-src/pages/               ← Inicio (lanzador) y página genérica de herramienta
-src/components/          ← layout (menú, barra superior) y embed
+src/tools/<id>/          ← la pantalla de cada herramienta integrada
+src/lib/                 ← lógica compartida, sin interfaz (archivos, json-mapper, quoter, pdf-detect)
+src/components/ui/       ← componentes comunes con la marca (botones, carga de archivos, tablas…)
+src/components/layout/   ← menú lateral y barra superior
 src/styles/variables.css ← tokens de marca Namirial (Open Sans, paleta teal)
-
-apps/<id>/               ← herramientas que se construyen con Vite (index.html + main.js)
-apps/_lib/               ← lógica y estilos compartidos por esas herramientas
-public/apps/<id>/        ← herramientas estáticas que se publican tal cual (HTML sin build)
+public/apps/             ← herramientas viejas que todavía no están integradas (se abren en pestaña nueva)
 ```
 
-Las dos carpetas de herramientas terminan publicadas en la misma URL: `/PShome/apps/<id>/`.
+## Estado de las herramientas
 
-## Herramientas
-
-| Herramienta | Sección | Dónde está el código |
+| Herramienta | Sección | Estado |
 |---|---|---|
-| Ficha de formulario · Matriz interna | Signaframe | `public/apps/ficha-formulario/` (ex SingaframeFormBuilder) |
-| Comparador JSON | Signaframe | `apps/comparador-json/` + `apps/_lib/json-mapper/` (ex FormConverterExcel, «Mapa JSON») |
-| Cotizador | Planificación y seguimiento | `apps/cotizador/` + `apps/_lib/quoter/` (ex FormConverterExcel) |
-| Multi Send, Generador CSV, Email Templates, Gantt | varias | pendientes de migrar: hoy cargan desde su repo anterior |
+| Gantt Generator | Planificación y seguimiento | ✅ integrada (`src/tools/gantt`) |
+| Cotizador | Planificación y seguimiento | ✅ integrada (`src/tools/cotizador`) |
+| Comparador JSON | Signaframe | ✅ integrada (`src/tools/comparador-json`) |
+| Ficha de formulario · Matriz interna | Signaframe | ⏳ versión anterior (`public/apps/ficha-formulario`) |
+| Multi Send | Firma y envíos | ⏳ versión anterior (repo `bulksend`) |
+| Generador CSV | Alta de clientes | ⏳ versión anterior (repo `toolsImport`) |
+| Email Templates | Comunicación | ⏳ versión anterior (repo `HTMLgenerator`) |
 
 ## Sumar o reordenar una herramienta
 
-1. Poné el código en una de las dos carpetas:
-   - **Estática** (HTML/JS sin build): `public/apps/<id>/index.html`.
-   - **Con build** (usa paquetes de npm o módulos de `apps/_lib`): `apps/<id>/index.html` + `apps/<id>/main.js`. Vite la detecta sola.
-2. Agregá una entrada en `TOOLS` dentro de `src/config/tools.js`:
+1. Creá la pantalla en `src/tools/<id>/index.jsx` (export default) usando los componentes de `src/components/ui`.
+2. Agregá la entrada en `TOOLS` dentro de `src/config/tools.js`:
 
 ```js
 {
@@ -41,7 +38,7 @@ Las dos carpetas de herramientas terminan publicadas en la misma URL: `/PShome/a
   name: 'Mi herramienta',
   description: 'Qué hace, en una línea.',
   icon: 'FileJson',                 // ver lista en src/components/common/ToolIcon.jsx
-  src: local('mi-herramienta'),     // → /PShome/apps/mi-herramienta/
+  load: () => import('../tools/mi-herramienta/index.jsx'),
 },
 ```
 
@@ -52,7 +49,7 @@ Para reordenar, mové la entrada dentro del array. Para cambiar el orden de las 
 
 ```bash
 npm ci
-npm run dev      # http://localhost:5173/PShome/  (las apps: /PShome/apps/<id>/)
+npm run dev      # http://localhost:5173/PShome/
 npm run lint
 npm run build    # genera dist/
 ```
@@ -61,5 +58,4 @@ El deploy a GitHub Pages corre solo con cada push a `main` (`.github/workflows/d
 
 ## Datos de clientes
 
-No se commitean PDFs, Excel ni JSON de clientes: el `.gitignore` los bloquea. Las únicas excepciones son
-los archivos de referencia sin datos reales (`public/apps/*/docs/plantilla_referencia_*`, `diccionario_*`, `catalogo_*`).
+No se commitean PDFs, Excel ni JSON de clientes: el `.gitignore` los bloquea. Todo se procesa en el navegador.

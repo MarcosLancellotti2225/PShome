@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, ArrowRight } from 'lucide-react';
-import { SECTIONS, TOOLS, toolsInSection } from '../config/tools';
+import { SECTIONS, TOOLS, toolsInSection, isIntegrated } from '../config/tools';
 import ToolIcon from '../components/common/ToolIcon';
 import './DashboardPage.css';
 
@@ -70,6 +70,7 @@ export default function DashboardPage() {
                   <div className="home-card-desc">{tool.description}</div>
                   <div className="home-card-open">
                     Abrir <ArrowRight size={14} />
+                    {!isIntegrated(tool) && <span className="home-card-legacy">versión anterior</span>}
                   </div>
                 </Link>
               ))}
@@ -81,7 +82,7 @@ export default function DashboardPage() {
       ))}
 
       <p className="home-footnote">
-        {TOOLS.length} herramientas · Para sumar o reordenar, editá <code>src/config/tools.js</code>.
+        {TOOLS.filter(isIntegrated).length} de {TOOLS.length} herramientas integradas a la app. Para sumar o reordenar, editá <code>src/config/tools.js</code>.
       </p>
     </div>
   );

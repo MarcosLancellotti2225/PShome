@@ -206,7 +206,7 @@
 }
 
 .home-card-open {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 4px;
   margin-top: 8px;
@@ -247,4 +247,14 @@
   .home-section {
     padding: var(--spacing-md);
   }
+}
+
+.home-card-legacy {
+  margin-left: auto;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  background: var(--color-band);
+  padding: 1px 8px;
+  border-radius: 999px;
 }
