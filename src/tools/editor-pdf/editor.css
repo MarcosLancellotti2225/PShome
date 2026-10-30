@@ -1,0 +1,96 @@
+/* Editor PDF — prefijo ep- */
+.ep { display: flex; flex-direction: column; gap: var(--spacing-md); min-width: 0; }
+.ep-mono { font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace; font-size: 0.82rem; }
+.ep-inline-actions { display: inline-flex; gap: 6px; margin-left: 6px; vertical-align: middle; }
+
+/* Barra */
+.ep-toolbar { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 10px 14px; display: flex; flex-direction: column; gap: 10px; position: sticky; top: 64px; z-index: 20; }
+.ep-file { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; color: var(--color-text-secondary); }
+.ep-file-name { font-weight: 700; color: var(--color-text); max-width: 360px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ep-tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.ep-group { display: flex; gap: 4px; align-items: center; padding-right: 8px; border-right: 1px solid var(--color-border); }
+.ep-group:last-child, .ep-group-end { border-right: 0; }
+.ep-group-end { margin-left: auto; }
+.ep-zoom { font-size: 0.8rem; font-weight: 600; min-width: 48px; padding: 6px 4px; border-radius: var(--radius-sm); color: var(--color-text-secondary); }
+.ep-zoom:hover { background: var(--color-band); }
+.ep-badge-btn { padding: 0; }
+
+/* Paneles */
+.ep-bulk { width: 100%; min-height: 220px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.8rem; padding: 10px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg); color: var(--color-text); resize: vertical; }
+.ep-export { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.ep-export-item { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.ep-check { display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--color-text-secondary); cursor: pointer; }
+.ep-num { width: 56px; font: inherit; font-size: 0.82rem; padding: 3px 6px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); }
+.ep-status-list { margin-top: 6px; padding-left: 18px; list-style: disc; font-size: 0.8rem; max-height: 180px; overflow: auto; }
+
+/* Área de trabajo: lista · PDF · propiedades */
+.ep-workspace { display: grid; grid-template-columns: 280px minmax(0, 1fr) 290px; gap: var(--spacing-md); height: calc(100vh - 230px); min-height: 520px; }
+@media (max-width: 1200px) { .ep-workspace { grid-template-columns: 240px minmax(0, 1fr) 260px; } }
+
+.ep-list, .ep-inspector, .ep-viewer { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); min-height: 0; }
+.ep-list { display: flex; flex-direction: column; overflow: hidden; }
+.ep-list-filters { padding: 10px; display: flex; flex-direction: column; gap: 6px; border-bottom: 1px solid var(--color-border); }
+.ep-list-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.ep-list-row .ui-input { min-width: 0; font-size: 0.8rem; padding: 5px 6px; }
+.ep-list-count { font-size: 0.75rem; color: var(--color-text-muted); }
+.ep-list-items { overflow: auto; flex: 1; }
+.ep-item { padding: 7px 10px; border-bottom: 1px solid var(--color-band); cursor: pointer; display: flex; flex-direction: column; gap: 2px; }
+.ep-item:hover { background: var(--color-bg); }
+.ep-item:focus-visible { outline: 2px solid var(--color-primary); outline-offset: -2px; }
+.ep-item.is-selected { background: var(--color-primary-light); box-shadow: inset 3px 0 0 var(--color-primary); }
+.ep-item.is-deleted .ep-item-name { text-decoration: line-through; color: var(--color-text-muted); }
+.ep-item-main { display: flex; align-items: center; gap: 6px; }
+.ep-item-name { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.8rem; font-weight: 600; overflow-wrap: anywhere; }
+.ep-item-warn { color: var(--color-accent); display: flex; }
+.ep-item-meta { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; font-size: 0.72rem; color: var(--color-text-muted); }
+.ep-item-old { font-family: ui-monospace, Menlo, Consolas, monospace; overflow-wrap: anywhere; }
+.ep-item-type { margin-left: auto; white-space: nowrap; }
+.ep-tag { padding: 0 6px; border-radius: 999px; font-weight: 600; }
+.ep-tag-new { background: #dfffe6; color: #006d36; }
+.ep-tag-del { background: #ffe8e7; color: #952f33; }
+.ep-tag-exacto, .ep-tag-normalizado { background: var(--color-primary-light); color: var(--color-primary-dark); }
+.ep-tag-parecido { background: #ffecce; color: #745102; }
+.ep-empty { padding: 20px; text-align: center; color: var(--color-text-muted); font-size: 0.85rem; }
+
+/* Visor */
+.ep-viewer { overflow: auto; background: var(--color-band); }
+.ep-pages { display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 20px; }
+.ep-pages.is-drawing .ep-page { cursor: crosshair; }
+.ep-page-wrap { display: flex; flex-direction: column; gap: 6px; }
+.ep-page-label { font-size: 0.75rem; font-weight: 600; color: var(--color-text-muted); }
+.ep-page { position: relative; background: #fff; box-shadow: var(--shadow-md); user-select: none; touch-action: none; }
+.ep-canvas { display: block; pointer-events: none; }
+.ep-box { position: absolute; border: 1.5px solid rgba(4, 124, 118, 0.75); background: rgba(4, 124, 118, 0.08); cursor: move; border-radius: 2px; }
+.ep-pages.is-drawing .ep-box { pointer-events: none; }
+.ep-box:hover { background: rgba(4, 124, 118, 0.18); }
+.ep-box.is-renamed { border-color: #00a69d; background: rgba(0, 166, 157, 0.12); }
+.ep-box.is-new { border-color: #198446; background: rgba(25, 132, 70, 0.12); }
+.ep-box.is-problem { border-color: #a1782c; background: rgba(161, 120, 44, 0.16); }
+.ep-box.is-deleted { border: 1.5px dashed #ad4546; background: rgba(173, 69, 70, 0.08); cursor: pointer; }
+.ep-box.is-selected { border-color: #012825; border-width: 2px; background: rgba(0, 166, 157, 0.22); z-index: 2; }
+.ep-box-name {
+  position: absolute; bottom: 100%; left: -1px; margin-bottom: 1px; max-width: 240px;
+  font: 600 10px/1.3 ui-monospace, Menlo, Consolas, monospace; color: #fff; background: rgba(4, 124, 118, 0.88);
+  padding: 0 4px; border-radius: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none;
+}
+.ep-box.is-selected .ep-box-name { background: #012825; max-width: none; z-index: 3; }
+.ep-box.is-deleted .ep-box-name { background: rgba(173, 69, 70, 0.85); text-decoration: line-through; }
+.ep-handle { position: absolute; right: -5px; bottom: -5px; width: 10px; height: 10px; background: #012825; border: 2px solid #fff; border-radius: 2px; cursor: nwse-resize; }
+.ep-ghost { position: absolute; border: 2px dashed #198446; background: rgba(25, 132, 70, 0.12); pointer-events: none; }
+
+/* Propiedades */
+.ep-inspector { padding: 14px; overflow: auto; display: flex; flex-direction: column; gap: 10px; }
+.ep-inspector input:not([type='checkbox']), .ep-inspector select { width: 100%; }
+.ep-inspector-empty { color: var(--color-text-secondary); font-size: 0.85rem; gap: 12px; }
+.ep-inspector-empty ul { display: flex; flex-direction: column; gap: 6px; font-size: 0.8rem; }
+.ep-insp-title { font-size: 1rem; font-weight: 700; }
+.ep-insp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.ep-insp-grid-4 { grid-template-columns: 1fr 1fr; }
+.ep-insp-static { font-size: 0.875rem; padding: 4px 0; }
+.ep-insp-old { font-size: 0.78rem; color: var(--color-text-secondary); overflow-wrap: anywhere; }
+.ep-insp-note { font-size: 0.78rem; color: var(--color-text-secondary); background: var(--color-bg); padding: 6px 8px; border-radius: var(--radius-sm); }
+.ep-insp-deleted { font-size: 0.8rem; color: #952f33; background: #ffe8e7; padding: 6px 8px; border-radius: var(--radius-sm); }
+.ep-insp-problems { font-size: 0.78rem; color: #745102; background: #ffecce; padding: 6px 8px 6px 22px; border-radius: var(--radius-sm); list-style: disc; }
+.ep-insp-block { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.ep-insp-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 100%; }
+.ep-link { color: var(--color-primary); font-size: 0.78rem; text-decoration: underline; }
