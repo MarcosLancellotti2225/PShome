@@ -1,5 +1,5 @@
 // Motor que reescribe el AcroForm: renombra, borra, mueve, cambia tipo y propiedades, y agrega campos.
-// Portado desde FormConverterExcel/src/pdf-converter/pdf-rewriter.js. Único cambio (marcado «PS Tools»):
+// Portado desde FormConverterExcel/src/pdf-converter/pdf-rewriter.js. Único cambio (marcado «SE Tools»):
 // mover y regenerar la apariencia también funciona cuando el recuadro es un único hijo del campo.
 
 import { PDFDocument, PDFName, PDFHexString, PDFString, PDFArray, PDFNumber, PDFBool } from 'pdf-lib';
@@ -290,7 +290,7 @@ async function rewritePdf(pdfBytes, renameMap, deleteNames, moveMap, typeChanges
             rect.push(PDFNumber.of(posEntry.y));
             rect.push(PDFNumber.of(posEntry.x + posEntry.width));
             rect.push(PDFNumber.of(posEntry.y + posEntry.height));
-            // PS Tools: si el recuadro es un único hijo (sin /Rect en el campo), se mueve el hijo.
+            // SE Tools: si el recuadro es un único hijo (sin /Rect en el campo), se mueve el hijo.
             const target = leaf.dict.get(PDFName.of('Rect')) ? leaf.dict : (singleWidgetKid(leaf.dict, context) || leaf.dict);
             target.set(PDFName.of('Rect'), rect);
             target.delete(PDFName.of('AP'));
@@ -306,7 +306,7 @@ async function rewritePdf(pdfBytes, renameMap, deleteNames, moveMap, typeChanges
             const r = applyFieldProps(leaf.dict, propEntry);
             if (r) {
                 needAppearances = true; if (r.combCleared) combCleared++;
-                // PS Tools: la apariencia vieja puede estar en el único hijo: se borra para que se regenere.
+                // SE Tools: la apariencia vieja puede estar en el único hijo: se borra para que se regenere.
                 const kid = singleWidgetKid(leaf.dict, context);
                 if (kid) kid.delete(PDFName.of('AP'));
             }

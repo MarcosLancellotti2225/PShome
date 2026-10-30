@@ -1,6 +1,6 @@
-# CLAUDE.md — PS Tools (app de Namirial Professional Services)
+# CLAUDE.md — SE Tools (app de herramientas de Namirial)
 
-Una sola app React con todas las herramientas del equipo de PS. Antes de tocar nada, leé `README.md`.
+Una sola app React con todas las herramientas del equipo. Antes se llamaba «PS Tools»: las claves internas de guardado (`pstools`) no cambian para no perder el trabajo guardado. Antes de tocar nada, leé `README.md`.
 
 ## Cómo se trabaja
 
@@ -48,7 +48,7 @@ Reglas:
 ## Editor PDF (`src/tools/editor-pdf`)
 
 Une el Detector de campos y Convertir PDF de `FormConverterExcel`.
-- Lógica en `src/lib/pdf-editor/`: `rewriter.js` es el motor de Convertir PDF portado (único cambio marcado «PS Tools»: mover/regenerar apariencia cuando el recuadro es un único hijo del campo); `pdf-tools.js` (fuentes, datos de prueba, etiquetas); `model.js` (claves de campo, validación, cambios → parámetros del motor, cruce con Excel); `excel.js` (importar/exportar «AcroForm Actual / Propuesto»).
+- Lógica en `src/lib/pdf-editor/`: `rewriter.js` es el motor de Convertir PDF portado (único cambio marcado «SE Tools»: mover/regenerar apariencia cuando el recuadro es un único hijo del campo); `pdf-tools.js` (fuentes, datos de prueba, etiquetas); `model.js` (claves de campo, validación, cambios → parámetros del motor, cruce con Excel); `excel.js` (importar/exportar «AcroForm Actual / Propuesto»).
 - La clave de cada campo es la misma que usa el motor: `nombre#widget` en grupos, `nombre#n` en repetidos, `nombre` en el resto.
 - `npm test` corre `test/pdf-editor.test.mjs`; con la ruta a FormConverterExcel como argumento compara contra el motor original.
 - Deshacer/rehacer en `state.js`; el trabajo se guarda en IndexedDB (`storage.js`) para retomarlo.

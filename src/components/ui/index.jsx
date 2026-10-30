@@ -1,4 +1,4 @@
-// Componentes comunes de PS Tools (marca Namirial). Usalos en todas las herramientas
+// Componentes comunes de SE Tools (marca Namirial). Usalos en todas las herramientas
 // en vez de armar botones, cargas de archivo o tablas a mano.
 import { useId, useRef, useState } from 'react';
 import { Upload, CheckCircle2, AlertTriangle, XCircle, Info } from 'lucide-react';
