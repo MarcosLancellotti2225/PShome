@@ -8,7 +8,7 @@ Una sola app React con todas las herramientas del equipo de PS. Antes de tocar n
 - Plan primero: proponer el plan y esperar confirmación antes de cambios grandes o que borren cosas.
 - Commits en formato `vX.Y.Z Descripción` (ej. `v2.1.0 Multi Send integrado`).
 - Trabajar en una branch y abrir PR a `main`. `main` publica a GitHub Pages solo.
-- Después de cada cambio: `npm run lint` y `npm run build` tienen que pasar.
+- Después de cada cambio: `npm run lint`, `npm test` y `npm run build` tienen que pasar.
 
 ## Arquitectura (no cambiar sin hablarlo)
 
@@ -45,7 +45,13 @@ Reglas:
 - Email Templates trae plantillas de email con sus propios colores: esos HTML no se recolorean (su config solo recolorea `styles.css`).
 - La Ficha abre el paso opcional «Matriz del INS» (`public/apps/ficha-formulario/mapear.html`) en un panel interno: es lo único que falta unificar.
 
-Más adelante: Editor PDF (unifica Detector de campos + Convertir PDF de `FormConverterExcel`).
+## Editor PDF (`src/tools/editor-pdf`)
+
+Une el Detector de campos y Convertir PDF de `FormConverterExcel`.
+- Lógica en `src/lib/pdf-editor/`: `rewriter.js` es el motor de Convertir PDF portado (único cambio marcado «PS Tools»: mover/regenerar apariencia cuando el recuadro es un único hijo del campo); `pdf-tools.js` (fuentes, datos de prueba, etiquetas); `model.js` (claves de campo, validación, cambios → parámetros del motor, cruce con Excel); `excel.js` (importar/exportar «AcroForm Actual / Propuesto»).
+- La clave de cada campo es la misma que usa el motor: `nombre#widget` en grupos, `nombre#n` en repetidos, `nombre` en el resto.
+- `npm test` corre `test/pdf-editor.test.mjs`; con la ruta a FormConverterExcel como argumento compara contra el motor original.
+- Deshacer/rehacer en `state.js`; el trabajo se guarda en IndexedDB (`storage.js`) para retomarlo.
 
 ## Marca
 
@@ -60,7 +66,8 @@ Más adelante: Editor PDF (unifica Detector de campos + Convertir PDF de `FormCo
 
 ## Origen del código
 
-- `src/lib/json-mapper`, `src/lib/quoter`, `src/lib/pdf-detect` ← `FormConverterExcel/src/` (CommonJS → ES modules, sin cambios de lógica).
+- `src/lib/json-mapper`, `src/lib/quoter`, `src/lib/pdf-detect` ← `FormConverterExcel/src/` (CommonJS → ES modules). `pdf-detect` lee también campos cuyo recuadro es un único hijo.
+- `src/lib/pdf-editor` ← `FormConverterExcel` (pdf-rewriter.js + funciones de fuente, datos de prueba y etiquetas de browser.js).
 - `src/tools/gantt` ← repo `GranttGenerator`.
 - `legacy-src/multi-send` ← `bulksend`, `legacy-src/csv-generator` ← `toolsImport`, `legacy-src/email-templates` ← `HTMLgenerator`, `legacy-src/ficha-formulario` + `public/apps/ficha-formulario` ← `SingaframeFormBuilder`.
 - El resto de `FormConverterExcel` **no** se migra salvo pedido explícito.

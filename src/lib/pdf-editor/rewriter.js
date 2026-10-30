@@ -1,0 +1,498 @@
+// Motor que reescribe el AcroForm: renombra, borra, mueve, cambia tipo y propiedades, y agrega campos.
+// Portado desde FormConverterExcel/src/pdf-converter/pdf-rewriter.js. Único cambio (marcado «PS Tools»):
+// mover y regenerar la apariencia también funciona cuando el recuadro es un único hijo del campo.
+
+import { PDFDocument, PDFName, PDFHexString, PDFString, PDFArray, PDFNumber, PDFBool } from 'pdf-lib';
+
+const FF_MULTILINE = 1 << 12; // bit 13 of the Tx field flags
+const FF_COMB = 1 << 23;      // bit 24: one glyph per cell, fixed by /MaxLen
+
+/**
+ * Apply per-field visual properties (font size + multiline) to a field/widget dict.
+ * - fontSize 0 means "auto-size" (the viewer shrinks/grows text to fit the box).
+ * - multiline toggles bit 13 of the Tx field flags so text wraps inside the box.
+ * Returns true if anything changed (so the caller can flag NeedAppearances).
+ *
+ * Setting a size also clears the Comb flag. A comb field spreads one glyph per
+ * cell and computes its own size from /MaxLen, ignoring whatever /DA says — so
+ * picking a size (or Auto) on a comb field looked like it did nothing at all.
+ * Every text field of the real INS forms ships with Comb on.
+ */
+function applyFieldProps(dict, prop) {
+    let touched = false;
+    let combCleared = false;
+
+    if (prop.fontSize !== undefined && prop.fontSize !== null && prop.fontSize !== '') {
+        const size = Number(prop.fontSize);
+        if (!isNaN(size)) {
+            let da = '';
+            const daVal = dict.get(PDFName.of('DA'));
+            if (daVal) da = readStringValue(daVal);
+            if (da && /\/\S+\s+[\d.]+\s+Tf/.test(da)) {
+                da = da.replace(/(\/\S+\s+)([\d.]+)(\s+Tf)/, '$1' + size + '$3');
+            } else {
+                da = '/Helv ' + size + ' Tf 0 g';
+            }
+            dict.set(PDFName.of('DA'), PDFString.of(da));
+            touched = true;
+
+            // Sin esto el tamaño recién puesto no se ve.
+            if (clearComb(dict)) combCleared = true;
+        }
+    }
+
+    if (prop.multiline !== undefined) {
+        let ff = 0;
+        const ffVal = dict.get(PDFName.of('Ff'));
+        if (ffVal && typeof ffVal.asNumber === 'function') ff = ffVal.asNumber();
+        else if (typeof ffVal === 'number') ff = ffVal;
+        if (prop.multiline) ff |= FF_MULTILINE;
+        else ff &= ~FF_MULTILINE;
+        dict.set(PDFName.of('Ff'), PDFNumber.of(ff));
+        touched = true;
+    }
+
+    if (touched) dict.delete(PDFName.of('AP'));
+    return touched ? { touched: true, combCleared } : false;
+}
+
+/** Baja el bit Comb si está puesto. Devuelve si hubo que tocarlo. */
+function clearComb(dict) {
+    const ffVal = dict.get(PDFName.of('Ff'));
+    let ff = 0;
+    if (ffVal && typeof ffVal.asNumber === 'function') ff = ffVal.asNumber();
+    else if (typeof ffVal === 'number') ff = ffVal;
+    if (!(ff & FF_COMB)) return false;
+    dict.set(PDFName.of('Ff'), PDFNumber.of(ff & ~FF_COMB));
+    return true;
+}
+
+const FIELD_TYPE_MAP = {
+    PDFTextField: 'Tx',
+    PDFCheckBox: 'Btn',
+    PDFRadioGroup: 'Btn',
+    PDFDropdown: 'Ch',
+    PDFOptionList: 'Ch',
+    PDFButton: 'Btn',
+    PDFSignature: 'Sig',
+};
+
+function readStringValue(val) {
+    if (!val) return '';
+    if (typeof val === 'string') return val;
+    if (typeof val.decodeText === 'function') return val.decodeText();
+    if (typeof val.asString === 'function') return val.asString();
+    if (val instanceof PDFHexString) return val.decodeText();
+    if (val instanceof PDFString) return val.decodeText();
+    return String(val);
+}
+
+function collectLeavesRaw(fieldsArray, context, parentName, result) {
+    if (!fieldsArray || typeof fieldsArray.size !== 'function') return;
+    for (let i = 0; i < fieldsArray.size(); i++) {
+        const ref = fieldsArray.get(i);
+        const dict = context.lookup(ref);
+        if (!dict || typeof dict.get !== 'function') continue;
+
+        const tVal = dict.get(PDFName.of('T'));
+        const partialName = tVal ? readStringValue(tVal) : '';
+        const fullName = parentName ? parentName + '.' + partialName : partialName;
+
+        const kidsRef = dict.get(PDFName.of('Kids'));
+        if (kidsRef) {
+            const kids = context.lookup(kidsRef);
+            if (kids && typeof kids.size === 'function' && kids.size() > 0) {
+                const firstKid = context.lookup(kids.get(0));
+                const firstKidHasT = firstKid && firstKid.get && firstKid.get(PDFName.of('T'));
+                if (firstKidHasT) {
+                    collectLeavesRaw(kids, context, fullName, result);
+                    continue;
+                }
+
+                if (kids.size() > 1) {
+                    result.push({ dict, fullName, ref, kids, widgetCount: kids.size() });
+                    continue;
+                }
+            }
+        }
+
+        result.push({ dict, fullName, ref });
+    }
+}
+
+async function rewritePdf(pdfBytes, renameMap, deleteNames, moveMap, typeChanges, propChanges) {
+    const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+    const context = pdfDoc.context;
+    const warnings = [];
+    let needAppearances = false;
+    // Cuántos campos perdieron el Comb al fijarles un tamaño de fuente: se
+    // reporta para que la UI lo diga, porque les cambia el aspecto.
+    let combCleared = 0;
+
+    const nameMap = new Map();
+    for (const { oldName, newName } of renameMap) {
+        nameMap.set(oldName, newName);
+    }
+
+    const posMap = new Map();
+    if (moveMap) {
+        for (const m of moveMap) {
+            posMap.set(m.fieldName, { x: m.x, y: m.y, width: m.width, height: m.height });
+        }
+    }
+
+    const typeMap = new Map();
+    if (typeChanges) {
+        for (const t of typeChanges) {
+            typeMap.set(t.fieldName, t.ftCode);
+        }
+    }
+
+    const propMap = new Map();
+    if (propChanges) {
+        for (const p of propChanges) {
+            propMap.set(p.fieldName, { fontSize: p.fontSize, multiline: p.multiline });
+        }
+    }
+
+    const deleteSet = new Set(deleteNames || []);
+
+    const acroFormRef = pdfDoc.catalog.get(PDFName.of('AcroForm'));
+    if (!acroFormRef) {
+        warnings.push({ type: 'no_acroform', reason: 'PDF has no AcroForm' });
+        return { pdfBytes: await pdfDoc.save(), warnings };
+    }
+
+    const acroForm = context.lookup(acroFormRef);
+    const fieldsRef = acroForm.get(PDFName.of('Fields'));
+    const fieldsArray = fieldsRef ? context.lookup(fieldsRef) : null;
+
+    if (!fieldsArray) {
+        warnings.push({ type: 'no_fields', reason: 'AcroForm has no Fields array' });
+        return { pdfBytes: await pdfDoc.save(), warnings };
+    }
+
+    const leaves = [];
+    collectLeavesRaw(fieldsArray, context, '', leaves);
+
+    // Mark duplicate names so each gets a unique key
+    const dupCounts = {};
+    for (const leaf of leaves) {
+        if (!leaf.widgetCount) dupCounts[leaf.fullName] = (dupCounts[leaf.fullName] || 0) + 1;
+    }
+    const dupSeen = {};
+    for (const leaf of leaves) {
+        if (!leaf.widgetCount && dupCounts[leaf.fullName] > 1) {
+            const idx = dupSeen[leaf.fullName] || 0;
+            leaf._dupIndex = idx;
+            leaf._dupCount = dupCounts[leaf.fullName];
+            dupSeen[leaf.fullName] = idx + 1;
+        }
+    }
+
+    let renamedCount = 0;
+    let deletedCount = 0;
+    const renamedFields = [];
+    const deletedFields = [];
+    const newRootFields = PDFArray.withContext(context);
+
+    for (const leaf of leaves) {
+        const fullName = leaf.fullName;
+        const uniqueKey = leaf._dupCount > 1 ? fullName + '#' + leaf._dupIndex : fullName;
+
+        if (leaf.widgetCount > 1 && leaf.kids) {
+            for (let wi = 0; wi < leaf.kids.size(); wi++) {
+                const widgetKey = fullName + '#' + wi;
+                const kidRef = leaf.kids.get(wi);
+                const kidDict = context.lookup(kidRef);
+                if (!kidDict || typeof kidDict.get !== 'function') continue;
+
+                if (deleteSet.has(widgetKey) || deleteSet.has(fullName)) {
+                    deletedCount++;
+                    deletedFields.push(widgetKey);
+                    removeWidgetFromPages(kidDict, context, pdfDoc);
+                    continue;
+                }
+
+                collectInherited(leaf.dict, context);
+                const INHERITABLE = ['FT', 'Ff', 'V', 'DV', 'DA', 'DR', 'Q'];
+                for (const key of INHERITABLE) {
+                    const pdfKey = PDFName.of(key);
+                    if (kidDict.get(pdfKey) === undefined) {
+                        const val = leaf.dict.get(pdfKey);
+                        if (val !== undefined) kidDict.set(pdfKey, val);
+                    }
+                }
+
+                const widgetNewName = nameMap.get(widgetKey) || nameMap.get(fullName);
+                const finalName = widgetNewName || fullName;
+                kidDict.set(PDFName.of('T'), PDFHexString.fromText(finalName));
+                if (widgetNewName) {
+                    renamedCount++;
+                    renamedFields.push({ oldName: widgetKey, newName: widgetNewName });
+                }
+
+                const posEntry = posMap.get(widgetKey) || posMap.get(finalName);
+                if (posEntry) {
+                    const rect = PDFArray.withContext(context);
+                    rect.push(PDFNumber.of(posEntry.x));
+                    rect.push(PDFNumber.of(posEntry.y));
+                    rect.push(PDFNumber.of(posEntry.x + posEntry.width));
+                    rect.push(PDFNumber.of(posEntry.y + posEntry.height));
+                    kidDict.set(PDFName.of('Rect'), rect);
+                    kidDict.delete(PDFName.of('AP'));
+                }
+
+                const typeEntry = typeMap.get(widgetKey) || typeMap.get(fullName);
+                if (typeEntry) {
+                    kidDict.set(PDFName.of('FT'), PDFName.of(typeEntry));
+                }
+
+                const propEntry = propMap.get(widgetKey) || propMap.get(fullName);
+                if (propEntry) {
+                    const r = applyFieldProps(kidDict, propEntry);
+                    if (r) { needAppearances = true; if (r.combCleared) combCleared++; }
+                }
+
+                kidDict.delete(PDFName.of('Parent'));
+                ensureFieldType(kidDict, context);
+
+                let kRef = context.getObjectRef(kidDict);
+                if (!kRef) kRef = context.register(kidDict);
+                newRootFields.push(kRef);
+            }
+            continue;
+        }
+
+        if (deleteSet.has(uniqueKey) || deleteSet.has(fullName)) {
+            deletedCount++;
+            deletedFields.push(uniqueKey);
+            removeWidgetFromPages(leaf.dict, context, pdfDoc);
+            continue;
+        }
+
+        const newName = nameMap.get(uniqueKey) || nameMap.get(fullName);
+
+        collectInherited(leaf.dict, context);
+
+        if (newName) {
+            leaf.dict.set(PDFName.of('T'), PDFHexString.fromText(newName));
+            renamedCount++;
+            renamedFields.push({ oldName: uniqueKey, newName });
+        } else {
+            leaf.dict.set(PDFName.of('T'), PDFHexString.fromText(fullName));
+        }
+
+        const posEntry = posMap.get(uniqueKey) || posMap.get(fullName);
+        if (posEntry) {
+            const rect = PDFArray.withContext(context);
+            rect.push(PDFNumber.of(posEntry.x));
+            rect.push(PDFNumber.of(posEntry.y));
+            rect.push(PDFNumber.of(posEntry.x + posEntry.width));
+            rect.push(PDFNumber.of(posEntry.y + posEntry.height));
+            // PS Tools: si el recuadro es un único hijo (sin /Rect en el campo), se mueve el hijo.
+            const target = leaf.dict.get(PDFName.of('Rect')) ? leaf.dict : (singleWidgetKid(leaf.dict, context) || leaf.dict);
+            target.set(PDFName.of('Rect'), rect);
+            target.delete(PDFName.of('AP'));
+        }
+
+        const typeEntry = typeMap.get(uniqueKey) || typeMap.get(fullName);
+        if (typeEntry) {
+            leaf.dict.set(PDFName.of('FT'), PDFName.of(typeEntry));
+        }
+
+        const propEntry = propMap.get(uniqueKey) || propMap.get(fullName);
+        if (propEntry) {
+            const r = applyFieldProps(leaf.dict, propEntry);
+            if (r) {
+                needAppearances = true; if (r.combCleared) combCleared++;
+                // PS Tools: la apariencia vieja puede estar en el único hijo: se borra para que se regenere.
+                const kid = singleWidgetKid(leaf.dict, context);
+                if (kid) kid.delete(PDFName.of('AP'));
+            }
+        }
+
+        leaf.dict.delete(PDFName.of('Parent'));
+        ensureFieldType(leaf.dict, context);
+
+        let ref = context.getObjectRef(leaf.dict);
+        if (!ref) ref = context.register(leaf.dict);
+        newRootFields.push(ref);
+    }
+
+    acroForm.set(PDFName.of('Fields'), newRootFields);
+
+    if (needAppearances) {
+        acroForm.set(PDFName.of('NeedAppearances'), PDFBool.True);
+    }
+
+    const newBytes = await pdfDoc.save({ updateFieldAppearances: false });
+    return { pdfBytes: newBytes, warnings, renamedCount, renamedFields, deletedCount, deletedFields, combCleared };
+}
+
+function singleWidgetKid(dict, context) {
+    const kidsRef = dict.get(PDFName.of('Kids'));
+    if (!kidsRef) return null;
+    const kids = context.lookup(kidsRef);
+    if (!kids || typeof kids.size !== 'function' || kids.size() !== 1) return null;
+    const kid = context.lookup(kids.get(0));
+    if (!kid || typeof kid.get !== 'function' || kid.get(PDFName.of('T'))) return null;
+    return kid;
+}
+function removeWidgetFromPages(fieldDict, context, pdfDoc) {
+    const fieldRef = context.getObjectRef(fieldDict);
+    if (!fieldRef) return;
+
+    const pages = pdfDoc.getPages();
+    for (const page of pages) {
+        const annotsRef = page.node.get(PDFName.of('Annots'));
+        if (!annotsRef) continue;
+        const annots = context.lookup(annotsRef);
+        if (!annots || typeof annots.size !== 'function') continue;
+
+        const newAnnots = PDFArray.withContext(context);
+        for (let i = 0; i < annots.size(); i++) {
+            const ref = annots.get(i);
+            if (ref !== fieldRef && String(ref) !== String(fieldRef)) {
+                newAnnots.push(ref);
+            }
+        }
+        page.node.set(PDFName.of('Annots'), newAnnots);
+    }
+
+    const kidsRef = fieldDict.get(PDFName.of('Kids'));
+    if (kidsRef) {
+        const kids = context.lookup(kidsRef);
+        if (kids && typeof kids.size === 'function') {
+            for (let i = 0; i < kids.size(); i++) {
+                const kidRef = kids.get(i);
+                for (const page of pages) {
+                    const annotsRef2 = page.node.get(PDFName.of('Annots'));
+                    if (!annotsRef2) continue;
+                    const annots2 = context.lookup(annotsRef2);
+                    if (!annots2 || typeof annots2.size !== 'function') continue;
+
+                    const newAnnots2 = PDFArray.withContext(context);
+                    for (let j = 0; j < annots2.size(); j++) {
+                        const ref = annots2.get(j);
+                        if (ref !== kidRef && String(ref) !== String(kidRef)) {
+                            newAnnots2.push(ref);
+                        }
+                    }
+                    page.node.set(PDFName.of('Annots'), newAnnots2);
+                }
+            }
+        }
+    }
+}
+
+function collectInherited(dict, context) {
+    const INHERITABLE = ['FT', 'Ff', 'V', 'DV', 'DA', 'DR', 'Q'];
+    let parentRef = dict.get(PDFName.of('Parent'));
+    while (parentRef) {
+        const parent = context.lookup(parentRef);
+        if (!parent || typeof parent.get !== 'function') break;
+
+        for (const key of INHERITABLE) {
+            const pdfKey = PDFName.of(key);
+            if (dict.get(pdfKey) === undefined) {
+                const val = parent.get(pdfKey);
+                if (val !== undefined) dict.set(pdfKey, val);
+            }
+        }
+
+        parentRef = parent.get(PDFName.of('Parent'));
+    }
+}
+
+function ensureFieldType(dict, context) {
+    if (dict.get(PDFName.of('FT'))) return;
+
+    const kidsRef = dict.get(PDFName.of('Kids'));
+    if (kidsRef) {
+        const kids = context.lookup(kidsRef);
+        if (kids && typeof kids.size === 'function') {
+            for (let i = 0; i < kids.size(); i++) {
+                const kid = context.lookup(kids.get(i));
+                if (kid && kid.get) {
+                    const asVal = kid.get(PDFName.of('AS'));
+                    if (asVal) {
+                        dict.set(PDFName.of('FT'), PDFName.of('Btn'));
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+    dict.set(PDFName.of('FT'), PDFName.of('Tx'));
+}
+
+async function addFieldToPdf(pdfBytes, newFields) {
+    const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+    const context = pdfDoc.context;
+    const pages = pdfDoc.getPages();
+
+    let acroFormRef = pdfDoc.catalog.get(PDFName.of('AcroForm'));
+    let acroForm;
+    if (acroFormRef) {
+        acroForm = context.lookup(acroFormRef);
+    } else {
+        acroForm = context.obj({});
+        pdfDoc.catalog.set(PDFName.of('AcroForm'), acroForm);
+    }
+
+    let fieldsRef = acroForm.get(PDFName.of('Fields'));
+    let fieldsArray = fieldsRef ? context.lookup(fieldsRef) : null;
+    if (!fieldsArray) {
+        fieldsArray = PDFArray.withContext(context);
+        acroForm.set(PDFName.of('Fields'), fieldsArray);
+    }
+
+    for (const f of newFields) {
+        const pageIdx = (f.page || 1) - 1;
+        if (pageIdx < 0 || pageIdx >= pages.length) continue;
+        const page = pages[pageIdx];
+        const pageRef = pdfDoc.getPage(pageIdx).ref;
+
+        const rect = PDFArray.withContext(context);
+        rect.push(PDFNumber.of(f.x));
+        rect.push(PDFNumber.of(f.y));
+        rect.push(PDFNumber.of(f.x + f.width));
+        rect.push(PDFNumber.of(f.y + f.height));
+
+        const fieldDict = context.obj({});
+        fieldDict.set(PDFName.of('Type'), PDFName.of('Annot'));
+        fieldDict.set(PDFName.of('Subtype'), PDFName.of('Widget'));
+        fieldDict.set(PDFName.of('FT'), PDFName.of('Tx'));
+        fieldDict.set(PDFName.of('T'), PDFHexString.fromText(f.name));
+        fieldDict.set(PDFName.of('Rect'), rect);
+        fieldDict.set(PDFName.of('P'), pageRef);
+        fieldDict.set(PDFName.of('F'), PDFNumber.of(4));
+
+        const da = '/Helv 10 Tf 0 g';
+        fieldDict.set(PDFName.of('DA'), PDFString.of(da));
+
+        const fieldRef = context.register(fieldDict);
+        fieldsArray.push(fieldRef);
+
+        let annotsRef = page.node.get(PDFName.of('Annots'));
+        let annots;
+        if (annotsRef) {
+            annots = context.lookup(annotsRef);
+            if (!annots || typeof annots.push !== 'function') {
+                annots = PDFArray.withContext(context);
+                page.node.set(PDFName.of('Annots'), annots);
+            }
+        } else {
+            annots = PDFArray.withContext(context);
+            page.node.set(PDFName.of('Annots'), annots);
+        }
+        annots.push(fieldRef);
+    }
+
+    const savedBytes = await pdfDoc.save({ updateFieldAppearances: false });
+    return { pdfBytes: savedBytes };
+}
+
+export { rewritePdf, addFieldToPdf };

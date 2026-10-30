@@ -66,6 +66,14 @@ export const TOOLS = [
     load: () => import('../tools/comparador-json/index.jsx'),
   },
   {
+    id: 'editor-pdf',
+    section: 'formularios',
+    name: 'Editor PDF',
+    description: 'Detecta los campos de un PDF y permite renombrarlos, moverlos, cambiarles fuente o tamaño, borrarlos o dibujar nuevos.',
+    icon: 'FilePen',
+    load: () => import('../tools/editor-pdf/index.jsx'),
+  },
+  {
     id: 'html-generator',
     section: 'comunicacion',
     name: 'Email Templates',

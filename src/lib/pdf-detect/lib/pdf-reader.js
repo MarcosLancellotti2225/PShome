@@ -107,6 +107,18 @@ function getWidgetPage(dict, context, pageRefs, annotsByPage) {
     return 1;
 }
 
+// Un campo con un único hijo sin nombre: el hijo es su recuadro (widget). Ahí están /Rect y /P.
+// (Así los arma pdf-lib y algunos editores; Acrobat suele fusionar campo y widget.)
+function singleWidgetOf(dict, context) {
+    const kidsRef = dict.get(PDFName.of('Kids'));
+    if (!kidsRef) return null;
+    const kids = context.lookup(kidsRef);
+    if (!kids || typeof kids.size !== 'function' || kids.size() !== 1) return null;
+    const kid = context.lookup(kids.get(0));
+    if (!kid || typeof kid.get !== 'function' || kid.get(PDFName.of('T'))) return null;
+    return kid;
+}
+
 function collectLeaves(fieldsArray, context, parentName, result, pageRefs, annotsByPage) {
     if (!fieldsArray || typeof fieldsArray.size !== 'function') return;
 
@@ -155,8 +167,9 @@ function collectLeaves(fieldsArray, context, parentName, result, pageRefs, annot
         }
 
         const type = getInheritedFieldType(dict, context);
-        const rect = getWidgetRect(dict, context);
-        const page = getWidgetPage(dict, context, pageRefs, annotsByPage);
+        const widget = dict.get(PDFName.of('Rect')) ? dict : (singleWidgetOf(dict, context) || dict);
+        const rect = getWidgetRect(widget, context);
+        const page = getWidgetPage(widget, context, pageRefs, annotsByPage);
 
         result.push({
             name: fullName,
