@@ -15,7 +15,7 @@ Una sola app React con todas las herramientas del equipo de PS. Antes de tocar n
 - **Una sola app, sin iframes.** Cada herramienta es una pantalla de React en `src/tools/<id>/index.jsx` (export default), que se descarga recién cuando se abre (`React.lazy`).
 - `src/config/tools.js` es el **único** lugar donde se declaran secciones y herramientas. Cada herramienta tiene `load: () => import('../tools/<id>/index.jsx')` (integrada) o `href` (todavía no integrada: se abre en pestaña nueva). Menú, inicio y rutas salen de ahí.
 - Tres capas:
-  - `src/lib/` — lógica pura, sin React ni DOM (lectura de archivos, json-mapper, quoter, pdf-detect). Se puede testear con Node.
+  - `src/lib/` — lógica pura, sin React ni DOM (lectura de archivos, json-mapper, quoter, pdf-detect, conexión Signaturit). Se puede testear con Node.
   - `src/components/ui/` — componentes comunes con la marca: `Button`, `Panel`, `FileDrop`, `Alert`, `Stats`, `Field`, `Tabs`, `Badge`, `DataTable`, `ConfirmButton`. Usalos siempre; no armes botones, cargas de archivo ni tablas a mano.
   - `src/tools/<id>/` — la pantalla de cada herramienta y su CSS propio (prefijo de clases corto y único, ej. `cz-` para el cotizador).
 - Librerías (xlsx, pdf-lib, jszip, html2canvas…) se instalan con npm y se importan; nunca desde un CDN. Las pesadas, con `import()` dinámico.
@@ -30,11 +30,22 @@ Una sola app React con todas las herramientas del equipo de PS. Antes de tocar n
 4. Comparar contra la versión vieja con los mismos archivos de entrada: los resultados tienen que ser idénticos.
 5. Recién entonces se puede archivar el repo viejo.
 
-Pendientes de integrar: Multi Send (`bulksend`), Generador CSV (`toolsImport`), Email Templates (`HTMLgenerator`), Ficha de formulario y Matriz interna (`public/apps/ficha-formulario`, ex `SingaframeFormBuilder`). Más adelante: Editor PDF (unifica Detector de campos + Convertir PDF de `FormConverterExcel`).
+## Herramientas clásicas (montadas con el adaptador)
 
-Notas para las que faltan:
-- Multi Send y Email Templates usan la API de Signaturit a través de un proxy (Edge Function). Tienen que compartir un mismo cliente en `src/lib/signaturit/` y la misma conexión (entorno + token) entre las dos. La palabra «Supabase» no puede aparecer en la interfaz. El token nunca se guarda en el repo.
-- Email Templates trae plantillas de email con sus propios colores: esos HTML no se recolorean con la marca.
+Multi Send, Generador CSV, Email Templates, Ficha de formulario y Matriz interna corren con su código original:
+- El original vive en `legacy-src/<id>/` (ver `legacy-src/README.md`).
+- `npm run legacy` lo convierte con `scripts/legacy/convert.mjs` en `src/tools/<id>/legacy/` (markup, CSS encapsulado bajo `.lg-<id>` con la paleta Namirial, y el JS dentro de `mount()`). **No edites `legacy/` a mano**: editá `legacy-src/` o la config `scripts/legacy/<id>.config.mjs` y regenerá.
+- `src/tools/_legacy/LegacyTool.jsx` la monta una vez por sesión y la mantiene viva al cambiar de pantalla.
+- Sus librerías (xlsx, papaparse, mammoth, pdf.js 3.11, pdf-lib, ExcelJS) salen de npm (`src/tools/_legacy/pdfLibs.js` y cada `index.jsx`).
+- Siguen usando `alert()`/`confirm()` propios: se reemplazan cuando cada una pase a React.
+- La meta es pasarlas de a una a React con `src/components/ui` (como Gantt, Comparador y Cotizador) y borrar su carpeta de `legacy-src/`.
+
+Reglas:
+- Multi Send y Email Templates comparten la conexión de Signaturit (entorno + token) con `src/lib/signaturit/session.js`, solo en memoria. El token nunca se guarda en el navegador ni en el repo. La palabra «Supabase» no puede aparecer en la interfaz. El proxy está en `supabase/functions/signaturit-proxy/`.
+- Email Templates trae plantillas de email con sus propios colores: esos HTML no se recolorean (su config solo recolorea `styles.css`).
+- La Ficha abre el paso opcional «Matriz del INS» (`public/apps/ficha-formulario/mapear.html`) en un panel interno: es lo único que falta unificar.
+
+Más adelante: Editor PDF (unifica Detector de campos + Convertir PDF de `FormConverterExcel`).
 
 ## Marca
 
@@ -51,5 +62,5 @@ Notas para las que faltan:
 
 - `src/lib/json-mapper`, `src/lib/quoter`, `src/lib/pdf-detect` ← `FormConverterExcel/src/` (CommonJS → ES modules, sin cambios de lógica).
 - `src/tools/gantt` ← repo `GranttGenerator`.
-- `public/apps/ficha-formulario/` ← repo `SingaframeFormBuilder` (copia tal cual, mientras no se integre).
+- `legacy-src/multi-send` ← `bulksend`, `legacy-src/csv-generator` ← `toolsImport`, `legacy-src/email-templates` ← `HTMLgenerator`, `legacy-src/ficha-formulario` + `public/apps/ficha-formulario` ← `SingaframeFormBuilder`.
 - El resto de `FormConverterExcel` **no** se migra salvo pedido explícito.

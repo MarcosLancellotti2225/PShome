@@ -15,8 +15,6 @@
  *   href        → URL de una herramienta que todavía no está integrada: se abre en pestaña nueva
  */
 
-const legacy = (path) => `${import.meta.env.BASE_URL}${path}`;
-
 export const SECTIONS = [
   { id: 'firma', name: 'Firma y envíos', description: 'Mandar a firmar, envíos masivos y créditos.' },
   { id: 'alta', name: 'Alta de clientes', description: 'Importaciones, usuarios y configuración inicial.' },
@@ -33,7 +31,7 @@ export const TOOLS = [
     name: 'Multi Send',
     description: 'Envío masivo de firmas electrónicas, emails y SMS certificados.',
     icon: 'Send',
-    href: 'https://marcoslancellotti2225.github.io/bulksend/', // pendiente de integrar
+    load: () => import('../tools/multi-send/index.jsx'),
   },
   {
     id: 'csv-generator',
@@ -41,7 +39,7 @@ export const TOOLS = [
     name: 'Generador CSV',
     description: 'Convierte Excel, CSV, JSON o XML al formato de la CLI de IvSign e IvNeos.',
     icon: 'FileSpreadsheet',
-    href: 'https://marcoslancellotti2225.github.io/toolsImport/', // pendiente de integrar
+    load: () => import('../tools/csv-generator/index.jsx'),
   },
   {
     id: 'ficha-formulario',
@@ -49,7 +47,7 @@ export const TOOLS = [
     name: 'Ficha de formulario',
     description: 'Arma el formulario desde el PDF y el JSON del cliente, cruza la matriz del INS y baja la ficha.',
     icon: 'FileCog',
-    href: legacy('apps/ficha-formulario/'), // pendiente de integrar (código en public/apps/ficha-formulario)
+    load: () => import('../tools/ficha-formulario/index.jsx'),
   },
   {
     id: 'matriz-interna',
@@ -57,7 +55,7 @@ export const TOOLS = [
     name: 'Matriz interna',
     description: 'Junta la ficha cerrada con los campos de Signaframe y baja la matriz para el form-def.',
     icon: 'Table2',
-    href: legacy('apps/ficha-formulario/interno.html'), // pendiente de integrar
+    load: () => import('../tools/matriz-interna/index.jsx'),
   },
   {
     id: 'comparador-json',
@@ -73,7 +71,7 @@ export const TOOLS = [
     name: 'Email Templates',
     description: 'Crea y gestiona templates de email para los brandings de Signaturit.',
     icon: 'Mail',
-    href: 'https://marcoslancellotti2225.github.io/HTMLgenerator/', // pendiente de integrar
+    load: () => import('../tools/email-templates/index.jsx'),
   },
   {
     id: 'gantt-generator',

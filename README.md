@@ -11,7 +11,10 @@ src/lib/                 ← lógica compartida, sin interfaz (archivos, json-ma
 src/components/ui/       ← componentes comunes con la marca (botones, carga de archivos, tablas…)
 src/components/layout/   ← menú lateral y barra superior
 src/styles/variables.css ← tokens de marca Namirial (Open Sans, paleta teal)
-public/apps/             ← herramientas viejas que todavía no están integradas (se abren en pestaña nueva)
+legacy-src/              ← código original de las herramientas clásicas (npm run legacy las convierte)
+scripts/legacy/          ← conversor y configuración de cada herramienta clásica
+public/apps/             ← archivos que se sirven tal cual (paso «Matriz del INS» y docs de la Ficha)
+supabase/functions/      ← proxy de la API de Signaturit (Edge Function)
 ```
 
 ## Estado de las herramientas
@@ -21,10 +24,12 @@ public/apps/             ← herramientas viejas que todavía no están integrad
 | Gantt Generator | Planificación y seguimiento | ✅ integrada (`src/tools/gantt`) |
 | Cotizador | Planificación y seguimiento | ✅ integrada (`src/tools/cotizador`) |
 | Comparador JSON | Signaframe | ✅ integrada (`src/tools/comparador-json`) |
-| Ficha de formulario · Matriz interna | Signaframe | ⏳ versión anterior (`public/apps/ficha-formulario`) |
-| Multi Send | Firma y envíos | ⏳ versión anterior (repo `bulksend`) |
-| Generador CSV | Alta de clientes | ⏳ versión anterior (repo `toolsImport`) |
-| Email Templates | Comunicación | ⏳ versión anterior (repo `HTMLgenerator`) |
+| Ficha de formulario · Matriz interna | Signaframe | ✅ integrada con su código original (`legacy-src/ficha-formulario`) |
+| Multi Send | Firma y envíos | ✅ integrada con su código original (`legacy-src/multi-send`) |
+| Generador CSV | Alta de clientes | ✅ integrada con su código original (`legacy-src/csv-generator`) |
+| Email Templates | Comunicación | ✅ integrada con su código original (`legacy-src/email-templates`) |
+
+Las que dicen «código original» corren tal cual eran, montadas como pantallas de la app (ver `legacy-src/README.md`). Se van pasando a React de a una.
 
 ## Sumar o reordenar una herramienta
 
@@ -52,6 +57,7 @@ npm ci
 npm run dev      # http://localhost:5173/PShome/
 npm run lint
 npm run build    # genera dist/
+npm run legacy   # regenera las herramientas clásicas desde legacy-src/
 ```
 
 El deploy a GitHub Pages corre solo con cada push a `main` (`.github/workflows/deploy.yml`).

@@ -1,0 +1,323 @@
+/* GENERADO por scripts/legacy/convert.mjs desde legacy-src/ficha-formulario (ex repo SingaframeFormBuilder) (index.html) (CSS). La lógica es la original. */
+.lg-ficha-formulario { font-family: var(--font-family); }
+
+/* Layout: una columna de lectura; el ejemplo en tres capas lado a lado (formulario · PDF · JSON), apiladas en móvil */
+.lg-ficha-formulario{
+  --bg:#f0f3f8; --paper:#ffffff; --ink:#0a1111; --muted:#4f5b5b; --line:#cddbdb; --soft:#e9ebf0;
+  --form:#047c76; --form-bg:#defffb; --pdf:#a16000; --pdf-bg:#ffe9c2; --json:#2b5cd1; --json-bg:#d5def6;
+  --warn:#ad4546; --warn-bg:#ffe8e7; --ok:#2b5cd1;
+  --sec0:#eef4fc; --sec1:#eef8f1; --sec2:#fef6ea; --sec3:#f5f0fc; --sec4:#fcf0f3; --sec5:#edf7f8; --sec6:#f8f5ec; --sec7:#f1f2f9; --sec-h:#f2f4f7;
+  --sans:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+.lg-ficha-formulario *{box-sizing:border-box}
+.lg-ficha-formulario{background:var(--bg);color:var(--ink);font:15px/1.6 var(--sans);padding-inline:16px;padding-block:28px 64px}
+.lg-ficha-formulario .wrap{max-width:1120px;margin:0 auto;display:grid;gap:56px}
+.lg-ficha-formulario h1{font-size:34px;line-height:1.15;margin:0 0 8px;font-weight:600;letter-spacing:-.01em;text-wrap:balance}
+.lg-ficha-formulario h2{font-size:22px;margin:0 0 6px;font-weight:600;text-wrap:balance}
+.lg-ficha-formulario h3{font-size:15px;margin:0 0 6px;font-weight:600}
+.lg-ficha-formulario p{margin:0}
+.lg-ficha-formulario .lead{color:var(--muted);max-width:68ch;font-size:16px}
+.lg-ficha-formulario .eyebrow{font:500 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.lg-ficha-formulario .mono{font-family:var(--mono)}
+.lg-ficha-formulario .layers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:20px}
+.lg-ficha-formulario .layer{border-radius:10px;padding:14px 16px;border:1px solid var(--line);background:var(--paper)}
+.lg-ficha-formulario .layer b{display:block;font-size:15px;margin-bottom:2px}
+.lg-ficha-formulario .layer small{color:var(--muted);font-size:13px;display:block}
+.lg-ficha-formulario .layer.f b{color:var(--form)} .lg-ficha-formulario .layer.p b{color:var(--pdf)} .lg-ficha-formulario .layer.j b{color:var(--json)}
+.lg-ficha-formulario .layer .who{font:500 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;margin-top:8px;color:var(--muted)}
+.lg-ficha-formulario .demo{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr) minmax(0,1fr);gap:14px;margin-top:18px;align-items:start}
+.lg-ficha-formulario .col{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px;min-width:0}
+.lg-ficha-formulario .colh{font:500 12px var(--mono);letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px;display:flex;justify-content:space-between}
+.lg-ficha-formulario .colh.f{color:var(--form)} .lg-ficha-formulario .colh.p{color:var(--pdf)} .lg-ficha-formulario .colh.j{color:var(--json)}
+.lg-ficha-formulario .step{font-size:12px;color:var(--muted);margin:12px 0 4px;font-weight:600}
+.lg-ficha-formulario .step:first-of-type{margin-top:0}
+.lg-ficha-formulario .q{display:flex;justify-content:space-between;gap:8px;align-items:center;width:100%;text-align:left;font:inherit;font-size:14px;color:var(--ink);background:none;border:1px solid transparent;border-radius:6px;padding:5px 8px;cursor:pointer}
+.lg-ficha-formulario .q:hover{background:var(--soft)}
+.lg-ficha-formulario .q:focus-visible{outline:2px solid var(--form);outline-offset:1px}
+.lg-ficha-formulario .q.on{background:var(--form-bg);border-color:var(--form)}
+.lg-ficha-formulario .chip{font:500 11px var(--mono);color:var(--muted);white-space:nowrap}
+.lg-ficha-formulario .q.hid{color:var(--muted);font-style:italic}
+.lg-ficha-formulario .page{background:#fffefb;color:#222;border:1px solid #cfcab8;border-radius:2px;padding:14px 14px 18px;font:11.5px/1.3 Georgia,"Times New Roman",serif;position:relative}
+.lg-ficha-formulario .page .hd{text-align:center;font-weight:bold;letter-spacing:.04em;border-bottom:1.5px solid #222;padding-bottom:6px;margin-bottom:8px;font-size:12px}
+.lg-ficha-formulario .page .sec{background:#e8e5da;font-weight:bold;padding:2px 5px;margin:9px 0 5px;font-size:10.5px;letter-spacing:.04em}
+.lg-ficha-formulario .pr{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;margin:4px 0}
+.lg-ficha-formulario .lb{white-space:nowrap}
+.lg-ficha-formulario .bx{display:inline-block;height:16px;min-width:40px;border:1px solid #777;background:#eef3ff;flex:1;transition:background .15s,outline-color .15s;outline:2px solid transparent}
+.lg-ficha-formulario .ck{display:inline-flex;align-items:center;gap:3px;white-space:nowrap}
+.lg-ficha-formulario .ck i{display:inline-block;width:11px;height:11px;border:1px solid #777;background:#eef3ff;outline:2px solid transparent}
+.lg-ficha-formulario .bx.w2{flex:0 0 26px;min-width:26px} .lg-ficha-formulario .bx.w4{flex:0 0 40px;min-width:40px}
+.lg-ficha-formulario .lit{outline-color:#e38b00!important;background:#ffe2ad!important}
+.lg-ficha-formulario .tbl{width:100%;border-collapse:collapse;font-size:10.5px}
+.lg-ficha-formulario .tbl td,.lg-ficha-formulario .tbl th{border:1px solid #888;height:16px;padding:0 3px;text-align:left}
+.lg-ficha-formulario .tbl td.lit{outline:none;background:#ffe2ad}
+.lg-ficha-formulario .sig{height:28px;border-bottom:1px solid #444;flex:1;min-width:90px;outline:2px solid transparent}
+.lg-ficha-formulario .json{font:12.5px/1.65 var(--mono);white-space:pre;overflow-x:auto}
+.lg-ficha-formulario .json span{display:block;border-radius:3px;padding:0 4px}
+.lg-ficha-formulario .json span.lit{background:var(--json-bg);outline:1px solid var(--json);outline-offset:-1px}
+.lg-ficha-formulario .why{margin-top:14px;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;font-size:14px}
+.lg-ficha-formulario .why .k{font:500 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px}
+.lg-ficha-formulario .why .k.f{color:var(--form)} .lg-ficha-formulario .why .k.p{color:var(--pdf)} .lg-ficha-formulario .why .k.j{color:var(--json)}
+.lg-ficha-formulario .cases{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-top:18px}
+.lg-ficha-formulario .case{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px;display:grid;gap:8px;align-content:start}
+.lg-ficha-formulario .case .n{font:500 12px var(--mono);color:var(--pdf)}
+.lg-ficha-formulario .case .sk{background:#fffefb;color:#222;border:1px solid #d8d3c2;border-radius:2px;padding:8px;font:11px Georgia,serif;display:grid;gap:5px;min-height:62px;align-content:center}
+.lg-ficha-formulario .case .sf{font-size:13px;color:var(--muted)}
+.lg-ficha-formulario .case .sf b{color:var(--ink);font-weight:500}
+.lg-ficha-formulario .builder{display:grid;gap:14px;margin-top:18px}
+.lg-ficha-formulario .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.lg-ficha-formulario button.btn{font:500 14px var(--sans);padding:8px 14px;border-radius:7px;border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer}
+.lg-ficha-formulario button.btn:hover{border-color:var(--muted)}
+.lg-ficha-formulario button.btn.pri{background:var(--form);border-color:var(--form);color:#fff}
+.lg-ficha-formulario button.btn:focus-visible,.lg-ficha-formulario input:focus-visible,.lg-ficha-formulario select:focus-visible,.lg-ficha-formulario textarea:focus-visible{outline:2px solid var(--form);outline-offset:1px}
+.lg-ficha-formulario .msg{font-size:13px;color:var(--muted)}
+.lg-ficha-formulario .tw{overflow-x:auto;background:var(--paper);border:1px solid var(--line);border-radius:10px}
+.lg-ficha-formulario table.ed{border-collapse:collapse;width:100%;min-width:1180px;font-size:13px}
+.lg-ficha-formulario table.ed th{font:500 11px var(--mono);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);background:var(--soft);position:sticky;top:0}
+.lg-ficha-formulario table.ed th.pdfh{color:var(--pdf)}
+.lg-ficha-formulario table.ed td{padding:4px 4px;border-bottom:1px solid var(--line);vertical-align:top}
+.lg-ficha-formulario table.ed input,.lg-ficha-formulario table.ed select{width:100%;font:13px var(--sans);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:5px 6px}
+.lg-ficha-formulario table.ed td.id{font:12px var(--mono);color:var(--muted);padding-top:9px;white-space:nowrap}
+.lg-ficha-formulario table.ed .x{border:none;background:none;color:var(--muted);cursor:pointer;font-size:16px;padding:4px 6px}
+.lg-ficha-formulario .two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+.lg-ficha-formulario .card{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+.lg-ficha-formulario textarea{width:100%;min-height:180px;font:13px/1.5 var(--mono);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px}
+.lg-ficha-formulario .hint{font-size:13px;color:var(--muted);margin:2px 0 8px}
+.lg-ficha-formulario .route{display:grid;gap:10px;margin-top:18px}
+.lg-ficha-formulario .rs{display:grid;grid-template-columns:44px minmax(0,1fr);gap:12px;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.lg-ficha-formulario .rs .num{font:600 20px var(--mono);color:var(--muted)}
+.lg-ficha-formulario .rs ul{margin:6px 0 0;padding-left:18px;font-size:14px}
+.lg-ficha-formulario .rs li{margin:2px 0}
+.lg-ficha-formulario .pill{display:inline-block;font:500 11px var(--mono);padding:2px 7px;border-radius:99px;margin-left:6px;vertical-align:1px}
+.lg-ficha-formulario .pill.ok{background:var(--json-bg);color:var(--ok)} .lg-ficha-formulario .pill.warn{background:var(--warn-bg);color:var(--warn)}
+.lg-ficha-formulario .stats{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px}
+.lg-ficha-formulario .stat{background:var(--soft);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.lg-ficha-formulario .stat b{display:block;font-size:20px;color:var(--ink);font-weight:600}
+
+.lg-ficha-formulario .rn-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.lg-ficha-formulario .rn-file{position:relative;overflow:hidden}
+.lg-ficha-formulario .rn-file input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.lg-ficha-formulario .rn-stats{display:flex;flex-wrap:wrap;gap:8px;font-size:13px;color:var(--muted)}
+.lg-ficha-formulario .rn-stats span{background:var(--soft);border-radius:99px;padding:3px 10px;font-variant-numeric:tabular-nums}
+.lg-ficha-formulario .rn-wrap{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:14px;margin-top:12px}
+.lg-ficha-formulario .rn-pdf{background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:10px;height:72vh;min-height:420px;overflow:auto}
+.lg-ficha-formulario .rn-pdf.drag{outline:2px dashed var(--form);outline-offset:-6px}
+.lg-ficha-formulario .rn-page{position:relative;margin:0 auto 10px;box-shadow:0 1px 3px rgba(0,0,0,.18);background:#fff}
+.lg-ficha-formulario .rn-page canvas{display:block;width:100%;height:auto}
+.lg-ficha-formulario .rn-box{position:absolute;border:1.5px solid;border-radius:2px;cursor:pointer;background:transparent;padding:0;font:600 10px/1 var(--sans);color:#fff;display:flex;align-items:center;justify-content:flex-end;overflow:hidden}
+.lg-ficha-formulario .rn-box.alta{border-color:#2f6fd6;background:rgba(47,111,214,.12)}
+.lg-ficha-formulario .rn-box.media{border-color:#d08f00;background:rgba(240,170,20,.26)}
+.lg-ficha-formulario .rn-box.baja,.lg-ficha-formulario .rn-box.err{border-color:#c0261f;background:rgba(192,38,31,.20)}
+.lg-ficha-formulario .rn-box.ok{border-color:#2b5cd1;background:rgba(43, 92, 209,.55)}
+.lg-ficha-formulario .rn-box.ok::after{content:"✓";padding-right:3px}
+.lg-ficha-formulario .rn-box.multi{outline:2.5px solid #440f8f;outline-offset:1px;background:rgba(68, 15, 143,.30);z-index:2}
+.lg-ficha-formulario .rn-box.sel{outline:3px solid #440f8f;outline-offset:2px;z-index:3}
+.lg-ficha-formulario .rn-box:focus-visible{outline:3px solid #440f8f}
+.lg-ficha-formulario .rn-lasso{position:absolute;border:1.5px dashed #440f8f;background:rgba(68, 15, 143,.10);pointer-events:none;z-index:4}
+.lg-ficha-formulario .rn-legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--muted);margin-top:14px;align-items:center}
+.lg-ficha-formulario .rn-legend i{display:inline-block;width:18px;height:12px;border:1.5px solid;border-radius:2px;vertical-align:-1px;margin-right:6px}
+.lg-ficha-formulario .rn-prog{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.lg-ficha-formulario .rn-prog .bar{width:160px;height:8px;border-radius:99px;background:var(--soft);overflow:hidden}
+.lg-ficha-formulario .rn-prog .bar b{display:block;height:100%;background:#2b5cd1;border-radius:99px;transition:width .2s}
+.lg-ficha-formulario .rn-done{margin-top:10px;border-radius:10px;padding:10px 14px;font-size:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.lg-ficha-formulario .rn-done.ok{background:var(--json-bg);color:var(--ok)}
+.lg-ficha-formulario .rn-done.todo{background:var(--soft);color:var(--muted)}
+.lg-ficha-formulario .rn-done.bad{background:var(--warn-bg);color:var(--warn)}
+.lg-ficha-formulario .rn-bulk{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px;padding:10px 12px;border-radius:10px;border:1.5px solid #440f8f;background:var(--paper)}
+.lg-ficha-formulario .rn-bulk input{font:13px var(--mono);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:6px 8px;width:240px;max-width:100%}
+.lg-ficha-formulario .rn-bulk select{font:13px var(--sans);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:6px}
+.lg-ficha-formulario .rn-bulk .pv{font:12px var(--mono);color:var(--muted)}
+.lg-ficha-formulario .rn-bulk b{color:#440f8f}
+.lg-ficha-formulario button.btn.on{border-color:#440f8f;color:#440f8f;background:rgba(68, 15, 143,.08)}
+.lg-ficha-formulario .rn-list{background:var(--paper);border:1px solid var(--line);border-radius:10px;height:72vh;min-height:420px;overflow:auto}
+.lg-ficha-formulario .rn-row{display:grid;grid-template-columns:18px 22px minmax(0,1fr);gap:8px;padding:8px 10px;border-bottom:1px solid var(--line);cursor:pointer}
+.lg-ficha-formulario .rn-row.sel{background:var(--form-bg)}
+.lg-ficha-formulario .rn-row .st{width:18px;height:18px;border-radius:50%;margin-top:6px;border:2px solid var(--line);display:grid;place-items:center;font-size:11px;color:#fff}
+.lg-ficha-formulario .rn-row .st.alta{border-color:#2f6fd6}.lg-ficha-formulario .rn-row .st.media{border-color:#d08f00;background:rgba(240,170,20,.3)}.lg-ficha-formulario .rn-row .st.baja,.lg-ficha-formulario .rn-row .st.err{border-color:#c0261f;background:rgba(192,38,31,.25)}
+.lg-ficha-formulario .rn-row.ok .st{background:#2b5cd1;border-color:#2b5cd1}
+.lg-ficha-formulario .rn-row.multi{background:rgba(68, 15, 143,.10)}
+.lg-ficha-formulario .rn-row .ck{margin-top:7px;width:15px;height:15px;accent-color:#440f8f}
+.lg-ficha-formulario .rn-row input{width:100%;font:13px var(--mono);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:5px 7px}
+.lg-ficha-formulario .rn-row input.bad{border-color:var(--warn);background:var(--warn-bg)}
+.lg-ficha-formulario .rn-meta{font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:3px}
+.lg-ficha-formulario .rn-meta .err{color:var(--warn);font-weight:500}
+.lg-ficha-formulario .rn-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+.lg-ficha-formulario .rn-tools input{font:13px var(--mono);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:6px 8px;width:150px}
+.lg-ficha-formulario .rn-keys{font-size:12px;color:var(--muted)}
+.lg-ficha-formulario .rn-keys kbd{font:11px var(--mono);border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 4px;background:var(--paper)}
+
+.lg-ficha-formulario .steps{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 4px}
+.lg-ficha-formulario .steps button{font:500 14px var(--sans);padding:8px 14px;border-radius:99px;border:1px solid var(--line);background:var(--paper);color:var(--muted);cursor:pointer}
+.lg-ficha-formulario .steps button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.lg-ficha-formulario .steps button.done{color:var(--ok);border-color:var(--ok)}
+.lg-ficha-formulario .next{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;margin-top:14px}
+.lg-ficha-formulario .jt{width:100%;border-collapse:collapse;font-size:13px}
+.lg-ficha-formulario .jt th{text-align:left;font:500 11px var(--mono);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);padding:8px;border-bottom:1px solid var(--line);background:var(--soft);position:sticky;top:0}
+.lg-ficha-formulario .jt td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+.lg-ficha-formulario .tag{font:500 10px var(--mono);background:var(--form-bg);color:var(--form);padding:1px 6px;border-radius:99px;margin-left:4px}
+.lg-ficha-formulario .js-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;margin-top:12px}
+.lg-ficha-formulario .js-grid textarea{min-height:52vh}
+.lg-ficha-formulario .js-box{background:var(--paper);border:1px solid var(--line);border-radius:10px;max-height:56vh;overflow:auto}
+.lg-ficha-formulario .fb-grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr) minmax(0,.8fr);gap:12px;margin-top:12px}
+.lg-ficha-formulario .fb-col{height:72vh;min-height:440px;overflow:auto;border:1px solid var(--line);border-radius:10px;background:var(--paper)}
+.lg-ficha-formulario #fb-pdf{background:var(--soft);padding:10px}
+.lg-ficha-formulario .fb-h{font:500 12px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.lg-ficha-formulario .rn-box.fb.free{border:1.5px dashed #c0261f;background:rgba(192,38,31,.14)}
+.lg-ficha-formulario .rn-box.fb.inq{border-color:#2f6fd6;background:rgba(47,111,214,.14)}
+.lg-ficha-formulario .fsec{font:600 12px var(--sans);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:12px 12px 4px}
+.lg-ficha-formulario .fq{padding:8px 10px;border-bottom:1px solid var(--line);cursor:pointer}
+.lg-ficha-formulario .fq.sel{background:rgba(68, 15, 143,.10);box-shadow:inset 3px 0 0 #440f8f}
+.lg-ficha-formulario .fq-top{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:6px}
+.lg-ficha-formulario .fq input,.lg-ficha-formulario .fq select{font:13px var(--sans);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:5px 6px;min-width:0}
+.lg-ficha-formulario .fq select{max-width:150px}
+.lg-ficha-formulario .fq-opts{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.lg-ficha-formulario .fq-opts span{font-size:12px;background:var(--soft);border-radius:4px;padding:1px 6px}
+.lg-ficha-formulario .fq-meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px;font-size:12px}
+.lg-ficha-formulario .pchip,.lg-ficha-formulario .jchip{font:12px var(--mono);border-radius:4px;padding:1px 6px;background:var(--soft);color:var(--muted)}
+.lg-ficha-formulario .pchip.none,.lg-ficha-formulario .jchip.none{color:var(--muted);font-style:italic}
+.lg-ficha-formulario .jchip.ok{background:var(--json-bg);color:var(--json)}
+.lg-ficha-formulario .dchip{font:12px var(--sans);border-radius:4px;padding:1px 6px;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.lg-ficha-formulario .dchip.ok{background:var(--form-bg);color:var(--form)}
+.lg-ficha-formulario .dchip.dif{background:var(--warn-bg);color:var(--warn)}
+.lg-ficha-formulario .dchip.sug{background:var(--soft);color:var(--muted)}
+.lg-ficha-formulario .tag.dic{background:var(--form-bg);color:var(--form)}
+.lg-ficha-formulario .tag.dicx{background:var(--warn-bg);color:var(--warn)}
+.lg-ficha-formulario .jchip.sug{background:rgba(240,170,20,.2);color:var(--pdf)}
+.lg-ficha-formulario .mini{font:12px var(--sans);border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:5px;padding:2px 7px;cursor:pointer}
+.lg-ficha-formulario .jp{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid var(--line);background:none;padding:7px 10px;cursor:pointer;color:var(--ink);font:inherit}
+.lg-ficha-formulario .jp:hover{background:var(--soft)}
+.lg-ficha-formulario .jp .mono{font-size:12.5px;display:block;word-break:break-all}
+.lg-ficha-formulario .jp .ex{font-size:12px;color:var(--muted)}
+.lg-ficha-formulario .jp.used .mono{color:var(--json)}
+.lg-ficha-formulario .jp:not(.used) .mono{color:#c0261f}
+.lg-ficha-formulario .jp.mine{background:rgba(68, 15, 143,.12);box-shadow:inset 3px 0 0 #440f8f}
+.lg-ficha-formulario .fb-stats{display:flex;flex-wrap:wrap;gap:8px;font-size:13px;color:var(--muted)}
+.lg-ficha-formulario .fb-stats span{background:var(--soft);border-radius:99px;padding:3px 10px}
+.lg-ficha-formulario .fb-stats b{color:var(--ink)}
+.lg-ficha-formulario .fb-stats .w b{color:var(--warn)}
+.lg-ficha-formulario .fq.part{margin-left:22px;border-left:2px solid #440f8f;background:rgba(68, 15, 143,.04)}
+.lg-ficha-formulario .fq.joined .fq-top input{font-style:italic}
+.lg-ficha-formulario .fq-join{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.5}
+.lg-ficha-formulario .fq-join b{color:var(--ink);font-weight:600}
+.lg-ficha-formulario .fq-split{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;margin-top:8px;padding:8px;border-radius:6px;background:var(--soft);font-size:12px;color:var(--muted)}
+.lg-ficha-formulario .fq-split label{display:grid;gap:3px}
+.lg-ficha-formulario .fq-split input{width:290px;max-width:100%}
+.lg-ficha-formulario .mini.pri{background:#440f8f;border-color:#440f8f;color:#fff}
+.lg-ficha-formulario .fb-tab{font:500 11px var(--sans);text-transform:none;letter-spacing:0;border:1px solid var(--line);background:var(--paper);color:var(--muted);border-radius:5px;padding:2px 8px;cursor:pointer}
+.lg-ficha-formulario .fb-tab.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.lg-ficha-formulario .pv{padding:14px 16px;font-size:14px}
+.lg-ficha-formulario .pv-sec{font-size:15px;margin:14px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--line)}
+.lg-ficha-formulario .pv-s:first-child>.pv-sec{margin-top:0}
+.lg-ficha-formulario #tp-form [hidden]{display:none!important}
+.lg-ficha-formulario .pv-slots{display:flex;gap:6px}
+.lg-ficha-formulario .pv-slots input{flex:1;min-width:0}
+.lg-ficha-formulario .pv-f{display:grid;gap:4px;margin-bottom:10px}
+.lg-ficha-formulario .pv-f>span{font-size:13px;font-weight:500}
+.lg-ficha-formulario .pv-f em{font-weight:400;color:var(--muted);font-style:normal;font-size:12px}
+.lg-ficha-formulario .pv-f input:not([type=radio]):not([type=checkbox]),.lg-ficha-formulario .pv-f select,.lg-ficha-formulario .pv-f textarea{font:14px var(--sans);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:7px 8px;width:100%}
+.lg-ficha-formulario .pv-ck{display:flex;gap:8px;align-items:center;font-size:13px}
+.lg-ficha-formulario .pv-opts{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px}
+.lg-ficha-formulario .pv-sig{border:1px dashed var(--line);border-radius:6px;padding:12px;color:var(--muted);font-size:12px;text-align:center}
+.lg-ficha-formulario .pv-rep{border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:10px}
+.lg-ficha-formulario .pv-rh{font-size:12px;color:var(--muted);margin-bottom:6px}
+.lg-ficha-formulario .pv-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}
+.lg-ficha-formulario .tp-grid{grid-template-columns:minmax(0,.9fr) minmax(0,1.15fr) minmax(0,.85fr)}
+.lg-ficha-formulario .tp-json{margin:0;padding:12px;font:12px/1.55 var(--mono);white-space:pre;color:var(--ink)}
+.lg-ficha-formulario .tp-v{position:absolute;display:flex;align-items:center;padding:0 2px;overflow:hidden;white-space:nowrap;font-family:"Courier New",monospace;color:#0b2a8a;pointer-events:none;border-radius:2px}
+.lg-ficha-formulario .tp-v.on{background:rgba(47,111,214,.10)}
+.lg-ficha-formulario .tp-v.ck{justify-content:center;font-weight:700}
+
+.lg-ficha-formulario .vsel{display:inline-flex;flex-wrap:wrap;gap:4px;align-items:center}
+.lg-ficha-formulario .vsel button{font:500 13px var(--sans);border:1px solid var(--line);background:var(--paper);color:var(--muted);border-radius:6px;padding:5px 10px;cursor:pointer}
+.lg-ficha-formulario .vsel button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.lg-ficha-formulario .f2-grid{display:grid;gap:12px;margin-top:12px}
+.lg-ficha-formulario .f2-grid.v-all{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) minmax(0,.8fr)}
+.lg-ficha-formulario .f2-grid.v-fp,.lg-ficha-formulario .f2-grid.v-fj,.lg-ficha-formulario .f2-grid.v-pj{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.lg-ficha-formulario .f2-grid.v-p,.lg-ficha-formulario .f2-grid.v-f,.lg-ficha-formulario .f2-grid.v-j{grid-template-columns:minmax(0,1fr) 320px}
+.lg-ficha-formulario .f2-side{position:sticky;top:10px;align-self:start;display:grid;gap:8px;min-width:0}
+.lg-ficha-formulario .f2-sc{border:1px solid var(--line);border-radius:10px;background:var(--paper);padding:10px 12px;display:grid;gap:3px;min-width:0}
+.lg-ficha-formulario .f2-sc .mini{justify-self:start;margin-top:4px}.lg-ficha-formulario .f2-sc .hint,.lg-ficha-formulario .f2-side>.hint{margin:0}
+.lg-ficha-formulario .f2-sh{font:600 11px var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.lg-ficha-formulario .f2-sv{font-weight:600;overflow-wrap:anywhere}.lg-ficha-formulario .f2-sv.mono{font-weight:500;font-size:13px}.lg-ficha-formulario .f2-sv.bad,.lg-ficha-formulario .hint.bad{color:var(--warn)}.lg-ficha-formulario .f2-sv.mut{color:var(--muted)}
+.lg-ficha-formulario .tp-grid.v-fp,.lg-ficha-formulario .tp-grid.v-fj,.lg-ficha-formulario .tp-grid.v-pj{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.lg-ficha-formulario .f2-pane{display:flex;flex-direction:column;gap:6px;min-width:0}
+.lg-ficha-formulario .f2-pane[hidden],.lg-ficha-formulario .f2-side[hidden]{display:none!important}
+.lg-ficha-formulario .f2-ph{display:flex;align-items:center;gap:6px;justify-content:space-between;min-height:26px}
+.lg-ficha-formulario .f2-ph .fb-h{margin:0}
+.lg-ficha-formulario .f2-quick,.lg-ficha-formulario .f2-search{width:100%;font:14px var(--sans);color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:7px;padding:8px 10px}
+.lg-ficha-formulario .f2-quick{border-color:#440f8f;border-width:1.5px}
+.lg-ficha-formulario .f2-search{font-size:13px;padding:6px 9px;background:var(--bg)}
+.lg-ficha-formulario .f2-col{height:64vh;min-height:420px}
+.lg-ficha-formulario .f2-pres{display:flex;flex-wrap:wrap;gap:4px;max-height:84px;overflow:auto}
+.lg-ficha-formulario .f2-empty{color:var(--muted);font-size:13px;padding:12px;margin:0}
+.lg-ficha-formulario .f2s{border-bottom:1px solid var(--line)}
+.lg-ficha-formulario .f2s-h{display:flex;align-items:center;gap:6px;padding:8px 8px;background:var(--secbg,var(--soft));position:sticky;top:0;z-index:1;cursor:grab}
+.lg-ficha-formulario .f2s.act .f2s-h{box-shadow:inset 3px 0 0 #440f8f}
+.lg-ficha-formulario .f2s-t{flex:1;min-width:0;font:600 14px var(--sans);color:var(--ink);background:transparent;border:1px solid transparent;border-radius:5px;padding:3px 5px}
+.lg-ficha-formulario .f2s-t:hover,.lg-ficha-formulario .f2s-t:focus{border-color:var(--line);background:var(--paper)}
+.lg-ficha-formulario .f2s .cnt{font:12px var(--mono);color:var(--muted)}
+.lg-ficha-formulario .f2s-b{min-height:34px}
+.lg-ficha-formulario .f2s.drop-in .f2s-b,.lg-ficha-formulario .f2s.drop-before{outline:2px dashed #440f8f;outline-offset:-2px}
+.lg-ficha-formulario .grip{color:var(--muted);cursor:grab;font-size:12px;letter-spacing:-2px;user-select:none}
+.lg-ficha-formulario .f2q{border-top:1px solid var(--line);cursor:pointer}
+.lg-ficha-formulario .f2q.sel{background:rgba(68, 15, 143,.08);box-shadow:inset 3px 0 0 #440f8f}
+.lg-ficha-formulario .f2q.part{padding-left:20px;background:rgba(68, 15, 143,.03)}
+.lg-ficha-formulario .f2q.dragging{opacity:.4}
+.lg-ficha-formulario .f2q.drop-before{box-shadow:inset 0 3px 0 #440f8f}
+.lg-ficha-formulario .f2q-row{display:flex;align-items:center;gap:6px;padding:7px 8px 4px}
+.lg-ficha-formulario .f2q-row .ti{font:600 11px var(--mono);color:var(--form);background:var(--form-bg);border-radius:4px;min-width:26px;text-align:center;padding:1px 3px}
+.lg-ficha-formulario .f2q-row .lb{flex:1;min-width:0;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lg-ficha-formulario .f2q-row .lb em{font-style:normal;color:var(--muted);font-size:12px}
+.lg-ficha-formulario .f2q-row .req{color:#c0261f;margin-left:2px}
+.lg-ficha-formulario .pchip.ok{background:rgba(47,111,214,.12);color:#2f6fd6}
+.lg-ficha-formulario .f2e{padding:4px 10px 12px 26px;display:grid;gap:10px;cursor:default}
+.lg-ficha-formulario .f2e-g{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
+.lg-ficha-formulario .f2e-g label:first-child{grid-column:1/-1}
+.lg-ficha-formulario .f2q-meta{display:flex;flex-wrap:wrap;gap:4px;padding:0 8px 8px 58px;font-size:12px}
+.lg-ficha-formulario .f2q-meta .pchip,.lg-ficha-formulario .f2q-meta .jchip{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lg-ficha-formulario .f2e label{display:grid;gap:3px;font-size:12px;color:var(--muted)}
+.lg-ficha-formulario .f2e-c{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.lg-ficha-formulario .f2e-c label{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--ink)}
+.lg-ficha-formulario .f2e input:not([type=checkbox]),.lg-ficha-formulario .f2e select{font:13px var(--sans);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:5px 6px;min-width:0;width:100%}
+.lg-ficha-formulario .f2e-c select{width:auto}
+.lg-ficha-formulario .f2e-blk{border:1px solid var(--line);border-radius:7px;padding:8px;display:grid;gap:6px;background:var(--paper)}
+.lg-ficha-formulario .f2e-h{font:600 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.lg-ficha-formulario .f2e-opt{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,.7fr) minmax(0,1.3fr) auto;gap:6px}
+.lg-ficha-formulario .f2e-parts .f2e-opt{grid-template-columns:minmax(0,1fr) auto}
+.lg-ficha-formulario .chips{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.lg-ficha-formulario .bchip{font:12px var(--mono);background:rgba(47,111,214,.12);color:#2f6fd6;border-radius:4px;padding:2px 4px 2px 7px;display:inline-flex;gap:4px;align-items:center;border:0}
+.lg-ficha-formulario .bchip button{border:0;background:none;color:inherit;cursor:pointer;font-size:13px;padding:0 3px}
+.lg-ficha-formulario .bchip.add{background:var(--soft);color:var(--ink);cursor:pointer;padding:2px 7px}
+.lg-ficha-formulario .mini.ok{color:var(--ok);border-color:var(--ok);font-weight:600}
+.lg-ficha-formulario .f2q-meta .jchip.sug{max-width:calc(100% - 140px)}
+.lg-ficha-formulario .f2q-meta .mini{padding:1px 6px}
+.lg-ficha-formulario .mini.danger{color:var(--warn);border-color:var(--warn)}
+.lg-ficha-formulario .mini:disabled{opacity:.35;cursor:default}
+.lg-ficha-formulario .jp{display:flex;gap:6px;align-items:center;border-bottom:1px solid var(--line);padding:0 8px 0 0}
+.lg-ficha-formulario .jp .jp-m{flex:1;min-width:0;text-align:left;border:0;background:none;padding:7px 10px;cursor:pointer;color:var(--ink);font:inherit}
+.lg-ficha-formulario .jp .jp-m:hover{background:var(--soft)}
+.lg-ficha-formulario .rn-box.fb.hit{outline:3px solid #e38b00;outline-offset:1px;z-index:2}
+.lg-ficha-formulario .rn-box.flash{animation:fl .9s}
+@keyframes fl{0%,100%{box-shadow:none}50%{box-shadow:0 0 0 6px rgba(227,139,0,.6)}}
+.lg-ficha-formulario .f2sub{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:8px 10px 2px 30px;border-left:4px solid var(--secbg,transparent)}
+.lg-ficha-formulario .f2sub-t{all:unset;cursor:pointer;font:600 12px var(--sans);color:#440f8f;text-transform:uppercase;letter-spacing:.04em}
+.lg-ficha-formulario .f2sub-t:focus-visible,.lg-ficha-formulario .f2fold:focus-visible{outline:2px solid #440f8f;outline-offset:2px}
+.lg-ficha-formulario .f2sub .cnt{margin-left:auto}
+.lg-ficha-formulario .cchip.rev{background:rgba(214,120,0,.14);color:#8a4b00}
+.lg-ficha-formulario .rsel{font:11px var(--sans);margin-left:4px;padding:0 2px;max-width:110px}
+.lg-ficha-formulario .hidb{font:600 10px var(--mono);background:var(--soft);color:var(--muted);border:1px dashed var(--muted);border-radius:4px;padding:1px 5px}
+.lg-ficha-formulario .mini.hid{background:var(--soft);border-style:dashed}
+.lg-ficha-formulario .cchip{font:12px var(--sans);background:rgba(68, 15, 143,.12);color:#5b2db8;border-radius:4px;padding:1px 6px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lg-ficha-formulario .f2e-cond{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.lg-ficha-formulario .f2e-cond select,.lg-ficha-formulario .f2e-cond input{width:auto!important;max-width:220px}
+.lg-ficha-formulario .pv-sub{font:600 12px var(--sans);color:#440f8f;text-transform:uppercase;letter-spacing:.04em;margin:10px 0 6px}
+.lg-ficha-formulario .pv-f .req{color:#c0261f}
+@media (max-width:1000px){.lg-ficha-formulario .f2-grid.v-all,.lg-ficha-formulario .f2-grid.v-fp,.lg-ficha-formulario .f2-grid.v-fj,.lg-ficha-formulario .f2-grid.v-pj,.lg-ficha-formulario .f2-grid.v-p,.lg-ficha-formulario .f2-grid.v-f,.lg-ficha-formulario .f2-grid.v-j,.lg-ficha-formulario .tp-grid.v-fp,.lg-ficha-formulario .tp-grid.v-fj,.lg-ficha-formulario .tp-grid.v-pj{grid-template-columns:minmax(0,1fr)}.lg-ficha-formulario .f2-col{height:56vh}.lg-ficha-formulario .f2e{padding-left:10px}.lg-ficha-formulario .f2e-g{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:1000px){.lg-ficha-formulario .fb-grid,.lg-ficha-formulario .js-grid{grid-template-columns:minmax(0,1fr)}.lg-ficha-formulario .fb-col{height:56vh}}
+@media (max-width:900px){.lg-ficha-formulario .rn-wrap{grid-template-columns:minmax(0,1fr)}.lg-ficha-formulario .rn-pdf,.lg-ficha-formulario .rn-list{height:60vh}}
+@media (max-width:900px){.lg-ficha-formulario .demo,.lg-ficha-formulario .layers,.lg-ficha-formulario .why,.lg-ficha-formulario .two{grid-template-columns:minmax(0,1fr)}}
+@media (prefers-reduced-motion:reduce){.lg-ficha-formulario *{transition:none!important}}
+
+
+/* Ajustes para correr dentro de la app */
+.lg-ficha-formulario { --ok: #198446; background: var(--color-bg); padding-block: 8px 48px; padding-inline: 0; }
