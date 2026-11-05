@@ -42,6 +42,14 @@ export const TOOLS = [
     load: () => import('../tools/csv-generator/index.jsx'),
   },
   {
+    id: 'signaframe-studio',
+    section: 'signaframe',
+    name: 'Signaframe Studio',
+    description: 'Simula el formulario con el motor real de Signaframe: el JSON que sale, el PDF y lo que está mal. Abre los trabajos que arma Claude.',
+    icon: 'FlaskConical',
+    load: () => import('../tools/signaframe-studio/index.jsx'),
+  },
+  {
     id: 'ficha-formulario',
     section: 'signaframe',
     name: 'Ficha de formulario',
@@ -93,7 +101,7 @@ export const TOOLS = [
     id: 'cotizador',
     section: 'planificacion',
     name: 'Cotizador',
-    description: 'Lee un ZIP con los insumos de un formulario y calcula su complejidad: Baja, Media o Alta.',
+    description: 'Lee el ZIP de un formulario y lo cotiza según el contrato: nivel, precio y extras.',
     icon: 'ClipboardList',
     load: () => import('../tools/cotizador/index.jsx'),
   },

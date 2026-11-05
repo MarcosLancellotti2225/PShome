@@ -1,0 +1,30 @@
+/* Signaframe Studio — prefijo ss- */
+.ss-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--spacing-md); align-items: start; }
+@media (max-width: 1100px) { .ss-grid { grid-template-columns: 1fr; } }
+.ss-form { max-height: 72vh; overflow: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 4px; }
+.ss-section { border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+.ss-section.is-off { opacity: 0.55; }
+.ss-section-head { display: flex; align-items: center; gap: 8px; padding: 8px 12px; font-weight: 600; background: var(--color-band); border-radius: var(--radius-md) var(--radius-md) 0 0; }
+.ss-section-head .ss-sub { margin-left: auto; font-weight: 400; }
+.ss-fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px 12px; padding: 10px 12px; }
+.ss-field { display: flex; flex-direction: column; gap: 3px; min-width: 0; padding: 3px; border-radius: var(--radius-sm); }
+.ss-field .ui-input { width: 100%; }
+.ss-field.is-pre .ui-input { background: var(--color-primary-light); }
+.ss-field.is-edited .ui-input { border-color: var(--color-primary); border-width: 2px; }
+.ss-field.is-off { opacity: 0.45; }
+.ss-field.is-focus { outline: 2px solid var(--color-danger); outline-offset: 2px; }
+.ss-label { font-size: 0.78rem; font-weight: 600; color: var(--color-text-secondary); display: flex; align-items: center; gap: 4px; }
+.ss-dot { display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; background: var(--color-danger); color: #fff; font-size: 0.7rem; cursor: help; }
+.ss-sub { color: var(--color-text-muted); font-size: 0.72rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ss-ro { padding: 7px 10px; border: 1px dashed var(--color-border); border-radius: var(--radius-sm); color: var(--color-text-secondary); font-size: 0.875rem; }
+.ss-check { display: inline-flex; align-items: center; gap: 6px; font-size: 0.875rem; margin-bottom: 8px; }
+.ss-system { padding: 0 12px 8px; }
+.ss-system summary { cursor: pointer; color: var(--color-text-secondary); font-size: 0.8rem; padding: 6px 0; }
+.ss-system .ss-fields { padding: 4px 0 0; }
+.ss-code {
+  background: var(--color-primary-deep); color: #e4f2f2; border-radius: var(--radius-md);
+  padding: 14px 16px; max-height: 64vh; overflow: auto; margin: 0;
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace; font-size: 0.78rem; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.ss-key { color: #59d8ce; }
+.ss-chg { background: rgba(252, 208, 134, 0.28); border-radius: 3px; }

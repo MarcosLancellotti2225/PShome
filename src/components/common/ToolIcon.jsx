@@ -1,7 +1,7 @@
 import {
   Send, FileSpreadsheet, Mail, GanttChart, FileJson, FileText, FileCog, Table, Table2,
   PenTool, Palette, Ticket, Users, Upload, Download, Code, LayoutDashboard, MessageSquare,
-  KeyRound, ShieldCheck, Workflow, ClipboardList, Wrench, FilePen,
+  KeyRound, ShieldCheck, Workflow, ClipboardList, Wrench, FilePen, FlaskConical,
 } from 'lucide-react';
 
 // Íconos disponibles para src/config/tools.js (campo `icon`).
@@ -9,7 +9,7 @@ import {
 const ICONS = {
   Send, FileSpreadsheet, Mail, GanttChart, FileJson, FileText, FileCog, Table, Table2,
   PenTool, Palette, Ticket, Users, Upload, Download, Code, LayoutDashboard, MessageSquare,
-  KeyRound, ShieldCheck, Workflow, ClipboardList, Wrench, FilePen,
+  KeyRound, ShieldCheck, Workflow, ClipboardList, Wrench, FilePen, FlaskConical,
 };
 
 export default function ToolIcon({ name, ...props }) {

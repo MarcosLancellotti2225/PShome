@@ -15,3 +15,12 @@
 .cz-indent { padding-left: 1.25rem; color: var(--color-text-secondary); }
 .cz-bar { height: 4px; border-radius: 2px; background: var(--color-primary); opacity: 0.7; margin-top: 3px; margin-left: auto; }
 .ui-table tr.is-total td { font-weight: 700; border-top: 2px solid var(--color-border); }
+.cz-form-note { display: grid; gap: 6px; padding: var(--spacing-sm) 0; border-top: 1px solid var(--color-border); }
+.cz-form-note > .ui-btn, .cz-form-note > button { justify-self: start; }
+.cz-pricing { border-top: 1px solid var(--color-border); padding-top: var(--spacing-sm); }
+.cz-pricing summary, .cz-internal summary { cursor: pointer; font-weight: 700; color: var(--color-primary); }
+.cz-pricing-grid { display: grid; gap: 10px; margin-top: var(--spacing-sm); }
+.cz-tier-name { min-width: 56px; }
+.cz-internal { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--spacing-md); }
+.cz-internal[open] summary { margin-bottom: var(--spacing-sm); }
+.cz-form-note input[type='number'] { width: 110px; }

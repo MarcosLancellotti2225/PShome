@@ -34,4 +34,13 @@ export default defineConfig([
       'no-prototype-builtins': 'off',
     },
   },
+  {
+    // Motor del front de Signaframe, copiado tal cual (ver src/lib/signaframe-engine/README.md).
+    // No se reescribe por estilo: tiene que seguir siendo idéntico al original.
+    files: ['src/lib/signaframe-engine/{services,lib,components}/**/*.js'],
+    rules: {
+      'no-unused-vars': 'off',
+      'no-useless-escape': 'off',
+    },
+  },
 ])
