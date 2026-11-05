@@ -81,3 +81,10 @@ Une el Detector de campos y Convertir PDF de `FormConverterExcel`.
 - `src/tools/gantt` ← repo `GranttGenerator`.
 - `legacy-src/multi-send` ← `bulksend`, `legacy-src/csv-generator` ← `toolsImport`, `legacy-src/email-templates` ← `HTMLgenerator`, `legacy-src/ficha-formulario` + `public/apps/ficha-formulario` ← `SingaframeFormBuilder`.
 - El resto de `FormConverterExcel` **no** se migra salvo pedido explícito.
+- `src/lib/signaframe-engine` ← front de Signaframe (commit `d270aa3`), convertido con `tsc`. `services/` y `lib/` van tal cual; ver su README antes de tocarlo.
+
+## Signaframe Studio y MCP
+
+- `src/tools/signaframe-studio`: simula un formulario con `signaframe-engine` (el motor real del front), muestra el JSON que sale, los AcroForms, diagnósticos y el Revisor; cada cambio en el formulario vuelve a simular. Abre «trabajos» (.json, `tipo: se-tools/signaframe-trabajo`).
+- `mcp/server.mjs`: MCP local (Node, stdio) que le da a Claude la lógica de `src/lib` (simular, revisar, comparar JSON, detectar campos del PDF). Guarda los trabajos en `SE_TOOLS_TRABAJOS`. Ver `mcp/README.md`.
+- Regla: el MCP **no tiene lógica propia**. Todo lo que hace tiene que vivir en `src/lib` para que la app y Claude den lo mismo.
