@@ -62,6 +62,7 @@ export default function Cotizador() {
   const [target, setTarget] = useState('Media');
   const [pricing, setPricing] = useState(loadPricing);
   const [hours, setHours] = useState({}); // horas de reglas extra, por formulario
+  const [group, setGroup] = useState({ on: false, main: null, out: [] }); // cotizar varios formularios como grupo
 
   const name = baseName(zip, 'formulario');
 
@@ -105,7 +106,7 @@ export default function Cotizador() {
 
   // Reporte de una página para comercial: sin puntajes ni pesos.
   function commercialReport(mode) {
-    const html = buildCommercialReport(reportModel(result.contract, pricing, hours), { archivo: zip?.name ?? null, fecha: today() });
+    const html = buildCommercialReport(reportModel(result.contract, pricing, hours, group), { archivo: zip?.name ?? null, fecha: today() });
     if (mode === 'download') {
       downloadBlob(new Blob([html], { type: 'text/html;charset=utf-8' }), `${name}_cotizacion.html`);
       return;
@@ -126,7 +127,7 @@ export default function Cotizador() {
   async function exportDocx() {
     setStatus({ tone: 'info', text: 'Generando el documento de Word…' });
     try {
-      const bytes = await buildDocxReport(reportModel(result.contract, pricing, hours), { archivo: zip?.name ?? null, fecha: today() });
+      const bytes = await buildDocxReport(reportModel(result.contract, pricing, hours, group), { archivo: zip?.name ?? null, fecha: today() });
       downloadBlob(new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }), `${name}_cotizacion.docx`);
       setStatus({ tone: 'success', text: 'Word descargado.' });
     } catch (e) {
@@ -163,7 +164,7 @@ export default function Cotizador() {
     <div className="ui-stack">
       <Panel title="1. Cargar el ZIP" hint="El ZIP puede traer PDFs, Excels de reglas de negocio (con todas sus pestañas) y JSONs de definición. Se analiza todo, sin importar las carpetas.">
         <div className="ui-files">
-          <FileDrop label="ZIP del formulario" description="PDFs + Excels + JSONs" accept=".zip" file={zip} onFile={(f) => { setZip(f); setResult(null); setStatus(null); setHours({}); }} required />
+          <FileDrop label="ZIP del formulario" description="PDFs + Excels + JSONs" accept=".zip" file={zip} onFile={(f) => { setZip(f); setResult(null); setStatus(null); setHours({}); setGroup({ on: false, main: null, out: [] }); }} required />
         </div>
         <div className="ui-row">
           <Button variant="primary" icon={Calculator} onClick={run} disabled={!zip || busy}>{busy ? 'Analizando…' : 'Analizar y cotizar'}</Button>
@@ -180,7 +181,7 @@ export default function Cotizador() {
         {status && <Alert tone={status.tone}>{status.text}</Alert>}
       </Panel>
 
-      {result && <ContractQuote contract={result.contract} onStatus={setStatus} pricing={pricing} setPricing={setPricing} hours={hours} setHours={setHours} />}
+      {result && <ContractQuote contract={result.contract} onStatus={setStatus} pricing={pricing} setPricing={setPricing} hours={hours} setHours={setHours} group={group} setGroup={setGroup} />}
 
       {result && (
         <details className="cz-internal">

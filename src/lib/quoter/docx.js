@@ -115,10 +115,11 @@ function buildDocxReport(model, opts) {
         body += h2('Detalle por formulario');
         model.items.forEach(function (it) {
             var col = COLORS[it.levelKey] || COLORS.media;
-            body += para([run(it.name, { bold: true, size: 21, color: COLORS.dark })], { before: 120, after: 20 });
+            var tag = it.role === 'principal' ? '  · Principal del grupo' : it.role === 'agrupado' ? '  · Agrupado: se cobra lo nuevo' : '';
+            body += para([run(it.name, { bold: true, size: 21, color: COLORS.dark }), run(tag, { bold: true, size: 16, color: COLORS.primary })], { before: 120, after: 20 });
             body += para([
                 run('Complejidad ' + it.level.toLowerCase() + ' · línea ' + it.line, { bold: true, size: 18, color: col.text }),
-                run('   ' + it.fields + ' campos de captura · ' + it.rules + ' reglas de negocio', { size: 18, color: COLORS.secondary }),
+                run('   ' + it.fields + (it.role === 'agrupado' ? ' campos nuevos · ' : ' campos de captura · ') + it.rules + (it.role === 'agrupado' ? ' reglas nuevas' : ' reglas de negocio'), { size: 18, color: COLORS.secondary }),
             ], { after: 40 });
             if (it.pdf) body += para(run('Documento: ' + it.pdf, { size: 16, color: COLORS.muted }), { after: 40 });
             body += para(run(it.why, { size: 18, color: COLORS.secondary }), { after: 80 });
@@ -143,6 +144,13 @@ function buildDocxReport(model, opts) {
         });
     }
 
+    if (model.grouped) {
+        body += para(run('Cotizados en grupo: los formularios comparten campos y reglas, que se cobran una sola vez. Por separado sumarían ' + money(model.separateTotal, c) + '.', { size: 18, color: COLORS.deep }), { shade: 'DEFFFB', before: 160, after: 120, indent: 120 });
+    }
+    if (model.explanation.length) {
+        body += h2('Cómo se calculó');
+        model.explanation.forEach(function (x) { body += para(run(x, { size: 18, color: COLORS.secondary }), { bullet: true, after: 60 }); });
+    }
     if (model.includes.length) {
         body += h2('Qué incluye');
         model.includes.forEach(function (it) { body += para(run(it, { size: 19, color: COLORS.dark }), { bullet: true, after: 60 }); });

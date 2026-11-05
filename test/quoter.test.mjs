@@ -153,4 +153,52 @@ assert.match(q(50, 30).why, /entran en Alta/);
   assert.ok(!/semana/i.test(xml));
 }
 
+// ── Grupo: el principal completo, los demás solo por lo que agregan ─────────
+{
+  const { quoteItems, explainQuote, reportModel } = await import('../src/lib/quoter/contract.js');
+  const fld = (name, rules = []) => ({ key: `hoja|${name}`, name, sheet: 'hoja', kind: 'editable', rules: rules.map((t) => ({ text: t, type: 'validacion' })) });
+  const big = Array.from({ length: 40 }, (_, i) => fld(`c${i}`, i < 25 ? [`regla ${i}`] : []));
+  const mk = (id, fieldList) => ({
+    id, ficha: `${id}.xlsx`, code: null, codes: [], auto: 0, info: 0, fieldList,
+    editable: fieldList.length,
+    rules: { validacion: fieldList.reduce((s, f) => s + f.rules.length, 0), condicional: 0, calculo: 0, otra: 0, total: fieldList.reduce((s, f) => s + f.rules.length, 0) },
+  });
+  const A = mk('A', big);                                              // 40 campos, 25 reglas: Alta
+  const B = mk('B', [...big.slice(0, 30), fld('nuevo1', ['otra regla'])]); // casi todo repetido
+  const C = mk('C', [fld('suelto')]);
+  const forms = [B, A, C];
+
+  const solo = quoteItems(forms, CONTRACT_PRICING, {}, null);
+  assert.ok(solo.every((i) => i.role === 'solo'));
+  assert.equal(solo.find((i) => i.form.id === 'B').quote.tier.key, 'alta', 'B solo: 31 campos');
+
+  const g = quoteItems(forms, CONTRACT_PRICING, {}, { on: true, main: null, out: ['C'] });
+  assert.deepEqual(g.map((i) => [i.form.id, i.role]), [['A', 'principal'], ['B', 'agrupado'], ['C', 'solo']]);
+  const b = g[1];
+  assert.equal(b.quote.fields, 1, 'B agrega un campo');
+  assert.equal(b.quote.rules, 1, 'B agrega una regla');
+  assert.equal(b.quote.tier.key, 'baja');
+  assert.deepEqual(b.shared, { fields: 30, rules: 25 });
+
+  // Principal elegido a mano.
+  const g2 = quoteItems(forms, CONTRACT_PRICING, {}, { on: true, main: 'B', out: ['C'] });
+  assert.equal(g2[0].form.id, 'B');
+  assert.equal(g2[1].quote.fields, 10, 'A agrega los 10 campos que B no tiene');
+
+  // Un solo miembro: no hay grupo.
+  assert.ok(quoteItems(forms, CONTRACT_PRICING, {}, { on: true, main: null, out: ['B', 'C'] }).every((i) => i.role === 'solo'));
+
+  const contract = { forms, skipped: [] };
+  const m = reportModel(contract, CONTRACT_PRICING, {}, { on: true, main: null, out: ['C'] });
+  assert.equal(m.grouped, true);
+  assert.equal(m.total, 12700 + 5500 + 5500);
+  assert.equal(m.separateTotal, 12700 + 12700 + 5500);
+  const ex = explainQuote(g, contract, CONTRACT_PRICING);
+  assert.ok(ex.some((x) => /Rubro 2/.test(x)), 'cita el contrato');
+  assert.ok(ex.some((x) => /se cotizan juntos/.test(x)), 'explica el grupo');
+  const { buildCommercialReport } = await import('../src/lib/quoter/report.js');
+  const html = buildCommercialReport(m, {});
+  assert.ok(html.includes('Cómo se calculó') && html.includes('Principal del grupo') && html.includes('Por separado sumarían'));
+}
+
 console.log('cotizador: todas las pruebas OK');

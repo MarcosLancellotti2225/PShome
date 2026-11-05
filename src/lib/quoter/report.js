@@ -22,6 +22,12 @@ var LEVEL = {
     alta: { color: '#ad4546', bg: '#f9e3e3' },
 };
 
+function roleTag(role) {
+    if (role === 'principal') return ' <span class="role">Principal del grupo</span>';
+    if (role === 'agrupado') return ' <span class="role">Agrupado: se cobra lo nuevo</span>';
+    return '';
+}
+
 function pill(levelKey, texto) {
     var c = LEVEL[levelKey] || LEVEL.media;
     return '<span class="pill" style="color:' + c.color + ';background:' + c.bg + '">' + esc(texto) + '</span>';
@@ -41,8 +47,8 @@ function buildCommercialReport(model, opts) {
             return '<tr><td>' + esc(l.label) + '</td><td class="amt">' + (l.amount == null ? '<span class="tbd">a estimar</span>' : esc(money(l.amount, c))) + '</td></tr>';
         }).join('');
         return '<div class="form">' +
-            '<div class="form-head"><div><div class="fname">' + esc(it.name) + '</div>' +
-            '<div class="fsub">' + it.fields + ' campos de captura · ' + it.rules + ' reglas de negocio' + (it.pdf ? '<br>Documento: ' + esc(it.pdf) : '') + '</div></div>' +
+            '<div class="form-head"><div><div class="fname">' + esc(it.name) + roleTag(it.role) + '</div>' +
+            '<div class="fsub">' + it.fields + (it.role === 'agrupado' ? ' campos nuevos · ' : ' campos de captura · ') + it.rules + (it.role === 'agrupado' ? ' reglas nuevas' : ' reglas de negocio') + (it.pdf ? '<br>Documento: ' + esc(it.pdf) : '') + '</div></div>' +
             pill(it.levelKey, 'Complejidad ' + it.level.toLowerCase() + ' · línea ' + it.line) + '</div>' +
             '<p class="why">' + esc(it.why) + '</p>' +
             '<table class="lines">' + lines +
@@ -86,6 +92,9 @@ function buildCommercialReport(model, opts) {
 '.tiers td{padding:7px 8px 7px 0}' +
 'ul{margin:0;padding-left:20px;font-size:.9rem}li{margin-bottom:5px}' +
 '.note{padding:12px 16px;border-radius:9px;font-size:.88rem;margin-top:14px}' +
+'.role{display:inline-block;margin-left:8px;padding:1px 8px;border-radius:6px;background:' + BRAND.light + ';color:' + BRAND.primary + ';font-size:.7rem;font-weight:700;vertical-align:middle}' +
+'.note.ok{background:' + BRAND.light + ';border-left:4px solid ' + BRAND.primary + '}' +
+'.expl li{font-size:.86rem;color:' + BRAND.secondary + '}' +
 '.note.warn{background:' + LEVEL.media.bg + ';border-left:4px solid ' + LEVEL.media.color + '}' +
 '.foot{margin-top:30px;padding-top:14px;border-top:1px solid ' + BRAND.border + ';font-size:.75rem;color:' + BRAND.muted + '}' +
 '@media print{body{background:#fff}.sheet{box-shadow:none;margin:0;max-width:none;padding:0}.form{break-inside:avoid}' +
@@ -101,7 +110,9 @@ empty +
       (model.pending ? '<small>+ horas de reglas adicionales,<br>a estimar a ' + esc(money(model.hourRate, c)) + ' la hora</small>' : '') + '</div>'
     : '') +
 (formsHtml ? '<h2>Detalle por formulario</h2>' + formsHtml : '') +
+(model.grouped ? '<div class="note ok">Cotizados en grupo: los formularios comparten campos y reglas, que se cobran una sola vez. Por separado sumarían ' + esc(money(model.separateTotal, c)) + '.</div>' : '') +
 (attachHtml ? '<h2>Documentos que no se cotizan</h2><ul>' + attachHtml + '</ul>' : '') +
+(model.explanation.length ? '<h2>Cómo se calculó</h2><ul class="expl">' + model.explanation.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' : '') +
 (model.includes.length ? '<h2>Qué incluye</h2><ul>' + model.includes.map(function (i) { return '<li>' + esc(i) + '</li>'; }).join('') + '</ul>' : '') +
 '<h2>Niveles del contrato</h2><table class="tiers">' + tiersHtml + '</table>' +
 '<div class="foot">Precios según ' + esc(model.source) + '. Sin IVA ni retenciones. ' +
