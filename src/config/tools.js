@@ -93,7 +93,7 @@ export const TOOLS = [
     id: 'cotizador',
     section: 'planificacion',
     name: 'Cotizador',
-    description: 'Lee un ZIP con los insumos de un formulario y calcula su complejidad: Baja, Media o Alta.',
+    description: 'Lee el ZIP de un formulario y lo cotiza según el contrato: nivel, precio y extras.',
     icon: 'ClipboardList',
     load: () => import('../tools/cotizador/index.jsx'),
   },

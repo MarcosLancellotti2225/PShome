@@ -15,6 +15,7 @@
 import JSZip from 'jszip';
 import * as XLSX from 'xlsx';
 import { detectFields } from '../pdf-detect/index.js';
+import { fichaForms, contractForms } from './contract.js';
 
 // ─── Configuración (pesos y umbrales) ────────────────────────────────────────
 // Editable desde la UI para calibrar la cotización.
@@ -296,9 +297,13 @@ function analyzeExcel(bytes, fileName) {
     var refTotal = 0;
     for (var k in catalogRefNames) if (catalogRefNames.hasOwnProperty(k)) refTotal += catalogRefNames[k];
 
+    var forms = [];
+    try { forms = fichaForms(wb, fileName); } catch (e) { forms = []; }
+
     return {
         file: fileName,
         type: 'excel',
+        contractForms: forms,
         sheetCount: wb.SheetNames.length,
         ignoredSheets: ignoredSheets,
         sheets: sheets,
@@ -862,6 +867,7 @@ async function analyzeZip(zipBytes, configOverride) {
     var documents = buildDocuments(pdfs, excels, config);
 
     return {
+        contract: contractForms(pdfs, excels),
         inventory: inventory,
         byFile: byFile,
         documents: documents,
