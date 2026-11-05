@@ -34,17 +34,53 @@ function ficha(sheets) {
     ],
     'JSON Generado': [{ name: 'tampoco' }],
   });
+  // Una ficha = un formulario web. Los códigos salen de «Formulario a visualizar».
   const forms = fichaForms(wb, 'ficha.xlsx');
-  assert.deepEqual(forms.map((f) => f.code), ['D0001', 'D0002']);
-  const d1 = forms.find((f) => f.code === 'D0001');
-  // Nombre, Género, Moneda, Cobertura, Teléfono, Referencia = 6 editables
-  assert.equal(d1.editable, 6, 'campos editables de D0001');
-  assert.equal(d1.auto, 1);
-  assert.equal(d1.info, 1);
-  assert.deepEqual(d1.rules, { validacion: 2, condicional: 1, calculo: 1, otra: 0, total: 4 });
-  const d2 = forms.find((f) => f.code === 'D0002');
-  // D0002 suma «Peso» y «Solo del otro», pierde «Teléfono»
-  assert.equal(d2.editable, 7, 'campos editables de D0002');
+  assert.equal(forms.length, 1);
+  assert.deepEqual(forms[0].codes, ['D0001', 'D0002']);
+  const d = forms[0];
+  // Nombre, Género, Moneda, Cobertura, Teléfono, Solo del otro, Referencia y Peso
+  // («No aplica Formulario D0001», pero la ficha también arma D0002).
+  assert.equal(d.editable, 8, 'campos editables');
+  assert.equal(d.auto, 1);
+  assert.equal(d.info, 1);
+  assert.deepEqual(d.rules, { validacion: 2, condicional: 1, calculo: 1, otra: 0, total: 4 });
+}
+
+// Ficha de un solo PDF: «No aplica Formulario X» la saca; un «No aplica» suelto en Regla
+// es «sin regla»; las observaciones con otros códigos no crean formularios.
+{
+  const forms = fichaForms(ficha({
+    hoja: [
+      { name: 'A', form: '1008172' },
+      { name: 'B', regla: 'No aplica Formulario 1008172' },
+      { name: 'C', regla: 'No aplica' },
+      { name: 'D', obs: 'En el formulario D0714 debe de verse como predeterminado' },
+      { name: 'E', regla: 'No aplica para este formulario' },
+    ],
+  }), 'f.xlsx');
+  assert.deepEqual(forms[0].codes, ['1008172']);
+  assert.equal(forms[0].editable, 3, 'A, C y D');
+  assert.equal(forms[0].rules.total, 1, 'solo la observación de D');
+}
+
+// Varias fichas en un ZIP: cada una con su PDF por el nombre; un código común no decide.
+{
+  const { contractForms } = await import('../src/lib/quoter/contract.js');
+  const mk = (ficha) => ({ ficha, code: '1008172', codes: ['1008172'], editable: 1, rules: { total: 0 } });
+  const { forms, skipped } = contractForms(
+    [
+      { file: '1008172 Solicitud Equipo Electronico Edit.pdf', fieldCount: 10 },
+      { file: 'D0714 Solicitud Equipo Electronico Equipo movil Edit.pdf', fieldCount: 10 },
+      { file: 'D0267 Solicitud Equipo Electronico Colectivo Edit.pdf', fieldCount: 10 },
+      { file: 'Anexo.pdf', fieldCount: 0 },
+    ],
+    [{ contractForms: [mk('Ficha de configuración - Equipo Electrónico Modalidad Adhesión Equipo Movil.xlsx')] },
+     { contractForms: [mk('Ficha de configuración - Equipo Electrónico Modalidad Adhesión.xlsx')] },
+     { contractForms: [mk('Ficha de configuración - Equipo Electrónico Tomador Póliza Colectiva.xlsx')] }],
+  );
+  assert.deepEqual(forms.map((f) => f.pdf.slice(0, 5)), ['D0714', '10081', 'D0267']);
+  assert.deepEqual(skipped.map((x) => x.file), ['Anexo.pdf']);
 }
 
 // Ficha sin códigos de formulario: un solo formulario con todo.
@@ -87,6 +123,8 @@ assert.equal(q(55, 5).extraFieldGroups, 1);
 assert.equal(q(56, 5).extraFieldGroups, 2);
 assert.equal(q(56, 5).total, 12700 + 2 * 250);
 assert.equal(q(50, 30).extraRules + q(50, 30).extraFieldGroups, 0);
+assert.match(q(88, 74).why, /supera el máximo de Alta/);
+assert.match(q(50, 30).why, /entran en Alta/);
 
 // ── Reportes: salen del mismo modelo que la pantalla ───────────────────────
 {

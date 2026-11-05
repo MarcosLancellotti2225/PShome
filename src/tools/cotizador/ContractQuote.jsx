@@ -1,7 +1,7 @@
 // Cotización según el contrato (Rubro 2): precio por formulario a partir de la ficha.
 import { useMemo, useState } from 'react';
 import { Copy, RotateCcw } from 'lucide-react';
-import { CONTRACT_PRICING, money, quoteForm, quoteSummary } from '../../lib/quoter/contract.js';
+import { CONTRACT_PRICING, formTitle, money, quoteForm, quoteSummary } from '../../lib/quoter/contract.js';
 import { Alert, Badge, Button, DataTable, Field, Panel, Stats } from '../../components/ui';
 import { PRICING_KEY, savePricing } from './pricing';
 
@@ -70,8 +70,8 @@ export default function ContractQuote({ contract, onStatus, pricing, setPricing,
             columns={[
               { key: 'name', label: 'Formulario', render: ({ form }) => (
                 <>
-                  <strong>{form.pdf || form.code || 'Formulario'}</strong>
-                  <div className="cz-dim cz-small">Ficha: {form.ficha}{form.code ? ` · ${form.code}` : ''}{form.pdfFields != null ? ` · ${form.pdfFields} espacios en el PDF` : ''}</div>
+                  <strong>{formTitle(form)}</strong>
+                  <div className="cz-dim cz-small">{form.pdf ? `PDF: ${form.pdf} (${form.pdfFields} espacios)` : 'Sin PDF emparejado'}{form.code ? ` · códigos: ${form.code}` : ''}</div>
                 </>
               ) },
               { key: 'fields', label: 'Campos', num: true, render: ({ form }) => <span title={`${form.auto} automáticos o bloqueados y ${form.info} informativos no cuentan`}><strong>{form.editable}</strong></span> },
@@ -91,7 +91,7 @@ export default function ContractQuote({ contract, onStatus, pricing, setPricing,
 
           {items.map(({ form, quote: q }) => (
             <div key={form.id} className="cz-form-note">
-              <div><strong>{form.pdf || form.code}:</strong> {q.why}{q.extraFields > 0 ? ` Pasa los ${pricing.tiers[2].maxFields} campos por ${q.extraFields}: se cobran ${q.extraFieldGroups} grupos de ${pricing.extraFields.groupSize}.` : ''}</div>
+              <div><strong>{formTitle(form)}:</strong> {q.why}{q.extraFields > 0 ? ` Pasa los ${pricing.tiers[2].maxFields} campos por ${q.extraFields}: se cobran ${q.extraFieldGroups} grupos de ${pricing.extraFields.groupSize}.` : ''}</div>
               <div className="cz-rule-mix cz-dim cz-small">
                 Reglas: {pl(form.rules.validacion, 'validación', 'validaciones')} · {pl(form.rules.condicional, 'condicional', 'condicionales')} · {pl(form.rules.calculo, 'cálculo', 'cálculos')} · {pl(form.rules.otra, 'otra', 'otras')}.
                 {' '}Campos que no cuentan: {pl(form.auto, 'automático o bloqueado', 'automáticos o bloqueados')}, {pl(form.info, 'informativo', 'informativos')}.
@@ -100,7 +100,7 @@ export default function ContractQuote({ contract, onStatus, pricing, setPricing,
                 <div className="cz-config">
                   <span className="ui-hint">{q.extraRules === 1 ? '1 regla pasa' : `${q.extraRules} reglas pasan`} el máximo de {pricing.tiers[2].maxRules}. El contrato las cobra a {money(pricing.hourRate, c)} la hora, a estimar:</span>
                   <Field label="Horas" inline>
-                    <input type="number" min="0" step="0.5" value={hours[form.id] ?? ''} placeholder="a estimar" onChange={(e) => setHours({ ...hours, [form.id]: e.target.value === '' ? null : e.target.value })} aria-label={`Horas para ${form.pdf || form.code}`} />
+                    <input type="number" min="0" step="0.5" value={hours[form.id] ?? ''} placeholder="a estimar" onChange={(e) => setHours({ ...hours, [form.id]: e.target.value === '' ? null : e.target.value })} aria-label={`Horas para ${formTitle(form)}`} />
                   </Field>
                 </div>
               )}

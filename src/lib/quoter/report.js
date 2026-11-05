@@ -42,7 +42,7 @@ function buildCommercialReport(model, opts) {
         }).join('');
         return '<div class="form">' +
             '<div class="form-head"><div><div class="fname">' + esc(it.name) + '</div>' +
-            '<div class="fsub">' + it.fields + ' campos de captura · ' + it.rules + ' reglas de negocio</div></div>' +
+            '<div class="fsub">' + it.fields + ' campos de captura · ' + it.rules + ' reglas de negocio' + (it.pdf ? '<br>Documento: ' + esc(it.pdf) : '') + '</div></div>' +
             pill(it.levelKey, 'Complejidad ' + it.level.toLowerCase() + ' · línea ' + it.line) + '</div>' +
             '<p class="why">' + esc(it.why) + '</p>' +
             '<table class="lines">' + lines +

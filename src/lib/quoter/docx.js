@@ -120,6 +120,7 @@ function buildDocxReport(model, opts) {
                 run('Complejidad ' + it.level.toLowerCase() + ' · línea ' + it.line, { bold: true, size: 18, color: col.text }),
                 run('   ' + it.fields + ' campos de captura · ' + it.rules + ' reglas de negocio', { size: 18, color: COLORS.secondary }),
             ], { after: 40 });
+            if (it.pdf) body += para(run('Documento: ' + it.pdf, { size: 16, color: COLORS.muted }), { after: 40 });
             body += para(run(it.why, { size: 18, color: COLORS.secondary }), { after: 80 });
             var rows = it.lines.map(function (l) {
                 return '<w:tr>' +
