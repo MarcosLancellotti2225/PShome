@@ -3,30 +3,18 @@ import { useMemo, useState } from 'react';
 import { Copy, RotateCcw } from 'lucide-react';
 import { CONTRACT_PRICING, money, quoteForm, quoteSummary } from '../../lib/quoter/contract.js';
 import { Alert, Badge, Button, DataTable, Field, Panel, Stats } from '../../components/ui';
+import { PRICING_KEY, savePricing } from './pricing';
 
-const PRICING_KEY = 'pstools.quoter.contract';
 const LEVEL_TONE = { baja: 'good', media: 'warn', alta: 'bad' };
 const KIND_LABEL = { editable: 'Editable', auto: 'Automático / bloqueado', info: 'Informativo' };
 const pl = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 const short = (t, n = 110) => (t.length > n ? `${t.slice(0, n)}…` : t);
 const RULE_LABEL = { validacion: 'Validación', condicional: 'Condicional', calculo: 'Cálculo', otra: 'Otra' };
 
-function loadPricing() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(PRICING_KEY) || 'null');
-    if (saved?.tiers?.length === 3) return { ...CONTRACT_PRICING, ...saved, extraFields: { ...CONTRACT_PRICING.extraFields, ...saved.extraFields } };
-  } catch { /* sin guardado local */ }
-  return CONTRACT_PRICING;
-}
-function savePricing(p) {
-  try { localStorage.setItem(PRICING_KEY, JSON.stringify(p)); } catch { /* sin guardado local */ }
-}
 
-export default function ContractQuote({ contract, onStatus }) {
-  const [pricing, setPricing] = useState(loadPricing);
-  const [hours, setHours] = useState({});
+export default function ContractQuote({ contract, onStatus, pricing, setPricing, hours, setHours }) {
   const [open, setOpen] = useState(null);
-  const forms = contract?.forms || [];
+  const forms = useMemo(() => contract?.forms || [], [contract]);
   const skipped = contract?.skipped || [];
 
   const items = useMemo(() => forms.map((form) => ({ form, quote: quoteForm(form, pricing, hours[form.id] ?? null) })), [forms, pricing, hours]);

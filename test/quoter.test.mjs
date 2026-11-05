@@ -88,4 +88,31 @@ assert.equal(q(56, 5).extraFieldGroups, 2);
 assert.equal(q(56, 5).total, 12700 + 2 * 250);
 assert.equal(q(50, 30).extraRules + q(50, 30).extraFieldGroups, 0);
 
+// ── Reportes: salen del mismo modelo que la pantalla ───────────────────────
+{
+  const { reportModel } = await import('../src/lib/quoter/contract.js');
+  const { buildCommercialReport } = await import('../src/lib/quoter/report.js');
+  const { buildDocxReport } = await import('../src/lib/quoter/docx.js');
+  const JSZip = (await import('jszip')).default;
+  const contract = {
+    forms: [{ id: 'f|D0001', code: 'D0001', ficha: 'f.xlsx', pdf: 'D0001.pdf', editable: 23, auto: 2, info: 1, rules: { validacion: 19, condicional: 9, calculo: 2, otra: 1, total: 31 } }],
+    skipped: [{ file: 'Anexo.pdf', reason: 'No tiene campos.' }],
+  };
+  const m = reportModel(contract, CONTRACT_PRICING, {});
+  assert.equal(m.items[0].level, 'Alta');
+  assert.equal(m.total, 12700);
+  assert.equal(m.pending, true);
+  assert.equal(m.items[0].lines[1].amount, null, 'regla extra sin horas = a estimar');
+  const m2 = reportModel(contract, CONTRACT_PRICING, { 'f|D0001': 2 });
+  assert.equal(m2.total, 12700 + 198);
+  assert.equal(m2.pending, false);
+  const html = buildCommercialReport(m, { archivo: 'caso.zip', fecha: 'hoy' });
+  assert.ok(html.includes('USD 12.700') && html.includes('a estimar') && html.includes('Anexo.pdf'));
+  assert.ok(!/semana|puntos/i.test(html), 'el reporte ya no habla de semanas ni puntos');
+  const docx = await buildDocxReport(m2, { archivo: 'caso.zip' });
+  const xml = await (await JSZip.loadAsync(docx)).file('word/document.xml').async('string');
+  assert.ok(xml.includes('USD 12.898') && xml.includes('Complejidad alta'));
+  assert.ok(!/semana/i.test(xml));
+}
+
 console.log('cotizador: todas las pruebas OK');

@@ -258,3 +258,68 @@ export function quoteSummary(items, pricing = CONTRACT_PRICING) {
         `Total: ${money(total, c)}${pending ? ' + horas de reglas extra a estimar' : ''} (sin IVA)`,
     ].join('\n');
 }
+
+// ─── Modelo para los reportes (HTML, PDF y Word) ────────────────────────────
+
+const pluralize = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+
+/**
+ * Todo lo que muestran los reportes, ya calculado: los tres formatos salen de acá
+ * para que digan lo mismo que la pantalla.
+ * @param {object} contract - result.contract de analyzeZip
+ * @param {object} pricing
+ * @param {Object<string, number|null>} hours - horas de reglas extra por id de formulario
+ */
+export function reportModel(contract, pricing = CONTRACT_PRICING, hours = {}) {
+    const c = pricing.currency;
+    const quoted = (contract?.forms || []).map((form) => ({ form, quote: quoteForm(form, pricing, hours[form.id] ?? null) }));
+    const items = quoted.map(({ form, quote: q }) => {
+        const lines = [{ label: `Formulario digital ${q.tier.label.toLowerCase()} (línea ${q.tier.line})`, amount: q.base }];
+        if (q.extraFieldGroups) {
+            lines.push({ label: `${pluralize(q.extraFieldGroups, 'grupo', 'grupos')} de ${pricing.extraFields.groupSize} campos adicionales (línea 2.4)`, amount: q.fieldsCost });
+        }
+        if (q.extraRules) {
+            lines.push({
+                label: `${pluralize(q.extraRules, 'regla adicional', 'reglas adicionales')} (línea 2.5, ${money(pricing.hourRate, c)} por hora)`
+                    + (q.hours == null ? '' : ` · ${q.hours} h`),
+                amount: q.hours == null ? null : q.hoursCost,
+            });
+        }
+        return {
+            name: form.pdf || form.code || 'Formulario',
+            code: form.code,
+            level: q.tier.label,
+            levelKey: q.tier.key,
+            line: q.tier.line,
+            fields: q.fields,
+            rules: q.rules,
+            why: q.why,
+            ruleMix: form.rules,
+            notCounted: { auto: form.auto, info: form.info },
+            lines,
+            total: q.total,
+            pending: q.pendingHours,
+        };
+    });
+    const total = items.reduce((s, i) => s + i.total, 0);
+    const pending = items.some((i) => i.pending);
+    const sum = (k) => items.reduce((s, i) => s + i.ruleMix[k], 0);
+    const includes = items.length ? [
+        `Construcción de ${pluralize(items.length, 'formulario digital', 'formularios digitales')} con ${pluralize(items.reduce((s, i) => s + i.fields, 0), 'campo de captura', 'campos de captura')}.`,
+        `Implementación de ${pluralize(items.reduce((s, i) => s + i.rules, 0), 'regla de negocio', 'reglas de negocio')}: ${pluralize(sum('validacion'), 'validación', 'validaciones')}, ${pluralize(sum('condicional'), 'condición', 'condiciones')}, ${pluralize(sum('calculo'), 'cálculo', 'cálculos')}${sum('otra') ? ` y ${pluralize(sum('otra'), 'otra', 'otras')}` : ''}.`,
+        'Generación del documento PDF con los datos del formulario.',
+        'Pruebas del formulario, del documento generado y del envío de datos.',
+    ] : [];
+    return {
+        source: pricing.source,
+        currency: c,
+        tiers: pricing.tiers,
+        hourRate: pricing.hourRate,
+        items,
+        attachments: (contract?.skipped || []).map((s) => ({ file: s.file, reason: s.reason })),
+        total,
+        totalLabel: `${money(total, c)}${pending ? ' + horas a estimar' : ''}`,
+        pending,
+        includes,
+    };
+}

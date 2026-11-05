@@ -60,7 +60,8 @@ Une el Detector de campos y Convertir PDF de `FormConverterExcel`.
 - Reglas = todos los textos distintos de «Regla» y «Observaciones» de cada campo (validaciones, condicionales, cálculos, otras), salvo «No aplica…», «Referencia…» y «Aplica para…».
 - Nivel = el mayor entre el que piden los campos y el que piden las reglas. 15 campos es Baja. Arriba de 50 campos: grupos de 5 (un grupo empezado cuenta entero). Reglas arriba de 30: horas a estimar a USD 99.
 - Los precios están en `CONTRACT_PRICING` y se pueden editar en la pantalla (se guardan en el navegador).
-- Abajo, plegado, el análisis por puntos de antes. Los reportes (HTML, PDF, Word) todavía usan ese cálculo.
+- Abajo, plegado, el análisis por puntos de antes (solo de referencia interna).
+- Los reportes (HTML, PDF y Word) salen de `reportModel` en `contract.js`, con los precios y las horas de la pantalla: dicen lo mismo que la cotización.
 - `npm test` corre también `test/quoter.test.mjs` (ficha sintética).
 
 ## Marca
