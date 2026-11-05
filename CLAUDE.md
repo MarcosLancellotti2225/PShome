@@ -53,6 +53,16 @@ Une el Detector de campos y Convertir PDF de `FormConverterExcel`.
 - `npm test` corre `test/pdf-editor.test.mjs`; con la ruta a FormConverterExcel como argumento compara contra el motor original.
 - Deshacer/rehacer en `state.js`; el trabajo se guarda en IndexedDB (`storage.js`) para retomarlo.
 
+## Cotizador (`src/tools/cotizador`)
+
+- Arriba, «Cotización según contrato»: `src/lib/quoter/contract.js` lee la ficha (columna «Nombre del campo en formulario») y cotiza cada formulario con el Rubro 2 de la propuesta INS–Namirial del 21/10/2025.
+- Campos = editables de la ficha (también los prellenados que se pueden cambiar); no cuentan los bloqueados («Disabled»), los informativos ni los que van solo al JSON. Varias filas del mismo campo (opciones de un combo) cuentan una vez.
+- Reglas = todos los textos distintos de «Regla» y «Observaciones» de cada campo (validaciones, condicionales, cálculos, otras), salvo «No aplica…», «Referencia…» y «Aplica para…».
+- Nivel = el mayor entre el que piden los campos y el que piden las reglas. 15 campos es Baja. Arriba de 50 campos: grupos de 5 (un grupo empezado cuenta entero). Reglas arriba de 30: horas a estimar a USD 99.
+- Los precios están en `CONTRACT_PRICING` y se pueden editar en la pantalla (se guardan en el navegador).
+- Abajo, plegado, el análisis por puntos de antes. Los reportes (HTML, PDF, Word) todavía usan ese cálculo.
+- `npm test` corre también `test/quoter.test.mjs` (ficha sintética).
+
 ## Marca
 
 - Tokens del Namirial Design System en `src/styles/variables.css`. Fuente Open Sans.

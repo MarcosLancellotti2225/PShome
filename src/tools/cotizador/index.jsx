@@ -7,6 +7,7 @@ import { buildCommercialReport } from '../../lib/quoter/report.js';
 import { buildDocxReport } from '../../lib/quoter/docx.js';
 import { baseName, downloadBlob, jsonBlob, readBytes } from '../../lib/files';
 import { Alert, Badge, Button, DataTable, Field, FileDrop, Panel, Stats } from '../../components/ui';
+import ContractQuote from './ContractQuote';
 import './cotizador.css';
 
 const CFG_KEY = 'formtools.quoter.config'; // misma clave que la versión anterior: se conservan los umbrales calibrados
@@ -175,7 +176,17 @@ export default function Cotizador() {
         {status && <Alert tone={status.tone}>{status.text}</Alert>}
       </Panel>
 
-      {result && <Results result={result} cfg={cfg} setCfg={setCfg} target={target} setTarget={setTarget} onRequote={requote} onCalibrate={calibrate} />}
+      {result && <ContractQuote key={zip?.name} contract={result.contract} onStatus={setStatus} />}
+
+      {result && (
+        <details className="cz-internal">
+          <summary>Análisis interno por puntos (esfuerzo y plazo)</summary>
+          <p className="ui-hint">El cálculo anterior, por puntos. No es el precio del contrato: sirve para ver dónde está el esfuerzo. Los reportes (Ver reporte, PDF, Word) todavía usan este cálculo.</p>
+          <div className="ui-stack">
+            <Results result={result} cfg={cfg} setCfg={setCfg} target={target} setTarget={setTarget} onRequote={requote} onCalibrate={calibrate} />
+          </div>
+        </details>
+      )}
     </div>
   );
 }
