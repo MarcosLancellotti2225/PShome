@@ -1,36 +1,33 @@
 // Cotización según el contrato (Rubro 2): precio por formulario a partir de la ficha.
 import { useMemo, useState } from 'react';
 import { Copy, RotateCcw } from 'lucide-react';
-import { CONTRACT_PRICING, money, quoteForm, quoteSummary } from '../../lib/quoter/contract.js';
+import { CONTRACT_PRICING, explainQuote, formTitle, money, quoteForm, quoteItems, quoteSummary } from '../../lib/quoter/contract.js';
 import { Alert, Badge, Button, DataTable, Field, Panel, Stats } from '../../components/ui';
+import { PRICING_KEY, savePricing } from './pricing';
 
-const PRICING_KEY = 'pstools.quoter.contract';
 const LEVEL_TONE = { baja: 'good', media: 'warn', alta: 'bad' };
 const KIND_LABEL = { editable: 'Editable', auto: 'Automático / bloqueado', info: 'Informativo' };
 const pl = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 const short = (t, n = 110) => (t.length > n ? `${t.slice(0, n)}…` : t);
 const RULE_LABEL = { validacion: 'Validación', condicional: 'Condicional', calculo: 'Cálculo', otra: 'Otra' };
 
-function loadPricing() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(PRICING_KEY) || 'null');
-    if (saved?.tiers?.length === 3) return { ...CONTRACT_PRICING, ...saved, extraFields: { ...CONTRACT_PRICING.extraFields, ...saved.extraFields } };
-  } catch { /* sin guardado local */ }
-  return CONTRACT_PRICING;
-}
-function savePricing(p) {
-  try { localStorage.setItem(PRICING_KEY, JSON.stringify(p)); } catch { /* sin guardado local */ }
-}
-
-export default function ContractQuote({ contract, onStatus }) {
-  const [pricing, setPricing] = useState(loadPricing);
-  const [hours, setHours] = useState({});
+export default function ContractQuote({ contract, onStatus, pricing, setPricing, hours, setHours, group, setGroup }) {
   const [open, setOpen] = useState(null);
-  const forms = contract?.forms || [];
+  const forms = useMemo(() => contract?.forms || [], [contract]);
   const skipped = contract?.skipped || [];
 
-  const items = useMemo(() => forms.map((form) => ({ form, quote: quoteForm(form, pricing, hours[form.id] ?? null) })), [forms, pricing, hours]);
+  const items = useMemo(() => quoteItems(forms, pricing, hours, group), [forms, pricing, hours, group]);
+  const explanation = useMemo(() => explainQuote(items, contract, pricing), [items, contract, pricing]);
   const total = items.reduce((s, i) => s + i.quote.total, 0);
+  const grouped = items.filter((i) => i.role !== 'solo');
+  const separate = grouped.reduce((s, i) => s + quoteForm(i.form, pricing, hours[i.form.id] ?? null).total, 0);
+  const groupTotal = grouped.reduce((s, i) => s + i.quote.total, 0);
+  const mainId = grouped.find((i) => i.role === 'principal')?.form.id ?? null;
+  const toggleMember = (id) => {
+    const out = new Set(group.out);
+    if (out.has(id)) out.delete(id); else out.add(id);
+    setGroup({ ...group, out: [...out] });
+  };
   const pending = items.some((i) => i.quote.pendingHours);
   const c = pricing.currency;
 
@@ -51,8 +48,8 @@ export default function ContractQuote({ contract, onStatus }) {
   }
   async function copySummary() {
     try {
-      await navigator.clipboard.writeText(quoteSummary(items, pricing));
-      onStatus({ tone: 'success', text: 'Resumen copiado. Pegalo en el mail o en la propuesta.' });
+      await navigator.clipboard.writeText(quoteSummary(items, pricing, contract));
+      onStatus({ tone: 'success', text: 'Cotización y explicación copiadas. Pegalas en el mail o en la propuesta.' });
     } catch {
       onStatus({ tone: 'error', text: 'El navegador no dejó copiar.' });
     }
@@ -77,17 +74,46 @@ export default function ContractQuote({ contract, onStatus }) {
             { label: 'Total sin IVA', value: money(total, c), tone: 'good' },
             ...(pending ? [{ label: 'Horas a estimar', value: items.filter((i) => i.quote.pendingHours).length === 1 ? '1 formulario' : `${items.filter((i) => i.quote.pendingHours).length} formularios`, tone: 'warn' }] : []),
           ]} />
+          {forms.length > 1 && (
+            <div className="cz-group">
+              <label className="cz-group-toggle">
+                <input type="checkbox" checked={group.on} onChange={(e) => setGroup({ ...group, on: e.target.checked })} />
+                <span><strong>Cotizar como grupo</strong> — el principal se cobra completo y los demás solo por los campos y reglas que agregan (lo repetido no se cobra dos veces).</span>
+              </label>
+              {group.on && (
+                <div className="cz-config">
+                  <Field label="Principal" inline>
+                    <select className="ui-input" value={mainId ?? ''} onChange={(e) => setGroup({ ...group, main: e.target.value })} aria-label="Formulario principal del grupo">
+                      {forms.filter((f) => !group.out.includes(f.id)).map((f) => <option key={f.id} value={f.id}>{formTitle(f)}</option>)}
+                    </select>
+                  </Field>
+                  {grouped.length > 1
+                    ? <span className="ui-hint">Por separado: {money(separate, c)} · en grupo: <strong>{money(groupTotal, c)}</strong></span>
+                    : <span className="ui-hint">Marcá al menos dos formularios para agruparlos.</span>}
+                </div>
+              )}
+            </div>
+          )}
           <DataTable
-            rows={items.map(({ form, quote: q }) => ({ key: form.id, form, q }))}
+            rows={items.map(({ form, counts, role, shared, quote: q }) => ({ key: form.id, form, counts, role, shared, q }))}
             columns={[
-              { key: 'name', label: 'Formulario', render: ({ form }) => (
+              ...(group.on && forms.length > 1 ? [{ key: 'in', label: 'Grupo', render: ({ form }) => (
+                <input type="checkbox" checked={!group.out.includes(form.id)} onChange={() => toggleMember(form.id)} aria-label={`Incluir ${formTitle(form)} en el grupo`} />
+              ) }] : []),
+              { key: 'name', label: 'Formulario', render: ({ form, role }) => (
                 <>
-                  <strong>{form.pdf || form.code || 'Formulario'}</strong>
-                  <div className="cz-dim cz-small">Ficha: {form.ficha}{form.code ? ` · ${form.code}` : ''}{form.pdfFields != null ? ` · ${form.pdfFields} espacios en el PDF` : ''}</div>
+                  <strong>{formTitle(form)}</strong>
+                  {role === 'principal' && <> <Badge tone="primary">Principal</Badge></>}
+                  {role === 'agrupado' && <> <Badge>Solo lo nuevo</Badge></>}
+                  <div className="cz-dim cz-small">{form.pdf ? `PDF: ${form.pdf} (${form.pdfFields} espacios)` : 'Sin PDF emparejado'}{form.code ? ` · códigos: ${form.code}` : ''}</div>
                 </>
               ) },
-              { key: 'fields', label: 'Campos', num: true, render: ({ form }) => <span title={`${form.auto} automáticos o bloqueados y ${form.info} informativos no cuentan`}><strong>{form.editable}</strong></span> },
-              { key: 'rules', label: 'Reglas', num: true, render: ({ form }) => <strong>{form.rules.total}</strong> },
+              { key: 'fields', label: 'Campos', num: true, render: ({ form, q, role }) => (role === 'agrupado'
+                ? <span title="Campos nuevos / campos de la ficha"><strong>{q.fields}</strong><span className="cz-dim"> / {form.editable}</span></span>
+                : <span title={`${form.auto} automáticos o bloqueados y ${form.info} informativos no cuentan`}><strong>{form.editable}</strong></span>) },
+              { key: 'rules', label: 'Reglas', num: true, render: ({ form, q, role }) => (role === 'agrupado'
+                ? <span title="Reglas nuevas / reglas de la ficha"><strong>{q.rules}</strong><span className="cz-dim"> / {form.rules.total}</span></span>
+                : <strong>{form.rules.total}</strong>) },
               { key: 'level', label: 'Nivel', render: ({ q }) => <Badge tone={LEVEL_TONE[q.tier.key]}>{q.tier.label} · línea {q.tier.line}</Badge> },
               { key: 'base', label: 'Base', num: true, render: ({ q }) => money(q.base, c) },
               { key: 'extra', label: 'Extras', num: true, render: ({ q }) => (
@@ -101,9 +127,9 @@ export default function ContractQuote({ contract, onStatus }) {
             ]}
           />
 
-          {items.map(({ form, quote: q }) => (
+          {items.map(({ form, quote: q, role, shared }) => (
             <div key={form.id} className="cz-form-note">
-              <div><strong>{form.pdf || form.code}:</strong> {q.why}{q.extraFields > 0 ? ` Pasa los ${pricing.tiers[2].maxFields} campos por ${q.extraFields}: se cobran ${q.extraFieldGroups} grupos de ${pricing.extraFields.groupSize}.` : ''}</div>
+              <div><strong>{formTitle(form)}:</strong> {role === 'agrupado' ? `Comparte ${pl(shared.fields, 'campo', 'campos')} y ${pl(shared.rules, 'regla', 'reglas')} con los anteriores del grupo; se cobra lo que agrega (${pl(q.fields, 'campo', 'campos')} y ${pl(q.rules, 'regla', 'reglas')}): ${q.tier.label}.` : q.why}{q.extraFields > 0 ? ` Pasa los ${pricing.tiers[2].maxFields} campos por ${q.extraFields}: se cobran ${q.extraFieldGroups} grupos de ${pricing.extraFields.groupSize}.` : ''}</div>
               <div className="cz-rule-mix cz-dim cz-small">
                 Reglas: {pl(form.rules.validacion, 'validación', 'validaciones')} · {pl(form.rules.condicional, 'condicional', 'condicionales')} · {pl(form.rules.calculo, 'cálculo', 'cálculos')} · {pl(form.rules.otra, 'otra', 'otras')}.
                 {' '}Campos que no cuentan: {pl(form.auto, 'automático o bloqueado', 'automáticos o bloqueados')}, {pl(form.info, 'informativo', 'informativos')}.
@@ -112,7 +138,7 @@ export default function ContractQuote({ contract, onStatus }) {
                 <div className="cz-config">
                   <span className="ui-hint">{q.extraRules === 1 ? '1 regla pasa' : `${q.extraRules} reglas pasan`} el máximo de {pricing.tiers[2].maxRules}. El contrato las cobra a {money(pricing.hourRate, c)} la hora, a estimar:</span>
                   <Field label="Horas" inline>
-                    <input type="number" min="0" step="0.5" value={hours[form.id] ?? ''} placeholder="a estimar" onChange={(e) => setHours({ ...hours, [form.id]: e.target.value === '' ? null : e.target.value })} aria-label={`Horas para ${form.pdf || form.code}`} />
+                    <input type="number" min="0" step="0.5" value={hours[form.id] ?? ''} placeholder="a estimar" onChange={(e) => setHours({ ...hours, [form.id]: e.target.value === '' ? null : e.target.value })} aria-label={`Horas para ${formTitle(form)}`} />
                   </Field>
                 </div>
               )}
@@ -138,6 +164,14 @@ export default function ContractQuote({ contract, onStatus }) {
       )}
 
       {skipped.map((s) => <Alert key={s.file} tone="info"><strong>{s.file}:</strong> {s.reason}</Alert>)}
+
+      {explanation.length > 0 && (
+        <details className="cz-pricing" open>
+          <summary>Explicación para el cliente</summary>
+          <p className="ui-hint">Sale en los reportes y en «Copiar resumen». Se arma con los números de este ZIP.</p>
+          <ul className="cz-expl">{explanation.map((x) => <li key={x}>{x}</li>)}</ul>
+        </details>
+      )}
 
       <details className="cz-pricing">
         <summary>Precios y límites del contrato</summary>

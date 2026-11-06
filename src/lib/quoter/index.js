@@ -87,6 +87,16 @@ function calibrateThresholds(points, targetLevel, current) {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
+// Los ZIP armados en Windows guardan los nombres en CP437/850 («Electrónico» llega
+// como «Electr�nico» si se lee como UTF-8). Si no es UTF-8 válido, se lee como CP437.
+var CP437 = 'ÇüéâäàåçêëèïîìÄÅÉæÆôöòûùÿÖÜ¢£¥₧ƒáíóúñÑªº¿⌐¬½¼¡«»░▒▓│┤╡╢╖╕╣║╗╝╜╛┐└┴┬├─┼╞╟╚╔╩╦╠═╬╧╨╤╥╙╘╒╓╫╪┘┌█▄▌▐▀αßΓπΣσµτΦΘΩδ∞φε∩≡±≥≤⌠⌡÷≈°∙·√ⁿ²■\u00a0';
+function decodeZipName(bytes) {
+    try { return new TextDecoder('utf-8', { fatal: true }).decode(bytes); } catch (e) { /* no es UTF-8 */ }
+    var out = '';
+    for (var i = 0; i < bytes.length; i++) out += bytes[i] < 128 ? String.fromCharCode(bytes[i]) : CP437.charAt(bytes[i] - 128);
+    return out;
+}
+
 function norm(s) {
     return String(s == null ? '' : s).trim().toLowerCase()
         .normalize('NFD').replace(/[̀-ͯ]/g, '');
@@ -764,7 +774,7 @@ async function analyzeZip(zipBytes, configOverride) {
             ? configOverride.reuseFactor : DEFAULT_CONFIG.reuseFactor,
     };
 
-    var zip = await JSZip.loadAsync(zipBytes);
+    var zip = await JSZip.loadAsync(zipBytes, { decodeFileName: decodeZipName });
     var entries = [];
     zip.forEach(function (path, entry) {
         if (entry.dir || isJunk(path)) return;

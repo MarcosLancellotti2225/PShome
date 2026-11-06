@@ -8,6 +8,8 @@ import { buildDocxReport } from '../../lib/quoter/docx.js';
 import { baseName, downloadBlob, jsonBlob, readBytes } from '../../lib/files';
 import { Alert, Badge, Button, DataTable, Field, FileDrop, Panel, Stats } from '../../components/ui';
 import ContractQuote from './ContractQuote';
+import { loadPricing } from './pricing';
+import { reportModel } from '../../lib/quoter/contract.js';
 import './cotizador.css';
 
 const CFG_KEY = 'formtools.quoter.config'; // misma clave que la versión anterior: se conservan los umbrales calibrados
@@ -58,6 +60,9 @@ export default function Cotizador() {
   const [busy, setBusy] = useState(false);
   const [cfg, setCfg] = useState(loadConfig);
   const [target, setTarget] = useState('Media');
+  const [pricing, setPricing] = useState(loadPricing);
+  const [hours, setHours] = useState({}); // horas de reglas extra, por formulario
+  const [group, setGroup] = useState({ on: false, main: null, out: [] }); // cotizar varios formularios como grupo
 
   const name = baseName(zip, 'formulario');
 
@@ -101,9 +106,9 @@ export default function Cotizador() {
 
   // Reporte de una página para comercial: sin puntajes ni pesos.
   function commercialReport(mode) {
-    const html = buildCommercialReport(result, { archivo: zip?.name ?? null, fecha: today() });
+    const html = buildCommercialReport(reportModel(result.contract, pricing, hours, group), { archivo: zip?.name ?? null, fecha: today() });
     if (mode === 'download') {
-      downloadBlob(new Blob([html], { type: 'text/html;charset=utf-8' }), `${name}_estimacion.html`);
+      downloadBlob(new Blob([html], { type: 'text/html;charset=utf-8' }), `${name}_cotizacion.html`);
       return;
     }
     const w = window.open('', '_blank');
@@ -122,8 +127,8 @@ export default function Cotizador() {
   async function exportDocx() {
     setStatus({ tone: 'info', text: 'Generando el documento de Word…' });
     try {
-      const bytes = await buildDocxReport(result, { archivo: zip?.name ?? null, fecha: today() });
-      downloadBlob(new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }), `${name}_estimacion.docx`);
+      const bytes = await buildDocxReport(reportModel(result.contract, pricing, hours, group), { archivo: zip?.name ?? null, fecha: today() });
+      downloadBlob(new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }), `${name}_cotizacion.docx`);
       setStatus({ tone: 'success', text: 'Word descargado.' });
     } catch (e) {
       setStatus({ tone: 'error', text: e.message });
@@ -159,7 +164,7 @@ export default function Cotizador() {
     <div className="ui-stack">
       <Panel title="1. Cargar el ZIP" hint="El ZIP puede traer PDFs, Excels de reglas de negocio (con todas sus pestañas) y JSONs de definición. Se analiza todo, sin importar las carpetas.">
         <div className="ui-files">
-          <FileDrop label="ZIP del formulario" description="PDFs + Excels + JSONs" accept=".zip" file={zip} onFile={(f) => { setZip(f); setResult(null); setStatus(null); }} required />
+          <FileDrop label="ZIP del formulario" description="PDFs + Excels + JSONs" accept=".zip" file={zip} onFile={(f) => { setZip(f); setResult(null); setStatus(null); setHours({}); setGroup({ on: false, main: null, out: [] }); }} required />
         </div>
         <div className="ui-row">
           <Button variant="primary" icon={Calculator} onClick={run} disabled={!zip || busy}>{busy ? 'Analizando…' : 'Analizar y cotizar'}</Button>
@@ -176,12 +181,12 @@ export default function Cotizador() {
         {status && <Alert tone={status.tone}>{status.text}</Alert>}
       </Panel>
 
-      {result && <ContractQuote key={zip?.name} contract={result.contract} onStatus={setStatus} />}
+      {result && <ContractQuote contract={result.contract} onStatus={setStatus} pricing={pricing} setPricing={setPricing} hours={hours} setHours={setHours} group={group} setGroup={setGroup} />}
 
       {result && (
         <details className="cz-internal">
           <summary>Análisis interno por puntos (esfuerzo y plazo)</summary>
-          <p className="ui-hint">El cálculo anterior, por puntos. No es el precio del contrato: sirve para ver dónde está el esfuerzo. Los reportes (Ver reporte, PDF, Word) todavía usan este cálculo.</p>
+          <p className="ui-hint">El cálculo anterior, por puntos. No es el precio del contrato: sirve para ver dónde está el esfuerzo. Los reportes (Ver reporte, PDF, Word) muestran la cotización según contrato.</p>
           <div className="ui-stack">
             <Results result={result} cfg={cfg} setCfg={setCfg} target={target} setTarget={setTarget} onRequote={requote} onCalibrate={calibrate} />
           </div>

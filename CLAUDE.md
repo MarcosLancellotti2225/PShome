@@ -59,8 +59,12 @@ Une el Detector de campos y Convertir PDF de `FormConverterExcel`.
 - Campos = editables de la ficha (también los prellenados que se pueden cambiar); no cuentan los bloqueados («Disabled»), los informativos ni los que van solo al JSON. Varias filas del mismo campo (opciones de un combo) cuentan una vez.
 - Reglas = todos los textos distintos de «Regla» y «Observaciones» de cada campo (validaciones, condicionales, cálculos, otras), salvo «No aplica…», «Referencia…» y «Aplica para…».
 - Nivel = el mayor entre el que piden los campos y el que piden las reglas. 15 campos es Baja. Arriba de 50 campos: grupos de 5 (un grupo empezado cuenta entero). Reglas arriba de 30: horas a estimar a USD 99.
+- Una ficha = un formulario web (es lo que cobra el contrato). Los códigos de PDF salen solo de «Formulario a visualizar» y de «No aplica Formulario X» (también numéricos, ej. 1008172). Cada ficha se empareja con su PDF por el nombre.
+- Grupo (`quoteItems`): con varios formularios se puede cotizar en grupo. El principal (por defecto el más grande) se cobra completo; los demás solo por los campos y reglas que no estaban en los anteriores (mínimo Baja).
+- Explicación para el cliente (`explainQuote`): se arma con los números del ZIP; sale en la pantalla, en «Copiar resumen» y en los reportes.
 - Los precios están en `CONTRACT_PRICING` y se pueden editar en la pantalla (se guardan en el navegador).
-- Abajo, plegado, el análisis por puntos de antes. Los reportes (HTML, PDF, Word) todavía usan ese cálculo.
+- Abajo, plegado, el análisis por puntos de antes (solo de referencia interna).
+- Los reportes (HTML, PDF y Word) salen de `reportModel` en `contract.js`, con los precios y las horas de la pantalla: dicen lo mismo que la cotización.
 - `npm test` corre también `test/quoter.test.mjs` (ficha sintética).
 
 ## Marca
