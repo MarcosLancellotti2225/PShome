@@ -99,4 +99,6 @@ Une el Detector de campos y Convertir PDF de `FormConverterExcel`.
 
 - `src/tools/signaframe-studio`: simula un formulario con `signaframe-engine` (el motor real del front), muestra el JSON que sale, los AcroForms, diagnósticos y el Revisor; cada cambio en el formulario vuelve a simular. Abre «trabajos» (.json, `tipo: se-tools/signaframe-trabajo`).
 - `mcp/server.mjs`: MCP local (Node, stdio) que le da a Claude la lógica de `src/lib` (simular, revisar, comparar JSON, detectar campos del PDF). Guarda los trabajos en `SE_TOOLS_TRABAJOS`. Ver `mcp/README.md`.
+- Matriz: `leer_matriz` y `editar_matriz` (`src/lib/signaframe-formdef/matrix-edit.js`, ExcelJS: conserva el formato y guarda una versión nueva).
+- Signaframe: tools `signaframe_*` con `src/lib/signaframe-api` (cliente de la API, swagger en `https://signaframe.namirial.com/api/swagger`). Credenciales por env (`SIGNAFRAME_URL`, `SIGNAFRAME_EMAIL`/`SIGNAFRAME_PASSWORD` o `SIGNAFRAME_TOKEN`). Todo lo que cambia algo (subir form-def, publicar, crear proceso) pide un código de confirmación; subir guarda copia y frena si `diffFormDefs` marca la regla de oro o el Revisor da errores. Los procesos de prueba nunca mandan el mail. No hay tools para borrar, usuarios ni settings.
 - Regla: el MCP **no tiene lógica propia**. Todo lo que hace tiene que vivir en `src/lib` para que la app y Claude den lo mismo.

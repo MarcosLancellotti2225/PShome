@@ -41,3 +41,6 @@ export function readMatrixXlsx(bytes) {
 export function formDefFromMatrixXlsx(bytes, main, opts = {}) {
     return buildFormDef(readMatrixXlsx(bytes), main, opts);
 }
+
+export { diffFormDefs } from './diff.js';
+// editMatrixXlsx usa ExcelJS: se importa aparte (./matrix-edit.js) para no sumarlo a la app.
