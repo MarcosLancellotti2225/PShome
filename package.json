@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "legacy": "for f in scripts/legacy/*.config.mjs; do node scripts/legacy/convert.mjs \"$f\" || exit 1; done",
-    "test": "node test/pdf-editor.test.mjs && node test/quoter.test.mjs && node test/signaframe-engine.test.mjs",
+    "test": "node test/pdf-editor.test.mjs && node test/quoter.test.mjs && node test/signaframe-engine.test.mjs && node test/signaframe-formdef.test.mjs",
     "mcp": "node mcp/server.mjs"
   },
   "dependencies": {

@@ -1,6 +1,7 @@
 // Matriz interna — integrada desde el repo SingaframeFormBuilder (interno.html).
 // La herramienta original corre tal cual (legacy/, generado con scripts/legacy/convert.mjs).
 import '../_legacy/pdfLibs';
+import '../_legacy/formDef';
 import LegacyTool from '../_legacy/LegacyTool';
 import markup from './legacy/markup.html?raw';
 import { mount } from './legacy/app.js';

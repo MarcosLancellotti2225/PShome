@@ -130,7 +130,8 @@ export function leafPaths(obj, prefix = '') {
     if (obj === null || typeof obj !== 'object')
         return prefix ? [{ path: prefix, value: obj }] : [];
     const out = [];
-    const entries = Array.isArray(obj) ? obj.map((v, i) => [String(i), v]) : Object.entries(obj);
+    // Array.from y no .map: un arreglo con huecos (personas[2] sin personas[1]) deja agujeros en .map.
+    const entries = Array.isArray(obj) ? Array.from(obj, (v, i) => [String(i), v]) : Object.entries(obj);
     if (entries.length === 0 && prefix)
         return [{ path: prefix, value: obj }];
     for (const [k, v] of entries) {

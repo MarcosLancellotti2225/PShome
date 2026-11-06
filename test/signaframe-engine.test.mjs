@@ -3,6 +3,7 @@
 import assert from 'node:assert/strict';
 import { formDataFromCaptured, transformFormDataForApi } from '../src/lib/signaframe-engine/services/formDataTransform.js';
 import { simulate } from '../src/lib/signaframe-engine/index.js';
+import { leafPaths } from '../src/lib/signaframe-engine/simulate.js';
 
 // Mini adaptador para correr los tests del front (escritos para vitest) tal cual.
 let passed = 0;
@@ -334,6 +335,15 @@ describe('simulate', () => {
   it('diff contra esperado', () => {
     const r3 = simulate({ formDefinition: def, payload, expectedJson: { datosFormulario: { personas: [{ nombre: 'Ana Mora', fechaNacimiento: '1990-01-01' }] } } });
     expect(r3.diff.some((d) => d.kind === 'faltante' && d.path === 'datosFormulario.personas.0.fechaNacimiento')).toBe(true);
+  });
+});
+
+describe('leafPaths (SE Tools)', () => {
+  it('soporta arreglos con huecos (personas[2] sin personas[1])', () => {
+    const a = [];
+    a[0] = { n: 'A' };
+    a[2] = { n: 'C' };
+    expect(leafPaths({ personas: a }).map((x) => x.path)).toEqual(['personas.0.n', 'personas.1', 'personas.2.n']);
   });
 });
 
