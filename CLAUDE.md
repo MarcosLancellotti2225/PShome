@@ -45,6 +45,14 @@ Reglas:
 - Email Templates trae plantillas de email con sus propios colores: esos HTML no se recolorean (su config solo recolorea `styles.css`).
 - La Ficha abre el paso opcional «Matriz del INS» (`public/apps/ficha-formulario/mapear.html`) en un panel interno: es lo único que falta unificar.
 
+## JSON del formulario (`src/lib/signaframe-formdef`)
+
+Reemplaza a `matriz_io.py build`: arma el form-def de Signaframe desde la matriz interna.
+- `buildFormDef(matrix, main)`: pasos/subsecciones/campos + main → form-def. El `sourceMeta` (y el id) de cada campo con «Casillero PDF» sale del main tal cual (regla de oro); si la matriz trae otro id, usa el del main y corrige las referencias. Deriva `order`, `childrenOrder`, `salidaJSON` y `prefillMode: "optional"`. Lo que el main tiene y la matriz no usa va oculto en «Campos del PDF sin usar». Firmas sin ubicar: posición provisoria y aviso.
+- `readMatrixXlsx` / `formDefFromMatrixXlsx`: lee el Excel de la matriz interna (hojas «Formulario Signaframe» y «Opciones»).
+- Las herramientas clásicas lo usan con `window.SeFormDef` (`src/tools/_legacy/formDef.js`), con el Revisor de Studio.
+- `npm test` corre `test/signaframe-formdef.test.mjs`; con la ruta a un form-def real hace la ida y vuelta form-def → matriz → form-def y compara también con el motor de Signaframe (mismo JSON y mismo PDF).
+
 ## Editor PDF (`src/tools/editor-pdf`)
 
 Une el Detector de campos y Convertir PDF de `FormConverterExcel`.

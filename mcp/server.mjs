@@ -18,6 +18,7 @@ import { analyzeFormDef, compareWithSample } from '../src/lib/json-mapper/index.
 import { construirModelo } from '../src/lib/json-mapper/revisor/modelo.js';
 import { revisar, cobertura } from '../src/lib/json-mapper/revisor/reglas.js';
 import { detectFields } from '../src/lib/pdf-detect/index.js';
+import { formDefFromMatrixXlsx } from '../src/lib/signaframe-formdef/index.js';
 
 const TRABAJOS = process.env.SE_TOOLS_TRABAJOS || join(homedir(), 'se-tools-trabajos');
 const TRABAJO_TIPO = 'se-tools/signaframe-trabajo';
@@ -206,6 +207,49 @@ server.registerTool(
         `${stats.total} campos en ${stats.pages} páginas`,
         '',
         ...fields.map((f, i) => `${String(i + 1).padStart(3)}. p${f.page} ${f.type ?? ''} ${f.name}  [x ${Math.round(f.x ?? 0)}, y ${Math.round(f.y ?? 0)}, ${Math.round(f.width ?? 0)}×${Math.round(f.height ?? 0)}]`),
+      ]),
+    );
+  },
+);
+
+server.registerTool(
+  'armar_json_formulario',
+  {
+    title: 'Armar el JSON del formulario',
+    description:
+      'Arma el form-def de Signaframe (el JSON que se sube) desde la matriz interna (.xlsx con las hojas «Formulario Signaframe» y «Opciones») y el main de Signaframe. ' +
+      'Igual que el botón «Bajar JSON del formulario» de SE Tools: el id y el sourceMeta de cada campo del PDF salen del main tal cual. ' +
+      'Guarda el JSON al lado de la matriz (o en la ruta pedida) y devuelve el resumen y lo que encontró el Revisor.',
+    inputSchema: {
+      matriz: z.string().describe('Ruta a la matriz interna (.xlsx) en esta máquina'),
+      main: jsonOrPath('Main de Signaframe (export con el PDF importado)').optional(),
+      version: z.string().optional().describe('Versión del JSON, ej. "v2". Por defecto v1'),
+      salida: z.string().optional().describe('Ruta del .json a escribir. Por defecto, al lado de la matriz'),
+    },
+  },
+  async ({ matriz, main, version, salida }) => {
+    const p = expand(matriz);
+    if (!existsSync(p)) throw new Error(`No encuentro la matriz: ${p}`);
+    const mainJson = main ? await loadJson(main, 'el main') : null;
+    const ver = (version || 'v1').trim();
+    const { formDef, report } = formDefFromMatrixXlsx(new Uint8Array(await readFile(p)), mainJson, { version: ver });
+    const out = salida ? expand(salida) : p.replace(/(_matriz_interna)?\.xlsx$/i, '') + `_form-def_${ver}.json`;
+    await writeFile(out, JSON.stringify(formDef, null, 2));
+    const { hallazgos } = revisionDe(formDef);
+    const cuenta = (s) => hallazgos.filter((h) => h.severidad === s).length;
+    const list = (titulo, arr) => (arr.length ? [`${titulo} (${arr.length}):`, ...arr.slice(0, 40).map((x) => `  - ${x}`), arr.length > 40 ? `  … y ${arr.length - 40} más` : null] : []);
+    return text(
+      lines([
+        `JSON guardado en ${out}`,
+        `${report.campos} campos · ${report.pasos} pasos · Revisor: ${cuenta('error')} errores, ${cuenta('aviso')} avisos`,
+        mainJson ? null : 'Sin main: los campos del PDF llevan solo el nombre del casillero (sin página ni posición).',
+        ...list('Casilleros que no están en el main (no pintan)', report.sinCasillero.map((x) => `${x.id} → ${x.casillero}`)),
+        ...list('Firmas sin ubicar (posición provisoria)', report.firmasSinUbicar),
+        ...list('Ids repetidos', report.repetidos),
+        ...list('Ids corregidos por los del main', report.idCorregido.map((x) => `${x.de} → ${x.a}`)),
+        ...list('Casilleros del main sin usar (ocultos)', report.sinUsar),
+        ...list('Errores del Revisor', hallazgos.filter((h) => h.severidad === 'error').map((h) => `${h.regla} ${h.titulo}`)),
+        ...list('Avisos de la matriz', report.warn),
       ]),
     );
   },

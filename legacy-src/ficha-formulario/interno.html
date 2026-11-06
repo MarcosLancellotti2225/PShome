@@ -61,7 +61,7 @@ input[type=file]{font:13px var(--sans);max-width:100%}
   <header>
     <div class="eyebrow">Uso interno · Signaframe</div>
     <h1>Matriz interna</h1>
-    <p class="lead">Junta la ficha cerrada del cliente con los campos que Signaframe necesita. Sale un Excel con la hoja «Formulario Signaframe» (una fila por paso, subsección y campo) y la hoja «Opciones», listo para <span class="mono">matriz_io.py build</span>.</p>
+    <p class="lead">Junta la ficha cerrada del cliente con los campos que Signaframe necesita. Sale la matriz (Excel con la hoja «Formulario Signaframe», una fila por paso, subsección y campo, y la hoja «Opciones») y el <b>JSON del formulario</b>, listo para subir a Signaframe.</p>
   </header>
 
   <section class="card">
@@ -77,7 +77,28 @@ input[type=file]{font:13px var(--sans);max-width:100%}
     <div class="row" style="margin-top:14px">
       <button class="btn pri" id="go" disabled>Armar matriz</button>
       <button class="btn" id="dl" disabled>Bajar matriz (.xlsx)</button>
+      <button class="btn" id="dljson" disabled>Bajar JSON del formulario</button>
     </div>
+  </section>
+
+  <section class="card">
+    <h2>¿Ya editaste la matriz?</h2>
+    <p class="lead" style="margin:0 0 10px">Si cambiaste la matriz a mano en Excel, subila acá y te armo el JSON desde esa versión. Usa el main de arriba para los casilleros del PDF.</p>
+    <div class="inputs">
+      <label class="in"><b>Matriz interna (.xlsx)</b><small>La que bajaste con «Bajar matriz», editada.</small>
+        <input type="file" id="in-mat" accept=".xlsx"><span class="st" id="st-mat">Sin archivo</span></label>
+      <label class="in"><b>Versión del JSON</b><small>Si es una corrección, subí el número (v2, v3…).</small>
+        <input type="text" id="in-ver" value="v1" style="font:13px var(--mono);padding:6px 8px;border:1px solid var(--line);border-radius:6px;max-width:120px"></label>
+    </div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn pri" id="go-json" disabled>Armar JSON desde la matriz</button>
+    </div>
+  </section>
+
+  <section class="card" id="res-json" hidden>
+    <h2>JSON del formulario</h2>
+    <div class="kpis" id="kpis-json"></div>
+    <div id="msgs-json" style="margin-top:14px;display:grid;gap:12px"></div>
   </section>
 
   <section class="card" id="res" hidden>
@@ -1689,7 +1710,7 @@ async function exportXlsx(M){
 }
 
 /* ═══════════════════ Página ═══════════════════ */
-const IN={ficha:null,main:null,ins:null};
+const IN={ficha:null,main:null,ins:null,mat:null};
 let CAT=null,OUT=null,OUTNAME="matriz_interna.xlsx";
 async function loadCat(){if(CAT)return CAT;try{const r=await fetch("docs/catalogo_cr.json");if(r.ok)CAT=await r.json()}catch(e){}return CAT}
 async function miRun({fichaBuf,mainText,insBuf}){
@@ -1727,12 +1748,59 @@ function bindIn(id,key){
   $("#in-"+id).addEventListener("change",e=>{const f=e.target.files[0];IN[key]=f||null;const st=$("#st-"+id);st.textContent=f?f.name:"Sin archivo";st.classList.toggle("ok",!!f);$("#go").disabled=!IN.ficha});
 }
 bindIn("ficha","ficha");bindIn("main","main");bindIn("ins","ins");
+$("#in-mat").addEventListener("change",e=>{const f=e.target.files[0];IN.mat=f||null;const st=$("#st-mat");st.textContent=f?f.name:"Sin archivo";st.classList.toggle("ok",!!f);$("#go-json").disabled=!IN.mat});
+
+/* ═══════════════════ JSON del formulario ═══════════════════ */
+let FD=null,FDNAME="form-def.json";
+async function buildJson(matBuf,baseName){
+  const main=IN.main?JSON.parse(await rdTxt(IN.main)):null;
+  const ver=($("#in-ver").value||"v1").trim();
+  const {formDef,report}=window.SeFormDef.formDefFromMatrixXlsx(new Uint8Array(matBuf),main,{version:ver});
+  FD=formDef;FDNAME=baseName.replace(/(_matriz_interna|_ficha)?\.xlsx$/i,"")+"_form-def_"+ver+".json";
+  renderJson(report,window.SeFormDef.revisar(formDef),!!main);
+  return formDef;
+}
+function renderJson(R,hall,hasMain){
+  const err=hall.filter(h=>h.severidad==="error"),avi=hall.filter(h=>h.severidad==="aviso");
+  const kp=[[R.campos,"campos"],[R.pasos,"pasos"],[err.length,"errores del Revisor",err.length?"bad":"good"],[avi.length,"avisos del Revisor"]];
+  $("#kpis-json").innerHTML=kp.map(([v,l,cl])=>`<div class="kpi ${cl||""}"><b>${esc(v)}</b><span>${esc(l)}</span></div>`).join("");
+  const box=(t,items,cls="")=>items.length?`<div class="${cls}"><b>${esc(t)}</b><ul class="lst">${items.map(x=>`<li>${x}</li>`).join("")}</ul></div>`:"";
+  const m=x=>`<span class="mono">${esc(x)}</span>`;
+  let h="";
+  if(!hasMain)h+=`<div class="warn"><b>Sin main de Signaframe</b><ul class="lst"><li>Los campos del PDF llevan solo el nombre del casillero, sin página ni posición. Subí el main arriba para que el JSON quede completo.</li></ul></div>`;
+  h+=box("Casilleros que no están en el main (no van a pintar el PDF)",R.sinCasillero.map(x=>`${m(x.id)} → ${m(x.casillero)}`),"warn");
+  h+=box("Firmas sin ubicar: tienen una posición provisoria, acomodalas en Signaframe",R.firmasSinUbicar.map(m),"warn");
+  h+=box("Ids repetidos",R.repetidos.map(m),"warn");
+  h+=box("Errores del Revisor",err.map(x=>`${esc(x.titulo)}${x.detalle?" — "+esc(String(x.detalle).slice(0,220)):""}`),"warn");
+  h+=box("Ids corregidos por los del main (regla de oro: el id del campo del PDF no se toca)",R.idCorregido.map(x=>`${m(x.de)} → ${m(x.a)}`));
+  h+=box("Casilleros del PDF que la matriz no usa (van ocultos en «Campos del PDF sin usar»)",R.sinUsar.map(m));
+  h+=box("Avisos del Revisor",avi.map(x=>`${esc(x.titulo)}${x.detalle?" — "+esc(String(x.detalle).slice(0,220)):""}`));
+  h+=box("Avisos de la matriz",R.warn.map(esc));
+  h+=`<div><button class="btn pri" id="dljson2">Bajar ${esc(FDNAME)}</button> <small style="color:var(--muted)">Para probarlo con un JSON del cliente, abrilo en Signaframe → Signaframe Studio.</small></div>`;
+  $("#msgs-json").innerHTML=h;
+  $("#res-json").hidden=false;
+  $("#dljson2").addEventListener("click",dlJson);
+}
+function dlJson(){
+  if(!FD)return;
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(FD,null,2)],{type:"application/json"}));a.download=FDNAME;a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+}
+$("#go-json").addEventListener("click",async()=>{
+  $("#go-json").disabled=true;
+  try{await buildJson(await rdBuf(IN.mat),IN.mat.name)}catch(e){$("#msgs-json").innerHTML=`<div class="warn">${esc(e.message)}</div>`;$("#res-json").hidden=false;console.error(e)}
+  $("#go-json").disabled=false;
+});
+$("#dljson").addEventListener("click",async()=>{
+  if(!OUT)return;
+  try{await buildJson(OUT,OUTNAME);dlJson()}catch(e){$("#msgs-json").innerHTML=`<div class="warn">${esc(e.message)}</div>`;$("#res-json").hidden=false;console.error(e)}
+});
 $("#go").addEventListener("click",async()=>{
   $("#go").disabled=true;
   try{
     const r=await miRun({fichaBuf:await rdBuf(IN.ficha),mainText:IN.main?await rdTxt(IN.main):null,insBuf:IN.ins?await rdBuf(IN.ins):null});
     OUT=r.buf;OUTNAME=IN.ficha.name.replace(/(_ficha)?\.xlsx$/i,"")+"_matriz_interna.xlsx";
-    render(r.M);$("#dl").disabled=false;
+    render(r.M);$("#dl").disabled=false;$("#dljson").disabled=false;
   }catch(e){$("#msgs").innerHTML=`<div class="warn">${esc(e.message)}</div>`;$("#res").hidden=false;console.error(e)}
   $("#go").disabled=false;
 });

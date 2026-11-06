@@ -3,7 +3,7 @@
   <header>
     <div class="eyebrow">Uso interno · Signaframe</div>
     <h1>Matriz interna</h1>
-    <p class="lead">Junta la ficha cerrada del cliente con los campos que Signaframe necesita. Sale un Excel con la hoja «Formulario Signaframe» (una fila por paso, subsección y campo) y la hoja «Opciones», listo para <span class="mono">matriz_io.py build</span>.</p>
+    <p class="lead">Junta la ficha cerrada del cliente con los campos que Signaframe necesita. Sale la matriz (Excel con la hoja «Formulario Signaframe», una fila por paso, subsección y campo, y la hoja «Opciones») y el <b>JSON del formulario</b>, listo para subir a Signaframe.</p>
   </header>
 
   <section class="card">
@@ -19,7 +19,28 @@
     <div class="row" style="margin-top:14px">
       <button class="btn pri" id="go" disabled>Armar matriz</button>
       <button class="btn" id="dl" disabled>Bajar matriz (.xlsx)</button>
+      <button class="btn" id="dljson" disabled>Bajar JSON del formulario</button>
     </div>
+  </section>
+
+  <section class="card">
+    <h2>¿Ya editaste la matriz?</h2>
+    <p class="lead" style="margin:0 0 10px">Si cambiaste la matriz a mano en Excel, subila acá y te armo el JSON desde esa versión. Usa el main de arriba para los casilleros del PDF.</p>
+    <div class="inputs">
+      <label class="in"><b>Matriz interna (.xlsx)</b><small>La que bajaste con «Bajar matriz», editada.</small>
+        <input type="file" id="in-mat" accept=".xlsx"><span class="st" id="st-mat">Sin archivo</span></label>
+      <label class="in"><b>Versión del JSON</b><small>Si es una corrección, subí el número (v2, v3…).</small>
+        <input type="text" id="in-ver" value="v1" style="font:13px var(--mono);padding:6px 8px;border:1px solid var(--line);border-radius:6px;max-width:120px"></label>
+    </div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn pri" id="go-json" disabled>Armar JSON desde la matriz</button>
+    </div>
+  </section>
+
+  <section class="card" id="res-json" hidden>
+    <h2>JSON del formulario</h2>
+    <div class="kpis" id="kpis-json"></div>
+    <div id="msgs-json" style="margin-top:14px;display:grid;gap:12px"></div>
   </section>
 
   <section class="card" id="res" hidden>
