@@ -10,6 +10,7 @@ Corre en tu máquina con Node: no hay servidor ni se sube nada.
 | `simular_formulario` | form-def + payload → JSON que se enviaría, valor de cada AcroForm, diagnósticos y Revisor. Guarda un trabajo. | `signaframe-engine`, `json-mapper/revisor` |
 | `revisar_formdef` | Las 26 reglas del Revisor + cobertura contra un ejemplo | `json-mapper/revisor` |
 | `comparar_json` | JSON del form-def vs. JSON real del cliente (faltan / sobran / forma) | `json-mapper` |
+| `armar_json_formulario` | Matriz interna (.xlsx) + main → JSON del formulario (form-def) listo para subir, con el resumen y el Revisor. Lo guarda al lado de la matriz. | `signaframe-formdef` |
 | `detectar_campos_pdf` | AcroForms del PDF en orden de lectura | `pdf-detect` |
 | `listar_trabajos` | Trabajos guardados | — |
 
