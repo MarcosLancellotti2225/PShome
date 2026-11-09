@@ -15,7 +15,9 @@ export default {
   jsReplace: [
     ['fr.setAttribute("src","mapear.html?embed=1")', 'fr.setAttribute("src",__PSTOOLS_BASE__+"apps/ficha-formulario/mapear.html?embed=1")'],
   ],
-  extraCss: `.lg-ficha-formulario { --ok: #198446; background: var(--color-bg); padding-block: 8px 48px; padding-inline: 0; }`,
+  extraCss: `.lg-ficha-formulario { --ok: #198446; background: var(--color-bg); padding-block: 8px 48px; padding-inline: 0; }
+/* El título ya lo pone la app arriba: no repetirlo. */
+.lg-ficha-formulario header .eyebrow, .lg-ficha-formulario header h1 { display: none; }`,
   colors: {
     ...COMMON,
     '#3346c8': '#047c76', '#e9ecfb': '#defffb', '#a35a00': '#a16000', '#fbefdc': '#ffe9c2',

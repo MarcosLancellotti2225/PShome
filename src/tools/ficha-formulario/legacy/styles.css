@@ -321,3 +321,5 @@
 
 /* Ajustes para correr dentro de la app */
 .lg-ficha-formulario { --ok: #198446; background: var(--color-bg); padding-block: 8px 48px; padding-inline: 0; }
+/* El título ya lo pone la app arriba: no repetirlo. */
+.lg-ficha-formulario header .eyebrow, .lg-ficha-formulario header h1 { display: none; }

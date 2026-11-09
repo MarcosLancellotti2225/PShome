@@ -54,6 +54,7 @@ ul.lst li{margin:2px 0;overflow-wrap:anywhere}
 .warn{background:var(--warn-bg);color:var(--warn);border-radius:8px;padding:10px 12px;font-size:14px}
 details summary{cursor:pointer;font-weight:600}
 input[type=file]{font:13px var(--sans);max-width:100%}
+input.ver{font:13px var(--mono);padding:6px 8px;border:1px solid var(--line);border-radius:6px;max-width:120px}
 </style>
 </head>
 <body>
@@ -88,7 +89,7 @@ input[type=file]{font:13px var(--sans);max-width:100%}
       <label class="in"><b>Matriz interna (.xlsx)</b><small>La que bajaste con «Bajar matriz», editada.</small>
         <input type="file" id="in-mat" accept=".xlsx"><span class="st" id="st-mat">Sin archivo</span></label>
       <label class="in"><b>Versión del JSON</b><small>Si es una corrección, subí el número (v2, v3…).</small>
-        <input type="text" id="in-ver" value="v1" style="font:13px var(--mono);padding:6px 8px;border:1px solid var(--line);border-radius:6px;max-width:120px"></label>
+        <input type="text" id="in-ver" value="v1" class="ver"></label>
     </div>
     <div class="row" style="margin-top:14px">
       <button class="btn pri" id="go-json" disabled>Armar JSON desde la matriz</button>
