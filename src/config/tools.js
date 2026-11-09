@@ -61,7 +61,7 @@ export const TOOLS = [
     id: 'matriz-interna',
     section: 'signaframe',
     name: 'Matriz interna',
-    description: 'Junta la ficha cerrada con los campos de Signaframe y baja la matriz para el form-def.',
+    description: 'Junta la ficha cerrada con el main de Signaframe: baja la matriz y el JSON del formulario.',
     icon: 'Table2',
     load: () => import('../tools/matriz-interna/index.jsx'),
   },
