@@ -13,13 +13,20 @@
  *   y UNA de estas dos:
  *   load        → () => import('../tools/<id>/index.jsx')   herramienta integrada a la app (se descarga al abrirla)
  *   href        → URL de una herramienta que todavía no está integrada: se abre en pestaña nueva
+ *
+ * Cápsulas (una herramienta que agrupa otras, como Signaframe Studio):
+ *   tabs        → en la herramienta que agrupa: el orden de sus pestañas (ids de herramientas;
+ *                 `self` es la pantalla propia de la cápsula)
+ *   selfTab     → { id, name } de esa pantalla propia (ej. «Probar»)
+ *   parent      → en cada herramienta de adentro: el id de la cápsula. No aparece sola en el menú
+ *                 ni en el inicio; vive en /tools/<cápsula>/<id> (la URL vieja /tools/<id> redirige).
+ *   tab         → nombre corto de su pestaña
  */
 
 export const SECTIONS = [
   { id: 'firma', name: 'Firma y envíos', description: 'Mandar a firmar, envíos masivos y créditos.' },
   { id: 'alta', name: 'Alta de clientes', description: 'Importaciones, usuarios y configuración inicial.' },
   { id: 'signaframe', name: 'Signaframe', description: 'Herramientas para armar y configurar formularios en Signaframe.' },
-  { id: 'formularios', name: 'Formularios', description: 'Convertir y armar formularios digitales.' },
   { id: 'comunicacion', name: 'Comunicación', description: 'Emails y material para clientes.' },
   { id: 'planificacion', name: 'Planificación y seguimiento', description: 'Planes de proyecto y feedback de producto.' },
 ];
@@ -45,13 +52,21 @@ export const TOOLS = [
     id: 'signaframe-studio',
     section: 'signaframe',
     name: 'Signaframe Studio',
-    description: 'Simula el formulario con el motor real de Signaframe: el JSON que sale, el PDF y lo que está mal. Abre los trabajos que arma Claude.',
+    description: 'Todo para armar un formulario de Signaframe: la ficha, la plantilla y su JSON, el PDF y la prueba con el motor real.',
     icon: 'FlaskConical',
     load: () => import('../tools/signaframe-studio/index.jsx'),
+    tabs: ['ficha-formulario', 'matriz-interna', 'editor-pdf', 'self', 'comparador-json'],
+    selfTab: {
+      id: 'probar',
+      name: 'Probar',
+      description: 'Simula el formulario con el motor real de Signaframe: el JSON que sale, el PDF y lo que está mal. Abre los trabajos que arma Claude.',
+    },
   },
   {
     id: 'ficha-formulario',
     section: 'signaframe',
+    parent: 'signaframe-studio',
+    tab: 'Crear formulario',
     name: 'Ficha de formulario',
     description: 'Arma el formulario desde el PDF y el JSON del cliente, cruza la matriz del INS y baja la ficha.',
     icon: 'FileCog',
@@ -60,6 +75,8 @@ export const TOOLS = [
   {
     id: 'matriz-interna',
     section: 'signaframe',
+    parent: 'signaframe-studio',
+    tab: 'Plantilla y JSON',
     name: 'Matriz interna',
     description: 'Junta la ficha cerrada con el main de Signaframe: baja la matriz y el JSON del formulario.',
     icon: 'Table2',
@@ -68,6 +85,8 @@ export const TOOLS = [
   {
     id: 'comparador-json',
     section: 'signaframe',
+    parent: 'signaframe-studio',
+    tab: 'Comparador JSON',
     name: 'Comparador JSON',
     description: 'Dibuja el JSON de entrada y salida de un form-definition y lo compara con el JSON real del cliente.',
     icon: 'FileJson',
@@ -75,7 +94,9 @@ export const TOOLS = [
   },
   {
     id: 'editor-pdf',
-    section: 'formularios',
+    section: 'signaframe',
+    parent: 'signaframe-studio',
+    tab: 'Editor PDF',
     name: 'Editor PDF',
     description: 'Detecta los campos de un PDF y permite renombrarlos, moverlos, cambiarles fuente o tamaño, borrarlos o dibujar nuevos.',
     icon: 'FilePen',
@@ -107,7 +128,18 @@ export const TOOLS = [
   },
 ];
 
-export const toolsInSection = (sectionId) => TOOLS.filter((t) => t.section === sectionId);
+// En el menú y el inicio: solo las herramientas sueltas y las cápsulas (no lo que vive adentro de una).
+export const toolsInSection = (sectionId) => TOOLS.filter((t) => t.section === sectionId && !t.parent);
 export const findTool = (id) => TOOLS.find((t) => t.id === id);
 export const findSection = (id) => SECTIONS.find((s) => s.id === id);
 export const isIntegrated = (tool) => typeof tool.load === 'function';
+export const isCapsule = (tool) => Array.isArray(tool?.tabs);
+
+/** Pestañas de una cápsula, en orden: [{ id, name, description, tool, self }]. */
+export function capsuleTabs(capsule) {
+  return capsule.tabs.map((id) => {
+    if (id === 'self') return { ...capsule.selfTab, tool: capsule, self: true };
+    const tool = findTool(id);
+    return { id, name: tool.tab || tool.name, description: tool.description, tool, self: false };
+  });
+}

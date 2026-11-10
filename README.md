@@ -23,9 +23,9 @@ supabase/functions/      ← proxy de la API de Signaturit (Edge Function)
 |---|---|---|
 | Gantt Generator | Planificación y seguimiento | ✅ integrada (`src/tools/gantt`) |
 | Cotizador | Planificación y seguimiento | ✅ integrada (`src/tools/cotizador`) |
-| Comparador JSON | Signaframe | ✅ integrada (`src/tools/comparador-json`) |
-| Editor PDF | Formularios | ✅ nueva: une Detector de campos + Convertir PDF (`src/tools/editor-pdf`) |
-| Ficha de formulario · Matriz interna | Signaframe | ✅ integrada con su código original (`legacy-src/ficha-formulario`) |
+| Comparador JSON | Signaframe Studio | ✅ integrada (`src/tools/comparador-json`) |
+| Editor PDF | Signaframe Studio | ✅ nueva: une Detector de campos + Convertir PDF (`src/tools/editor-pdf`) |
+| Ficha de formulario · Matriz interna | Signaframe Studio | ✅ integrada con su código original (`legacy-src/ficha-formulario`) |
 | Multi Send | Firma y envíos | ✅ integrada con su código original (`legacy-src/multi-send`) |
 | Generador CSV | Alta de clientes | ✅ integrada con su código original (`legacy-src/csv-generator`) |
 | Email Templates | Comunicación | ✅ integrada con su código original (`legacy-src/email-templates`) |
