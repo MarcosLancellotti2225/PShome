@@ -10,6 +10,7 @@ export default function App() {
         <Route element={<AppLayout />}>
           <Route index element={<DashboardPage />} />
           <Route path="/tools/:id" element={<ToolPage />} />
+          <Route path="/tools/:id/:sub" element={<ToolPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

@@ -14,6 +14,7 @@ Una sola app React con todas las herramientas del equipo. Antes se llamaba «PS 
 
 - **Una sola app, sin iframes.** Cada herramienta es una pantalla de React en `src/tools/<id>/index.jsx` (export default), que se descarga recién cuando se abre (`React.lazy`).
 - `src/config/tools.js` es el **único** lugar donde se declaran secciones y herramientas. Cada herramienta tiene `load: () => import('../tools/<id>/index.jsx')` (integrada) o `href` (todavía no integrada: se abre en pestaña nueva). Menú, inicio y rutas salen de ahí.
+- **Cápsulas:** una herramienta puede agrupar otras (`tabs` + `selfTab`; las de adentro llevan `parent` y `tab`). Las de adentro no salen solas en el menú ni en el inicio (sí en la búsqueda) y viven en `/tools/<cápsula>/<id>`; la URL vieja `/tools/<id>` redirige. `ToolPage` arma la cápsula: inicio con tarjetas, una pestaña por herramienta, y las pestañas ya abiertas quedan montadas (ocultas) para no perder lo cargado.
 - Tres capas:
   - `src/lib/` — lógica pura, sin React ni DOM (lectura de archivos, json-mapper, quoter, pdf-detect, conexión Signaturit). Se puede testear con Node.
   - `src/components/ui/` — componentes comunes con la marca: `Button`, `Panel`, `FileDrop`, `Alert`, `Stats`, `Field`, `Tabs`, `Badge`, `DataTable`, `ConfirmButton`. Usalos siempre; no armes botones, cargas de archivo ni tablas a mano.
@@ -97,7 +98,8 @@ Une el Detector de campos y Convertir PDF de `FormConverterExcel`.
 
 ## Signaframe Studio y MCP
 
-- `src/tools/signaframe-studio`: simula un formulario con `signaframe-engine` (el motor real del front), muestra el JSON que sale, los AcroForms, diagnósticos y el Revisor; cada cambio en el formulario vuelve a simular. Abre «trabajos» (.json, `tipo: se-tools/signaframe-trabajo`).
+- **Signaframe Studio es una cápsula** con: Crear formulario (Ficha), Plantilla y JSON (Matriz interna), Editor PDF, Probar (su pantalla propia, `src/tools/signaframe-studio`) y Comparador JSON.
+- `src/tools/signaframe-studio` (pestaña «Probar»): simula un formulario con `signaframe-engine` (el motor real del front), muestra el JSON que sale, los AcroForms, diagnósticos y el Revisor; cada cambio en el formulario vuelve a simular. Abre «trabajos» (.json, `tipo: se-tools/signaframe-trabajo`).
 - `mcp/server.mjs`: MCP local (Node, stdio) que le da a Claude la lógica de `src/lib` (simular, revisar, comparar JSON, detectar campos del PDF). Guarda los trabajos en `SE_TOOLS_TRABAJOS`. Ver `mcp/README.md`.
 - Matriz: `leer_matriz` y `editar_matriz` (`src/lib/signaframe-formdef/matrix-edit.js`, ExcelJS: conserva el formato y guarda una versión nueva).
 - Signaframe: tools `signaframe_*` con `src/lib/signaframe-api` (cliente de la API, swagger en `https://signaframe.namirial.com/api/swagger`). Credenciales por env (`SIGNAFRAME_URL`, `SIGNAFRAME_EMAIL`/`SIGNAFRAME_PASSWORD` o `SIGNAFRAME_TOKEN`). Todo lo que cambia algo (subir form-def, publicar, crear proceso) pide un código de confirmación; subir guarda copia y frena si `diffFormDefs` marca la regla de oro o el Revisor da errores. Los procesos de prueba nunca mandan el mail. No hay tools para borrar, usuarios ni settings.

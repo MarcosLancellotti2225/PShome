@@ -10,7 +10,9 @@ export default function DashboardPage() {
   const term = query.trim().toLowerCase();
   const matches = (t) => !term || `${t.name} ${t.description}`.toLowerCase().includes(term);
 
-  const sections = SECTIONS.map((s) => ({ ...s, all: toolsInSection(s.id), tools: toolsInSection(s.id).filter(matches) }))
+  // Al buscar, aparecen también las herramientas que viven adentro de una cápsula (ej. Signaframe Studio).
+  const searchable = (sid) => (term ? TOOLS.filter((t) => t.section === sid) : toolsInSection(sid));
+  const sections = SECTIONS.map((s) => ({ ...s, all: toolsInSection(s.id), tools: searchable(s.id).filter(matches) }))
     .filter((s) => !term || s.tools.length);
 
   return (
@@ -67,6 +69,7 @@ export default function DashboardPage() {
                     <ToolIcon name={tool.icon} size={22} />
                   </div>
                   <div className="home-card-name">{tool.name}</div>
+                  {tool.parent && <div className="home-card-desc">En {TOOLS.find((p) => p.id === tool.parent)?.name}</div>}
                   <div className="home-card-desc">{tool.description}</div>
                   <div className="home-card-open">
                     Abrir <ArrowRight size={14} />
