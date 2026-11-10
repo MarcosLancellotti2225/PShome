@@ -6,23 +6,17 @@
 <meta name="robots" content="noindex">
 <title>Ordenar y mapear</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
 :root{
-  --bg:#f5f6f8; --paper:#ffffff; --ink:#1b1f2a; --muted:#5d6475; --line:#dde1e8; --soft:#eceff4;
-  --form:#3346c8; --form-bg:#e9ecfb; --pdf:#a35a00; --pdf-bg:#fbefdc; --json:#17784f; --json-bg:#e2f3ea;
-  --warn:#b4231d; --warn-bg:#fbe6e4; --ok:#17784f; --info:#5b2db8; --info-bg:#f1ebfc;
-  --sans:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  /* SE Tools: paleta Namirial y siempre claro, como el resto de la app (antes seguía el modo oscuro del sistema). */
+  --bg:#f0f3f8; --paper:#ffffff; --ink:#0a1111; --muted:#4f5b5b; --line:#cddbdb; --soft:#e9ebf0;
+  --form:#047c76; --form-bg:#defffb; --pdf:#a16000; --pdf-bg:#ffe9c2; --json:#2b5cd1; --json-bg:#d5def6;
+  --warn:#ad4546; --warn-bg:#ffe8e7; --ok:#198446; --info:#440f8f; --info-bg:#efe7fb;
+  --sans:"Open Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:light;
 }
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#12151c; --paper:#1a1e27; --ink:#e7e9ef; --muted:#9aa1b2; --line:#2c3240; --soft:#222733;
-  --form:#9aa8ff; --form-bg:#252c52; --pdf:#f0b25e; --pdf-bg:#3a2a12; --json:#6fd3a3; --json-bg:#13362a;
-  --warn:#ff8a80; --warn-bg:#3d1c1a; --ok:#6fd3a3; --info:#c4a8ff; --info-bg:#2b2440; color-scheme:dark}}
-:root[data-theme="dark"]{
-  --bg:#12151c; --paper:#1a1e27; --ink:#e7e9ef; --muted:#9aa1b2; --line:#2c3240; --soft:#222733;
-  --form:#9aa8ff; --form-bg:#252c52; --pdf:#f0b25e; --pdf-bg:#3a2a12; --json:#6fd3a3; --json-bg:#13362a;
-  --warn:#ff8a80; --warn-bg:#3d1c1a; --ok:#6fd3a3; --info:#c4a8ff; --info-bg:#2b2440; color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font:15px/1.6 var(--sans);padding-inline:16px;padding-block:28px 64px;margin:0}
 .wrap{max-width:1440px;margin:0 auto;display:grid;gap:20px}
@@ -41,6 +35,13 @@ h2{font-size:20px;margin:0 0 6px;font-weight:600}
 .fin input{font:13px var(--sans);max-width:100%}
 .fin .st{font:12px var(--mono);color:var(--muted);min-height:1.4em;overflow-wrap:anywhere}
 .fin .st.ok{color:var(--ok)}.fin .st.bad{color:var(--warn)}
+/* SE Tools: botón «Elegir archivo» con la marca; el input nativo queda oculto y el label lo abre. */
+label.fin{cursor:pointer;position:relative}
+label.fin input[type=file]{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+label.fin .st{display:flex;align-items:center;gap:10px;font:400 13px var(--sans)}
+label.fin .st::before{content:"Elegir archivo";flex:none;font:500 14px var(--sans);color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:7px 14px}
+label.fin .st:empty::after{content:"Sin archivo";color:var(--muted)}
+label.fin:hover .st::before{border-color:var(--form);color:var(--form)}
 button.btn{font:500 14px var(--sans);padding:8px 14px;border-radius:7px;border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer}
 button.btn:hover{border-color:var(--muted)}
 button.btn.pri{background:var(--form);border-color:var(--form);color:#fff}
@@ -1411,7 +1412,7 @@ function mpMatch(){
   const jset=new Map();MP.json.paths.forEach(p=>{if(p.type==="array")return;const k=mpPathN(p.path);if(!jset.has(k))jset.set(k,p)});
   F.forEach((f,i)=>{
     f.id=i;f.kind=mpKind(f);f.dic=mpDicOf(f);
-    f.noCampo=!f.campoJson&&(/no aplica/i.test(f.nombreWeb+" "+f.seccion+" "+f.paso)||/informativ|texto info/i.test(f.controlWeb||"")||!f.nombreWeb||!f.controlWeb.trim());
+    f.noCampo=!f.campoJson&&(/no aplica/i.test(f.nombreWeb+" "+f.seccion+" "+f.paso)||/informativ|texto info/i.test(f.controlWeb||"")||!f.nombreWeb||!(f.controlWeb||"").trim());
     f.esperaPdf=!f.noCampo&&!!f.nombrePdf&&!f.sinPdf&&!/^json$/i.test(f.paso||"");
     /* JSON */
     const p=mpPathN(f.campoJson);
@@ -1428,7 +1429,7 @@ function mpMatch(){
   pairs.forEach(p=>{if(fUsed.has(p.i)||uUsed.has(p.j))return;const f=F[p.i];if(p.s<(f.esperaPdf?.42:.6))return;fUsed.set(p.i,p);uUsed.set(p.j,p.i)});
   F.forEach((f,i)=>{
     const m=fUsed.get(i);f.match=null;
-    if(f.noCampo){f.estado="NO_APLICA";f.senal=`fila sin campo JSON${!f.controlWeb.trim()&&f.nombreWeb&&!/no aplica/i.test(f.nombreWeb)?" ni control (título)":""}: ${f.nombreWeb||f.observaciones||"vacía"}`;return}
+    if(f.noCampo){f.estado="NO_APLICA";f.senal=`fila sin campo JSON${!(f.controlWeb||"").trim()&&f.nombreWeb&&!/no aplica/i.test(f.nombreWeb)?" ni control (título)":""}: ${f.nombreWeb||f.observaciones||"vacía"}`;return}
     if(!m){f.estado=f.esperaPdf?"SIN_MATCH":"SIN_PDF";f.confianza=f.cands[0]?Math.min(1,f.cands[0].s):0;
       f.senal=f.esperaPdf?(f.cands[0]?`el mejor candidato (${units[f.cands[0].j].name}, ${f.cands[0].s}) ya fue tomado por otro campo o no alcanza`:"ningún casillero se parece al «Nombre en PDF»"):"la ficha no le da nombre en el PDF: solo web / JSON";return}
     const u=units[m.j];f.match={j:m.j,u};f.confianza=Math.min(1,m.s);
@@ -2028,7 +2029,7 @@ if(MP_EMBED){
   $("#mp-xlsx").closest(".fin").querySelector("b").textContent="Ficha del INS (.xlsx)";
   $("#mp-xlsx").addEventListener("change",()=>{if(MP.files.pdf&&MP.files.json&&MP.files.xlsx)mpProcess()});
   $("#mp-dl").hidden=true;
-  try{const t=window.parent.document.documentElement.getAttribute("data-theme");if(t)document.documentElement.setAttribute("data-theme",t)}catch(e){}
+  /* SE Tools: siempre claro, no copia el tema del padre */
   /* dentro del marco, 100vh es el alto del marco: los paneles se miden con la ventana principal */
   const ph=()=>{try{document.documentElement.style.setProperty("--ph",Math.max(360,window.parent.innerHeight-170)+"px")}catch(e){}};ph();
   try{window.parent.addEventListener("resize",ph)}catch(e){}
