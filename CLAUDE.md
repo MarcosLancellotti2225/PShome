@@ -43,7 +43,7 @@ Multi Send, Generador CSV, Email Templates, Ficha de formulario y Matriz interna
 Reglas:
 - Multi Send y Email Templates comparten la conexión de Signaturit (entorno + token) con `src/lib/signaturit/session.js`, solo en memoria. El token nunca se guarda en el navegador ni en el repo. La palabra «Supabase» no puede aparecer en la interfaz. El proxy está en `supabase/functions/signaturit-proxy/`.
 - Email Templates trae plantillas de email con sus propios colores: esos HTML no se recolorean (su config solo recolorea `styles.css`).
-- La Ficha abre el paso opcional «Matriz del INS» (`public/apps/ficha-formulario/mapear.html`) en un panel interno: es lo único que falta unificar.
+- El paso «2 · Matriz del INS» de la Ficha es `legacy-src/ficha-formulario/mapear.html`, convertido aparte (config `ficha-mapear`) y montado adentro de la Ficha con `window.SeMapear` (sin iframe). Se hablan por `window.mpFromFlow`, `window.mpExport` y `window.gmReady`.
 
 ## JSON del formulario (`src/lib/signaframe-formdef`)
 

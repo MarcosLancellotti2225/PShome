@@ -445,16 +445,21 @@ $("#back0").addEventListener("click",()=>goStep(0));
 $("#go2").addEventListener("click",()=>{if(!ST.paths.length&&$("#js-in").value.trim()){jsRead();if(!ST.paths.length)return}goStep("m")});
 $("#go2b").addEventListener("click",()=>{ST.paths=[];ST.json=null;jsList();goStep("m")});
 
-/* ── Paso «Matriz del INS» (opcional): cruza la ficha del INS con el PDF renombrado y el JSON (mapear.html, dentro de un marco) ── */
-const GM={key:null,ready:false};
-function gmFrame(){return $("#gm-frame")}
+/* ── Paso «Matriz del INS» (opcional): cruza la ficha del INS con el PDF renombrado y el JSON ──
+   SE Tools: mapear.html se monta adentro de este paso (antes iba en un marco). Habla igual:
+   la Ficha llama a window.mpFromFlow / window.mpExport y el paso avisa con window.gmReady. */
+const GM={key:null,ready:false,mounted:false};
 function gmEnter(){
-  const fr=gmFrame();
-  if(!fr.getAttribute("src")){fr.addEventListener("load",()=>gmSend(true),{once:true});fr.setAttribute("src",__PSTOOLS_BASE__+"apps/ficha-formulario/mapear.html?embed=1");return}
+  if(!GM.mounted){
+    GM.mounted=true;
+    if(window.SeMapear)window.SeMapear.mount($("#gm-host"));
+    else window.location.href="mapear.html?embed=1"; /* fuera de SE Tools no hay montador */
+    setTimeout(()=>gmSend(true),0);return;
+  }
   gmSend(false);
 }
 async function gmSend(first){
-  const m=$("#gm-msg");const fr=gmFrame();const w=fr.contentWindow;if(!w||!w.mpFromFlow)return;
+  const m=$("#gm-msg");const w=window;if(!w.mpFromFlow)return;
   if(!rn.bytes||!rn.rows.length){m.textContent="Primero subí el PDF en el paso 0.";return}
   const jsonText=ST.paths.length?$("#js-in").value:"";
   const key=rn.file+"|"+rn.rows.map(r=>r.old+"="+r.nuevo).join(",")+"|"+jsonText;
@@ -466,7 +471,7 @@ async function gmSend(first){
     await w.mpFromFlow({pdfBytes:bytes,pdfName:rnBase()+"_renombrado.pdf",jsonText,jsonName:"cliente.json"});
   }catch(e){console.warn(e);m.textContent="No se pudo preparar el PDF para cruzar la matriz."}
 }
-window.gmHeight=h=>{gmFrame().style.height=Math.max(220,h+4)+"px"};
+window.gmHeight=()=>{}; /* ya no hay marco que agrandar */
 window.gmReady=info=>{GM.ready=!!info;$("#gm-go").disabled=!info;$("#gm-msg").textContent=info?`Matriz cruzada: ${info.preguntas} preguntas · ${info.revisar} cosas para revisar. Cuando esté, pasala al formulario.`:"No se pudo cruzar la matriz: revisá el archivo."};
 /* pasa la matriz cruzada al paso «Armar el formulario» */
 function gmImport(model){
@@ -489,7 +494,7 @@ function gmImport(model){
   return n;
 }
 $("#gm-go").addEventListener("click",()=>{
-  const w=gmFrame().contentWindow;if(!GM.ready||!w||!w.mpExport)return;
+  const w=window;if(!GM.ready||!w.mpExport)return;
   if(ST.Q.length&&!confirm(`Ya hay ${ST.Q.length} preguntas armadas. ¿Reemplazarlas por las de la matriz del INS?`))return;
   const n=gmImport(w.mpExport());goStep(2);
   $("#f2-msg").textContent=`Se armó el formulario desde la matriz del INS: ${n} preguntas, con sus casilleros y sus rutas. Revisalo y seguí a «Probar».`;

@@ -1,0 +1,47 @@
+<!-- GENERADO por scripts/legacy/convert.mjs desde legacy-src/ficha-formulario (ex repo SingaframeFormBuilder) (mapear.html) (HTML). La lógica es la original. -->
+<div class="embed"><main class="wrap" id="mp-main">
+<header>
+  <div class="eyebrow"><a href="./">Signaframe · Ficha de formulario</a> · paso opcional</div>
+  <h1>Ordenar y mapear <span class="ver" id="mp-ver"></span></h1>
+  <p class="lead" id="mp-lead">Cargá el PDF, el JSON main y la ficha del INS. Vas a ver el PDF, el formulario web y el JSON del mismo formulario; tocá cualquier campo y te dice su casillero, su pregunta y su ruta. Solo lee los archivos: no cambia el PDF. Todo se procesa en tu navegador.</p>
+</header>
+
+<section class="card" aria-labelledby="mp-in-h">
+  <details id="mp-files" open><summary><h2 id="mp-in-h">Archivos</h2> <span class="msg" id="mp-files-sum"></span></summary>
+  <div class="inputs" style="margin-top:10px">
+    <label class="fin"><b>PDF del formulario</b><span class="hint">Con los casilleros ya renombrados.</span><input type="file" id="mp-pdf" accept=".pdf,application/pdf"><span class="st" id="mp-pdf-st"></span></label>
+    <label class="fin"><b>JSON main</b><span class="hint">El JSON de ejemplo de salida / entrada.</span><input type="file" id="mp-json" accept=".json,application/json"><span class="st" id="mp-json-st"></span></label>
+    <label class="fin"><b>Ficha del INS (.xlsx)</b><span class="hint">La matriz armada por el INS.</span><input type="file" id="mp-xlsx" accept=".xlsx"><span class="st" id="mp-xlsx-st"></span></label>
+  </div>
+  <div class="bar" style="margin-top:12px"><button class="btn pri" id="mp-go" disabled>Procesar</button></div></details>
+  <p class="msg" id="mp-msg" aria-live="polite" style="margin-top:8px">Cargá los tres archivos.</p>
+</section>
+
+<section class="card" id="mp-out" hidden aria-label="Resultado">
+  <div class="bar" style="justify-content:space-between"><div class="kpis" id="mp-kpis"></div><button class="btn pri" id="mp-dl">Bajar ficha (.xlsx)</button></div>
+  <details class="wbox" id="mp-warns-box"><summary class="msg">Avisos al leer los archivos (<span id="mp-warns-n">0</span>)</summary><ul class="warns" id="mp-warns" style="margin-top:8px"></ul></details>
+  <div class="vtabs" id="mp-vtabs" role="tablist">
+    <button role="tab" data-v="todo" aria-selected="true">Todo</button>
+    <button role="tab" data-v="pdf" aria-selected="false">PDF</button>
+    <button role="tab" data-v="form" aria-selected="false">Formulario web</button>
+    <button role="tab" data-v="json" aria-selected="false">JSON</button>
+    <button role="tab" data-v="rev" aria-selected="false">Revisar</button>
+    <button role="tab" data-v="tab" aria-selected="false" class="sec">Tablas</button>
+  </div>
+  <div class="work v-todo" id="mp-work"><div class="vmain"><div class="vbar" id="mp-vbar"></div><div id="mp-view"></div></div><aside class="insp" id="mp-insp" aria-live="polite"></aside></div>
+  <div id="mp-tables" hidden>
+    <div class="tabs" role="tablist">
+      <button role="tab" data-tab="mat" aria-selected="true">Matriz ordenada</button>
+      <button role="tab" data-tab="res" aria-selected="false">Resultado del cruce</button>
+      <button role="tab" data-tab="hue" aria-selected="false">Huecos</button>
+      <button role="tab" data-tab="rep" aria-selected="false">Repeaters</button>
+      <button role="tab" data-tab="pdf" aria-selected="false">PDF</button>
+      <button role="tab" data-tab="json" aria-selected="false">JSON main</button>
+      <button role="tab" data-tab="ficha" aria-selected="false">Ficha del INS</button>
+      <button role="tab" data-tab="estr" aria-selected="false">Estructura base JSON</button>
+    </div>
+    <div class="filters"><input type="search" id="mp-q" placeholder="Buscar en la tabla…" aria-label="Buscar en la tabla"><select id="mp-est" aria-label="Filtrar por estado"><option value="">Todos los estados</option><option>SEGURO</option><option>DUDOSO</option><option>SIN_MATCH</option><option>SIN_PDF</option><option>SIN_FICHA</option><option>NO_APLICA</option></select><label class="msg"><input type="checkbox" id="mp-grp" checked> Agrupar opciones</label><span class="msg" id="mp-qn"></span></div>
+    <div class="tbox" id="mp-table"></div>
+  </div>
+</section>
+</main></div>

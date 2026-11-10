@@ -10,7 +10,7 @@ Acá está, sin cambios, el código de las herramientas que venían de otros rep
 | `email-templates/` | HTMLgenerator | `src/tools/email-templates` |
 | `ficha-formulario/` (index.html, interno.html) | SingaframeFormBuilder | `src/tools/ficha-formulario`, `src/tools/matriz-interna` |
 
-`mapear.html` (paso «Matriz del INS» de la Ficha) y `docs/` siguen en `public/apps/ficha-formulario/` porque se sirven tal cual.
+`mapear.html` (paso «Matriz del INS» de la Ficha) se convierte aparte con `scripts/legacy/ficha-mapear.config.mjs` y se monta adentro de la Ficha. `docs/` sigue en `public/apps/ficha-formulario/` porque se sirve tal cual.
 El proxy de la API de Signaturit está en `supabase/functions/signaturit-proxy/`.
 
 ## Cómo cambiar una herramienta clásica
@@ -23,7 +23,7 @@ El proxy de la API de Signaturit está en `supabase/functions/signaturit-proxy/`
 
 ```bash
 node legacy-src/ficha-formulario/tools/build_dic.mjs public/apps/ficha-formulario/docs/diccionario_vXX.xlsx \
-  legacy-src/ficha-formulario/index.html legacy-src/ficha-formulario/interno.html public/apps/ficha-formulario/mapear.html
+  legacy-src/ficha-formulario/index.html legacy-src/ficha-formulario/interno.html legacy-src/ficha-formulario/mapear.html
 npm run legacy
 ```
 

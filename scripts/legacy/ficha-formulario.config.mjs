@@ -1,6 +1,5 @@
 // Ficha de formulario ← repo SingaframeFormBuilder (index.html).
-// El paso opcional «Matriz del INS» sigue siendo mapear.html (public/apps/ficha-formulario),
-// que se abre en un panel interno y le avisa a esta pantalla con gmReady / gmHeight.
+// El paso «2 · Matriz del INS» (mapear.html) va aparte: config ficha-mapear, montado adentro de la Ficha.
 const COMMON = {
   '#f5f6f8': '#f0f3f8', '#1b1f2a': '#0a1111', '#5d6475': '#4f5b5b', '#dde1e8': '#cddbdb', '#eceff4': '#e9ebf0',
   '#b4231d': '#ad4546', '#fbe6e4': '#ffe8e7',
@@ -12,9 +11,7 @@ export default {
   html: 'index.html',
   dropDarkMode: true,
   exposeOnly: [], // gmReady y gmHeight ya se asignan a window en el original
-  jsReplace: [
-    ['fr.setAttribute("src","mapear.html?embed=1")', 'fr.setAttribute("src",__PSTOOLS_BASE__+"apps/ficha-formulario/mapear.html?embed=1")'],
-  ],
+  jsReplace: [],
   extraCss: `.lg-ficha-formulario { --ok: #198446; background: var(--color-bg); padding-block: 8px 48px; padding-inline: 0; }
 /* El título ya lo pone la app arriba: no repetirlo. */
 .lg-ficha-formulario header .eyebrow, .lg-ficha-formulario header h1 { display: none; }`,

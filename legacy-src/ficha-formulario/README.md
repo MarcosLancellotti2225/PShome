@@ -47,7 +47,7 @@ La plantilla de preguntas mantiene el formato v12 (las listas de Sección / Subs
 
 ## Matriz del INS (paso 2, opcional)
 
-Cuando el INS manda su matriz (la ficha en Excel), el paso 2 la cruza con el PDF renombrado y el JSON del cliente y la contrasta con el Diccionario INS. Corre en `mapear.html` dentro de un marco (abrir `mapear.html` solo lleva a este paso). No cambia el PDF.
+Cuando el INS manda su matriz (la ficha en Excel), el paso 2 la cruza con el PDF renombrado y el JSON del cliente y la contrasta con el Diccionario INS. Es `mapear.html`, convertido con el adaptador (config `ficha-mapear`) y montado adentro de la Ficha, sin marco. No cambia el PDF.
 
 - **Solapas**: *Todo* (PDF, formulario web y JSON lado a lado), *PDF*, *Formulario web* (cómo se vería, paso por paso), *JSON*, *Revisar* y *Tablas* (las tablas técnicas).
 - **Tocar un campo** en cualquier vista muestra las tres cosas del mismo campo: el casillero del PDF, la pregunta del formulario y la ruta del JSON (con su valor de ejemplo), y lo marca en las otras vistas.

@@ -1412,7 +1412,7 @@ function mpMatch(){
   const jset=new Map();MP.json.paths.forEach(p=>{if(p.type==="array")return;const k=mpPathN(p.path);if(!jset.has(k))jset.set(k,p)});
   F.forEach((f,i)=>{
     f.id=i;f.kind=mpKind(f);f.dic=mpDicOf(f);
-    f.noCampo=!f.campoJson&&(/no aplica/i.test(f.nombreWeb+" "+f.seccion+" "+f.paso)||/informativ|texto info/i.test(f.controlWeb||"")||!f.nombreWeb||!f.controlWeb.trim());
+    f.noCampo=!f.campoJson&&(/no aplica/i.test(f.nombreWeb+" "+f.seccion+" "+f.paso)||/informativ|texto info/i.test(f.controlWeb||"")||!f.nombreWeb||!(f.controlWeb||"").trim());
     f.esperaPdf=!f.noCampo&&!!f.nombrePdf&&!f.sinPdf&&!/^json$/i.test(f.paso||"");
     /* JSON */
     const p=mpPathN(f.campoJson);
@@ -1429,7 +1429,7 @@ function mpMatch(){
   pairs.forEach(p=>{if(fUsed.has(p.i)||uUsed.has(p.j))return;const f=F[p.i];if(p.s<(f.esperaPdf?.42:.6))return;fUsed.set(p.i,p);uUsed.set(p.j,p.i)});
   F.forEach((f,i)=>{
     const m=fUsed.get(i);f.match=null;
-    if(f.noCampo){f.estado="NO_APLICA";f.senal=`fila sin campo JSON${!f.controlWeb.trim()&&f.nombreWeb&&!/no aplica/i.test(f.nombreWeb)?" ni control (título)":""}: ${f.nombreWeb||f.observaciones||"vacía"}`;return}
+    if(f.noCampo){f.estado="NO_APLICA";f.senal=`fila sin campo JSON${!(f.controlWeb||"").trim()&&f.nombreWeb&&!/no aplica/i.test(f.nombreWeb)?" ni control (título)":""}: ${f.nombreWeb||f.observaciones||"vacía"}`;return}
     if(!m){f.estado=f.esperaPdf?"SIN_MATCH":"SIN_PDF";f.confianza=f.cands[0]?Math.min(1,f.cands[0].s):0;
       f.senal=f.esperaPdf?(f.cands[0]?`el mejor candidato (${units[f.cands[0].j].name}, ${f.cands[0].s}) ya fue tomado por otro campo o no alcanza`:"ningún casillero se parece al «Nombre en PDF»"):"la ficha no le da nombre en el PDF: solo web / JSON";return}
     const u=units[m.j];f.match={j:m.j,u};f.confianza=Math.min(1,m.s);
