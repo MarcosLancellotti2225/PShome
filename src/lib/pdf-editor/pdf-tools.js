@@ -181,6 +181,20 @@ async function fillPdfWithDummy(input, opts) {
     //
     // Auto no es garantía: hay un piso de tamaño, así que una caja muy angosta
     // con mucho texto se pasa igual. Esos son los que hay que ensanchar.
+    const noEntran = findOverflows(form, font);
+
+    return {
+        pdfBytes: await doc.save(),
+        texto: texto, casillas: casillas, listas: listas, radios: radios,
+        saltados: saltados, comb: comb, fallos: fallos,
+        noEntran: noEntran,
+        total: texto + casillas + listas + radios,
+    };
+}
+
+// Campos de texto (no multilínea) cuyo valor, con el tamaño que quedó en su /DA, es más ancho que la caja.
+// Se llama después de form.updateFieldAppearances(font). La usan «Probar relleno» y Probar PDF de Studio.
+function findOverflows(form, font) {
     const noEntran = [];
     const FF_MULTILINE = 1 << 12;
     form.getFields().forEach(function (f) {
@@ -210,14 +224,7 @@ async function fillPdfWithDummy(input, opts) {
             });
         }
     });
-
-    return {
-        pdfBytes: await doc.save(),
-        texto: texto, casillas: casillas, listas: listas, radios: radios,
-        saltados: saltados, comb: comb, fallos: fallos,
-        noEntran: noEntran,
-        total: texto + casillas + listas + radios,
-    };
+    return noEntran;
 }
 
 async function generateLabeledPdf(pdfBytes) {
@@ -276,4 +283,4 @@ async function generateLabeledPdf(pdfBytes) {
 }
 
 
-export { capPdfFieldFontSize, readPdfFieldFontSizes, fillPdfWithDummy, generateLabeledPdf };
+export { capPdfFieldFontSize, readPdfFieldFontSizes, fillPdfWithDummy, generateLabeledPdf, findOverflows, dummyPara };

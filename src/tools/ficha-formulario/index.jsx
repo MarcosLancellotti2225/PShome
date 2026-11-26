@@ -3,6 +3,7 @@
 // El paso «2 · Matriz del INS» (mapear.html) se monta adentro de la Ficha, sin marco:
 // legacy-src/ficha-formulario/mapear.html → src/tools/ficha-mapear/legacy/ (config ficha-mapear).
 import '../_legacy/pdfLibs';
+import '../signaframe-studio/trabajo.js';
 import LegacyTool from '../_legacy/LegacyTool';
 import markup from './legacy/markup.html?raw';
 import { mount } from './legacy/app.js';

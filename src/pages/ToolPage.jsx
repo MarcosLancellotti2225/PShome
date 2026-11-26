@@ -1,13 +1,15 @@
 import { Component, Suspense, lazy, useState } from 'react';
 import { Link, NavLink, Navigate, useParams } from 'react-router-dom';
 import { ArrowRight, ExternalLink, Loader2 } from 'lucide-react';
-import { TOOLS, capsuleTabs, findSection, findTool, isCapsule, isIntegrated } from '../config/tools';
+import { MOVED, TOOLS, capsuleTabs, findSection, findTool, isCapsule, isIntegrated } from '../config/tools';
 import ToolIcon from '../components/common/ToolIcon';
 import { Alert } from '../components/ui';
 import './ToolPage.css';
 
 // Un componente lazy por herramienta integrada, creado una sola vez al cargar la app.
 const TOOL_COMPONENTS = Object.fromEntries(TOOLS.filter(isIntegrated).map((t) => [t.id, lazy(t.load)]));
+// La barra de arriba de cada cápsula que tenga una (ej. el trabajo de Signaframe Studio).
+const BANNERS = Object.fromEntries(TOOLS.filter((t) => t.banner).map((t) => [t.id, lazy(t.banner)]));
 
 // Si una herramienta falla, el resto de la app sigue andando.
 class ToolErrorBoundary extends Component {
@@ -28,7 +30,7 @@ class ToolErrorBoundary extends Component {
 export default function ToolPage() {
   const { id, sub } = useParams();
   const tool = findTool(id);
-  if (!tool) return <Navigate to="/" replace />;
+  if (!tool) return <Navigate to={MOVED[id] || '/'} replace />;
   // Lo que vive adentro de una cápsula se abre en ella (la URL vieja sigue andando).
   if (tool.parent) return <Navigate to={`/tools/${tool.parent}/${tool.id}`} replace />;
   if (isCapsule(tool)) return <CapsulePage key={tool.id} capsule={tool} sub={sub} />;
@@ -81,10 +83,11 @@ function CapsulePage({ capsule, sub }) {
   const tabs = capsuleTabs(capsule);
   const active = tabs.find((t) => t.id === sub) || null;
   const [opened, setOpened] = useState(() => (active ? [active.id] : []));
-  if (sub && !active) return <Navigate to={`/tools/${capsule.id}`} replace />;
+  if (sub && !active) return <Navigate to={MOVED[sub] || `/tools/${capsule.id}`} replace />;
   if (active && !opened.includes(active.id)) setOpened((o) => [...o, active.id]);
   const base = `/tools/${capsule.id}`;
   const section = findSection(capsule.section);
+  const Banner = BANNERS[capsule.id];
 
   return (
     <div className="tool-page">
@@ -105,6 +108,12 @@ function CapsulePage({ capsule, sub }) {
           </NavLink>
         ))}
       </nav>
+
+      {Banner && (
+        <ToolErrorBoundary>
+          <Suspense fallback={null}><Banner /></Suspense>
+        </ToolErrorBoundary>
+      )}
 
       {!active && (
         <div className="cap-grid">

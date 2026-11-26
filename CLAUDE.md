@@ -39,7 +39,7 @@ Multi Send, Generador CSV, Email Templates, Ficha de formulario y Matriz interna
 - `src/tools/_legacy/LegacyTool.jsx` la monta una vez por sesión y la mantiene viva al cambiar de pantalla.
 - Sus librerías (xlsx, papaparse, mammoth, pdf.js 3.11, pdf-lib, ExcelJS) salen de npm (`src/tools/_legacy/pdfLibs.js` y cada `index.jsx`).
 - Siguen usando `alert()`/`confirm()` propios: se reemplazan cuando cada una pase a React.
-- La meta es pasarlas de a una a React con `src/components/ui` (como Gantt, Comparador y Cotizador) y borrar su carpeta de `legacy-src/`.
+- La meta es pasarlas de a una a React con `src/components/ui` (como Gantt, Editor PDF y Cotizador) y borrar su carpeta de `legacy-src/`.
 
 Reglas:
 - Multi Send y Email Templates comparten la conexión de Signaturit (entorno + token) con `src/lib/signaturit/session.js`, solo en memoria. El token nunca se guarda en el navegador ni en el repo. La palabra «Supabase» no puede aparecer en la interfaz. El proxy está en `supabase/functions/signaturit-proxy/`.
@@ -98,8 +98,14 @@ Une el Detector de campos y Convertir PDF de `FormConverterExcel`.
 
 ## Signaframe Studio y MCP
 
-- **Signaframe Studio es una cápsula** con: Crear formulario (Ficha), Plantilla y JSON (Matriz interna), Editor PDF, Probar (su pantalla propia, `src/tools/signaframe-studio`) y Comparador JSON.
-- `src/tools/signaframe-studio` (pestaña «Probar»): simula un formulario con `signaframe-engine` (el motor real del front), muestra el JSON que sale, los AcroForms, diagnósticos y el Revisor; cada cambio en el formulario vuelve a simular. Abre «trabajos» (.json, `tipo: se-tools/signaframe-trabajo`).
+- **Signaframe Studio es una cápsula** con: Crear formulario (Ficha), Plantilla y JSON (Matriz interna), Editor PDF y Probar (su pantalla propia, `src/tools/signaframe-studio`). El Comparador JSON se unió a Probar (`/tools/comparador-json` redirige, ver `MOVED` en `tools.js`).
+- **Trabajo** (`src/tools/signaframe-studio/trabajo.js`): los archivos de UN formulario (PDF, form-def, JSON del cliente, datos de prellenado, main, ficha, matriz), compartidos por todas las pestañas y guardados en IndexedDB (`se-tools-studio`). La barra de arriba (`TrabajoBar.jsx`, `banner` de la cápsula) los muestra y abre/guarda/empieza trabajos (.json, `tipo: se-tools/signaframe-trabajo`, compatible con el MCP). Las clásicas guardan con `window.SeTrabajo.guardar(tipo, nombre, datos)`: la Ficha el PDF renombrado, la ficha y el JSON del cliente; la Matriz interna la matriz, el main y el form-def.
+- **Probar** es el control de calidad, con el motor real (`signaframe-engine`) y `src/lib/signaframe-qa`:
+  - Probar JSON: nuestro JSON (simulado, o uno subido) contra el del cliente, valor por valor (`compareJson`); abajo la estructura (`compareWithSample`) y el mapa del JSON.
+  - Probar PDF: llena el PDF con lo que manda cada campo (`pdfValuesFor` + `fillFormPdf`) y marca lo que no entra, no pinta o no se usa.
+  - Revisar form-def: el Revisor y los problemas de rutas del JSON, en un solo lugar.
+  - Simular a mano: el formulario funcionando; lo que completes llega a las otras pruebas.
+- `npm test` corre `test/signaframe-qa.test.mjs` (PDF y form-def sintéticos).
 - `mcp/server.mjs`: MCP local (Node, stdio) que le da a Claude la lógica de `src/lib` (simular, revisar, comparar JSON, detectar campos del PDF). Guarda los trabajos en `SE_TOOLS_TRABAJOS`. Ver `mcp/README.md`.
 - Matriz: `leer_matriz` y `editar_matriz` (`src/lib/signaframe-formdef/matrix-edit.js`, ExcelJS: conserva el formato y guarda una versión nueva).
 - Signaframe: tools `signaframe_*` con `src/lib/signaframe-api` (cliente de la API, swagger en `https://signaframe.namirial.com/api/swagger`). Credenciales por env (`SIGNAFRAME_URL`, `SIGNAFRAME_EMAIL`/`SIGNAFRAME_PASSWORD` o `SIGNAFRAME_TOKEN`). Todo lo que cambia algo (subir form-def, publicar, crear proceso) pide un código de confirmación; subir guarda copia y frena si `diffFormDefs` marca la regla de oro o el Revisor da errores. Los procesos de prueba nunca mandan el mail. No hay tools para borrar, usuarios ni settings.

@@ -30,4 +30,4 @@ npm run legacy
 ## Hacia adelante
 
 La meta es que cada una pase a ser una pantalla de React con los componentes de `src/components/ui`
-(como el Gantt, el Comparador JSON o el Cotizador). Cuando eso pase, su carpeta de acá se borra.
+(como el Gantt, el Editor PDF o el Cotizador). Cuando eso pase, su carpeta de acá se borra.

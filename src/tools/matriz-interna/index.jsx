@@ -2,6 +2,7 @@
 // La herramienta original corre tal cual (legacy/, generado con scripts/legacy/convert.mjs).
 import '../_legacy/pdfLibs';
 import '../_legacy/formDef';
+import '../signaframe-studio/trabajo.js';
 import LegacyTool from '../_legacy/LegacyTool';
 import markup from './legacy/markup.html?raw';
 import { mount } from './legacy/app.js';
