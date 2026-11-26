@@ -323,3 +323,10 @@
 .lg-ficha-formulario { --ok: #198446; background: var(--color-bg); padding-block: 8px 48px; padding-inline: 0; }
 /* El título ya lo pone la app arriba: no repetirlo. */
 .lg-ficha-formulario header .eyebrow, .lg-ficha-formulario header h1 { display: none; }
+/* Adentro de «Crear formulario» (src/tools/ficha-formulario): los pasos, los archivos y la navegación los maneja
+   la pantalla nueva. Acá queda solo el trabajo de cada paso. */
+.lg-ficha-formulario header, .lg-ficha-formulario nav.steps, .lg-ficha-formulario #st0 > .lead, .lg-ficha-formulario #stm > .lead,
+.lg-ficha-formulario #st2 > .lead, .lg-ficha-formulario .rn-file, .lg-ficha-formulario #rn-sample, .lg-ficha-formulario #gm-skip,
+.lg-ficha-formulario #go1, .lg-ficha-formulario #back0, .lg-ficha-formulario #go2b, .lg-ficha-formulario #go2,
+.lg-ficha-formulario #back1m, .lg-ficha-formulario #gm-go, .lg-ficha-formulario #back1, .lg-ficha-formulario #go3,
+.lg-ficha-formulario #back2 { display: none !important; }

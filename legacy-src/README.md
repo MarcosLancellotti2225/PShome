@@ -8,7 +8,7 @@ Acá está, sin cambios, el código de las herramientas que venían de otros rep
 | `multi-send/` | bulksend | `src/tools/multi-send` |
 | `csv-generator/` | toolsImport | `src/tools/csv-generator` |
 | `email-templates/` | HTMLgenerator | `src/tools/email-templates` |
-| `ficha-formulario/` (index.html, interno.html) | SingaframeFormBuilder | `src/tools/ficha-formulario`, `src/tools/matriz-interna` |
+| `ficha-formulario/` (index.html, mapear.html) | SingaframeFormBuilder | pasos «Casilleros» y «Preguntas» de `src/tools/ficha-formulario` (la matriz interna ya está en `src/lib/signaframe-matriz`) |
 
 `mapear.html` (paso «Matriz del INS» de la Ficha) se convierte aparte con `scripts/legacy/ficha-mapear.config.mjs` y se monta adentro de la Ficha. `docs/` sigue en `public/apps/ficha-formulario/` porque se sirve tal cual.
 El proxy de la API de Signaturit está en `supabase/functions/signaturit-proxy/`.
@@ -23,7 +23,7 @@ El proxy de la API de Signaturit está en `supabase/functions/signaturit-proxy/`
 
 ```bash
 node legacy-src/ficha-formulario/tools/build_dic.mjs public/apps/ficha-formulario/docs/diccionario_vXX.xlsx \
-  legacy-src/ficha-formulario/index.html legacy-src/ficha-formulario/interno.html legacy-src/ficha-formulario/mapear.html
+  legacy-src/ficha-formulario/index.html legacy-src/ficha-formulario/mapear.html src/lib/signaframe-matriz/dic.js
 npm run legacy
 ```
 

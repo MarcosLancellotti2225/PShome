@@ -11,7 +11,9 @@ export const TRABAJO_TIPO = 'se-tools/signaframe-trabajo';
 
 /** Archivos que puede tener un trabajo. kind: json (objeto) o bytes (Uint8Array). */
 export const ARCHIVOS = {
-  pdf: { label: 'PDF del formulario', desc: 'El PDF con los casilleros renombrados', accept: '.pdf', kind: 'bytes' },
+  pdfOriginal: { label: 'PDF del cliente', desc: 'Tal como lo mandó el cliente', accept: '.pdf', kind: 'bytes' },
+  matrizIns: { label: 'Matriz del INS', desc: 'La ficha en Excel que arma el INS (opcional)', accept: '.xlsx', kind: 'bytes' },
+  pdf: { label: 'PDF renombrado', desc: 'El PDF con los casilleros renombrados', accept: '.pdf', kind: 'bytes' },
   formDef: { label: 'JSON del formulario', desc: 'El form-def de Signaframe', accept: '.json', kind: 'json' },
   clienteJson: { label: 'JSON del cliente', desc: 'El JSON que el cliente espera recibir', accept: '.json', kind: 'json' },
   payload: { label: 'Datos de prellenado', desc: 'Payload del alta: encabezado + datosFormulario', accept: '.json', kind: 'json' },
@@ -21,7 +23,7 @@ export const ARCHIVOS = {
   matriz: { label: 'Matriz interna', desc: 'La matriz que baja Plantilla y JSON', accept: '.xlsx', kind: 'bytes' },
 };
 
-const empty = () => ({ nombre: '', archivos: {}, edits: {}, updatedAt: 0 });
+const empty = () => ({ nombre: '', archivos: {}, edits: {}, ui: {}, updatedAt: 0 });
 let state = empty();
 let loaded = false;
 const listeners = new Set();
@@ -71,7 +73,7 @@ if (typeof indexedDB !== 'undefined') {
   loaded = true;
 }
 
-const sinExtension = (name) => String(name || '').replace(/\.[^.]+$/, '').replace(/_(renombrado|ficha|matriz_interna|form-def_v\d+)$/i, '');
+const sinExtension = (name) => String(name || '').replace(/\.[^.]+$/, '').replace(/_(renombrado|ficha|matriz_interna|form-def_v\d+|original)$/i, '').replace(/ \(ejemplo\)$/, '');
 
 // ── API ──
 export const getTrabajo = () => state;
@@ -93,6 +95,8 @@ export function quitarArchivo(tipo) {
 }
 
 export function setEdits(edits) { set({ ...state, edits }); }
+/** Estado de pantalla que conviene recordar (ej. en qué paso de Crear formulario quedaste). */
+export function setUi(patch) { set({ ...state, ui: { ...(state.ui || {}), ...patch } }); }
 export function renombrar(nombre) { set({ ...state, nombre }); }
 export function nuevoTrabajo() { set(empty()); }
 
@@ -152,7 +156,7 @@ export function abrirTrabajo(t) {
   put('formDef', e.formDefinition, `${t.nombre}_form-def.json`);
   put('payload', e.payload, `${t.nombre}_payload.json`);
   put('clienteJson', e.expectedJson, `${t.nombre}_cliente.json`);
-  set({ nombre: t.nombre || '', archivos, edits: e.edits || {} });
+  set({ nombre: t.nombre || '', archivos, edits: e.edits || {}, ui: {} });
 }
 
 /** El trabajo en un componente de React: se vuelve a dibujar cuando cambia. */

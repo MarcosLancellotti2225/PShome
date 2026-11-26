@@ -1,0 +1,25 @@
+/* Crear formulario — prefijo cf- */
+.cf-intro { color: var(--color-text-secondary); font-size: 0.92rem; max-width: 80ch; margin: 0; }
+.cf-legacy[hidden] { display: none; }
+.cf-slots { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--spacing-md); }
+.cf-slot {
+  display: flex; flex-direction: column; gap: 8px; padding: var(--spacing-md);
+  background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);
+}
+.cf-slot.is-on { border-color: var(--color-primary); }
+.cf-slot-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.cf-slot-name { font-weight: 700; }
+.cf-slot-why { margin: 0; color: var(--color-text-secondary); font-size: 0.85rem; flex: 1; }
+.cf-need { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 2px 8px; border-radius: 999px; background: var(--color-band); color: var(--color-text-secondary); }
+.cf-need.is-obligatorio { background: var(--color-primary); color: #fff; }
+.cf-need.is-recomendado { background: var(--color-primary-light); color: var(--color-primary); }
+.cf-list { margin: 6px 0 0; padding-left: 18px; font-size: 0.85rem; }
+.cf-list li { overflow-wrap: anywhere; }
+.cf-ver { width: 70px; }
+.cf-details > summary {
+  cursor: pointer; padding: 12px 16px; background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg); font-weight: 600; color: var(--color-text-secondary);
+}
+.cf-details[open] > summary { margin-bottom: var(--spacing-md); }
+/* La Ficha clásica ya no necesita su propio margen de abajo: está la barra fija. */
+.cf .lg-ficha-formulario { padding-block: 0; }

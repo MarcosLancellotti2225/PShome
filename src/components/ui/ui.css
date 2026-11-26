@@ -110,3 +110,35 @@
 .ui-table tr.is-sub td { background: var(--color-bg); }
 .ui-table tr.is-muted td { color: var(--color-text-muted); }
 .ui-mono { font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace; font-size: 0.8rem; overflow-wrap: anywhere; }
+
+/* Pasos */
+.ui-steps { display: flex; gap: 6px; list-style: none; padding: 0; margin: 0; flex-wrap: wrap; counter-reset: none; }
+.ui-step { flex: 1 1 160px; min-width: 0; }
+.ui-step button {
+  width: 100%; display: flex; align-items: center; gap: 10px; padding: 10px 12px; text-align: left;
+  border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface);
+  color: var(--color-text-secondary); font-weight: 600; font-size: 0.88rem;
+}
+.ui-step button:hover:not(:disabled) { border-color: var(--color-primary); color: var(--color-primary); }
+.ui-step button:disabled { opacity: 0.5; cursor: not-allowed; }
+.ui-step button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.ui-step-num {
+  flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+  background: var(--color-band); color: var(--color-text-secondary); font-size: 0.78rem; font-weight: 700;
+}
+.ui-step-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ui-step.is-done .ui-step-num { background: var(--color-primary-light); color: var(--color-primary); }
+.ui-step.is-current button { border-color: var(--color-primary); background: var(--color-primary-light); color: var(--color-primary-deep); }
+.ui-step.is-current .ui-step-num { background: var(--color-primary); color: #fff; }
+
+/* Barra de acciones fija abajo */
+.ui-actionbar {
+  position: sticky; bottom: 0; z-index: 5; display: flex; align-items: center; gap: var(--spacing-md);
+  padding: 10px var(--spacing-md); margin-top: var(--spacing-sm);
+  background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);
+  box-shadow: 0 -4px 16px rgba(1, 40, 37, 0.08);
+}
+.ui-actionbar-side { display: flex; gap: var(--spacing-sm); align-items: center; flex-shrink: 0; }
+.ui-actionbar-side.is-right { margin-left: auto; }
+.ui-actionbar-mid { flex: 1; min-width: 0; font-size: 0.85rem; color: var(--color-text-secondary); }
+@media (max-width: 640px) { .ui-actionbar { flex-wrap: wrap; } .ui-actionbar-mid { order: -1; flex-basis: 100%; } }
