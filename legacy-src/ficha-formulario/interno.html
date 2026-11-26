@@ -1758,6 +1758,8 @@ async function buildJson(matBuf,baseName){
   const ver=($("#in-ver").value||"v1").trim();
   const {formDef,report}=window.SeFormDef.formDefFromMatrixXlsx(new Uint8Array(matBuf),main,{version:ver});
   FD=formDef;FDNAME=baseName.replace(/(_matriz_interna|_ficha)?\.xlsx$/i,"")+"_form-def_"+ver+".json";
+  window.SeTrabajo?.guardar("formDef",FDNAME,FD);
+  if(main&&IN.main)window.SeTrabajo?.guardar("main",IN.main.name,main);
   renderJson(report,window.SeFormDef.revisar(formDef),!!main);
   return formDef;
 }
@@ -1777,7 +1779,7 @@ function renderJson(R,hall,hasMain){
   h+=box("Casilleros del PDF que la matriz no usa (van ocultos en «Campos del PDF sin usar»)",R.sinUsar.map(m));
   h+=box("Avisos del Revisor",avi.map(x=>`${esc(x.titulo)}${x.detalle?" — "+esc(String(x.detalle).slice(0,220)):""}`));
   h+=box("Avisos de la matriz",R.warn.map(esc));
-  h+=`<div><button class="btn pri" id="dljson2">Bajar ${esc(FDNAME)}</button> <small style="color:var(--muted)">Para probarlo con un JSON del cliente, abrilo en Signaframe → Signaframe Studio.</small></div>`;
+  h+=`<div><button class="btn pri" id="dljson2">Bajar ${esc(FDNAME)}</button> <small style="color:var(--muted)">Ya quedó en el trabajo: probalo en la pestaña «Probar».</small></div>`;
   $("#msgs-json").innerHTML=h;
   $("#res-json").hidden=false;
   $("#dljson2").addEventListener("click",dlJson);
@@ -1801,6 +1803,7 @@ $("#go").addEventListener("click",async()=>{
   try{
     const r=await miRun({fichaBuf:await rdBuf(IN.ficha),mainText:IN.main?await rdTxt(IN.main):null,insBuf:IN.ins?await rdBuf(IN.ins):null});
     OUT=r.buf;OUTNAME=IN.ficha.name.replace(/(_ficha)?\.xlsx$/i,"")+"_matriz_interna.xlsx";
+    window.SeTrabajo?.guardar("matriz",OUTNAME,new Uint8Array(OUT));
     render(r.M);$("#dl").disabled=false;$("#dljson").disabled=false;
   }catch(e){$("#msgs").innerHTML=`<div class="warn">${esc(e.message)}</div>`;$("#res").hidden=false;console.error(e)}
   $("#go").disabled=false;

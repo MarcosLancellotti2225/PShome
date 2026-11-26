@@ -168,7 +168,7 @@ server.registerTool(
     title: 'Comparar JSON del form-def con el del cliente',
     description:
       'Dibuja el JSON de salida (o de entrada) que declara un form-def y lo compara con un JSON real del cliente: ' +
-      'qué rutas faltan, cuáles sobran y cuáles tienen otra forma. Es la lógica del Comparador JSON de SE Tools.',
+      'qué rutas faltan, cuáles sobran y cuáles tienen otra forma. Es la lógica de «Probar JSON» (estructura) de Signaframe Studio.',
     inputSchema: {
       form_def: jsonOrPath('form-def'),
       json_cliente: jsonOrPath('JSON real del cliente'),

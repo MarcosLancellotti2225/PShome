@@ -21,6 +21,9 @@
  *   parent      → en cada herramienta de adentro: el id de la cápsula. No aparece sola en el menú
  *                 ni en el inicio; vive en /tools/<cápsula>/<id> (la URL vieja /tools/<id> redirige).
  *   tab         → nombre corto de su pestaña
+ *   banner      → (opcional, en la cápsula) () => import(...) de una barra que se ve arriba en todas sus pestañas
+ *
+ * MOVED: herramientas que se unieron a otra. Su URL vieja lleva a la nueva.
  */
 
 export const SECTIONS = [
@@ -52,14 +55,15 @@ export const TOOLS = [
     id: 'signaframe-studio',
     section: 'signaframe',
     name: 'Signaframe Studio',
-    description: 'Todo para armar un formulario de Signaframe: la ficha, la plantilla y su JSON, el PDF y la prueba con el motor real.',
+    description: 'Todo para armar un formulario de Signaframe: la ficha, la plantilla y su JSON, el PDF y el control de calidad con el motor real.',
     icon: 'FlaskConical',
     load: () => import('../tools/signaframe-studio/index.jsx'),
-    tabs: ['ficha-formulario', 'matriz-interna', 'editor-pdf', 'self', 'comparador-json'],
+    tabs: ['ficha-formulario', 'matriz-interna', 'editor-pdf', 'self'],
+    banner: () => import('../tools/signaframe-studio/TrabajoBar.jsx'),
     selfTab: {
       id: 'probar',
       name: 'Probar',
-      description: 'Simula el formulario con el motor real de Signaframe: el JSON que sale, el PDF y lo que está mal. Abre los trabajos que arma Claude.',
+      description: 'El control de calidad del formulario: compara nuestro JSON con el del cliente, llena el PDF y revisa el form-def, con el motor real de Signaframe.',
     },
   },
   {
@@ -81,16 +85,6 @@ export const TOOLS = [
     description: 'Junta la ficha cerrada con el main de Signaframe: baja la matriz y el JSON del formulario.',
     icon: 'Table2',
     load: () => import('../tools/matriz-interna/index.jsx'),
-  },
-  {
-    id: 'comparador-json',
-    section: 'signaframe',
-    parent: 'signaframe-studio',
-    tab: 'Comparador JSON',
-    name: 'Comparador JSON',
-    description: 'Dibuja el JSON de entrada y salida de un form-definition y lo compara con el JSON real del cliente.',
-    icon: 'FileJson',
-    load: () => import('../tools/comparador-json/index.jsx'),
   },
   {
     id: 'editor-pdf',
@@ -127,6 +121,11 @@ export const TOOLS = [
     load: () => import('../tools/cotizador/index.jsx'),
   },
 ];
+
+// Herramientas que se unieron a otra: la URL vieja lleva a la nueva.
+export const MOVED = {
+  'comparador-json': '/tools/signaframe-studio/probar',
+};
 
 // En el menú y el inicio: solo las herramientas sueltas y las cápsulas (no lo que vive adentro de una).
 export const toolsInSection = (sectionId) => TOOLS.filter((t) => t.section === sectionId && !t.parent);

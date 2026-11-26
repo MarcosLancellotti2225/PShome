@@ -47,6 +47,11 @@
 .ui-file-icon { color: var(--color-primary); display: flex; flex-shrink: 0; }
 .ui-file-body { display: flex; flex-direction: column; min-width: 0; }
 .ui-file-label { font-weight: 600; font-size: 0.9rem; }
+.ui-file-clear {
+  margin-left: auto; flex-shrink: 0; display: inline-flex; padding: 4px; border: 0; border-radius: var(--radius-sm);
+  background: transparent; color: var(--color-text-secondary); cursor: pointer;
+}
+.ui-file-clear:hover { background: var(--color-surface); color: var(--color-danger); }
 .ui-file-desc { font-size: 0.8rem; color: var(--color-text-secondary); overflow-wrap: anywhere; }
 .ui-files { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
 

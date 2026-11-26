@@ -1,7 +1,7 @@
 // Componentes comunes de SE Tools (marca Namirial). Usalos en todas las herramientas
 // en vez de armar botones, cargas de archivo o tablas a mano.
 import { useId, useRef, useState } from 'react';
-import { Upload, CheckCircle2, AlertTriangle, XCircle, Info } from 'lucide-react';
+import { Upload, CheckCircle2, AlertTriangle, XCircle, Info, X } from 'lucide-react';
 import { formatSize } from '../../lib/files';
 import './ui.css';
 
@@ -32,7 +32,8 @@ export function Panel({ title, hint, actions, children, className = '' }) {
 }
 
 // Casillero para subir un archivo: clic o arrastrar y soltar.
-export function FileDrop({ label, description, accept, file, onFile, required }) {
+// onClear (opcional): muestra una cruz para quitar el archivo cargado.
+export function FileDrop({ label, description, accept, file, onFile, onClear, required }) {
   const id = useId();
   const inputRef = useRef(null);
   const [over, setOver] = useState(false);
@@ -54,6 +55,17 @@ export function FileDrop({ label, description, accept, file, onFile, required })
           {file ? `${file.name} · ${formatSize(file.size)}` : description || 'Hacé clic o arrastrá el archivo acá'}
         </span>
       </span>
+      {file && onClear && (
+        <button
+          type="button"
+          className="ui-file-clear"
+          aria-label={`Quitar ${label}`}
+          title="Quitar"
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClear(); }}
+        >
+          <X size={16} />
+        </button>
+      )}
       <input
         ref={inputRef}
         id={id}

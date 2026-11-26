@@ -410,7 +410,7 @@ $("#rn-dl").addEventListener("click",async()=>{
   const e=rnValidate(rn.rows);if(e){$("#rn-filter").value="err";rnList();m.textContent=`Hay ${e} nombres con error (repetidos o con caracteres no válidos). Corregilos antes de bajar el PDF.`;return}
   if(!window.PDFLib){m.textContent="No se pudo cargar el editor de PDF. Recargá la página.";return}
   m.textContent="Renombrando…";
-  try{const map={};rn.rows.forEach(r=>map[r.old]=r.nuevo);const out=await rnRename(rn.bytes,map);const pend=rn.rows.filter(r=>!r.ok).length;await rnSave(rnBase()+"_renombrado.pdf",out.bytes);if(pend&&/^Listo/.test(m.textContent))m.textContent+=` Ojo: ${pend} casilleros salieron con el nombre sugerido sin que los aceptaras.`}
+  try{const map={};rn.rows.forEach(r=>map[r.old]=r.nuevo);const out=await rnRename(rn.bytes,map);const pend=rn.rows.filter(r=>!r.ok).length;window.SeTrabajo?.guardar("pdf",rnBase()+"_renombrado.pdf",new Uint8Array(out.bytes));await rnSave(rnBase()+"_renombrado.pdf",out.bytes);if(pend&&/^Listo/.test(m.textContent))m.textContent+=` Ojo: ${pend} casilleros salieron con el nombre sugerido sin que los aceptaras.`}
   catch(err){m.textContent="No se pudo renombrar este PDF. Pasámelo y lo reviso."}
 });
 $("#rn-csv").addEventListener("click",()=>{
@@ -554,8 +554,8 @@ function jsList(){
   $("#js-count").textContent=ST.paths.length?`${ST.paths.length} datos encontrados${DIC.length?` · ${nd} coinciden con el Diccionario INS`:""}`:"";
   $("#js-list").innerHTML=ST.paths.length?`<table class="jt"><thead><tr><th>Dato (ruta)</th><th>Valor de ejemplo</th>${DIC.length?"<th>Diccionario INS</th>":""}</tr></thead><tbody>${ST.paths.map((p,k)=>`<tr><td class="mono">${esc(tplPath(p.path))}${p.arr?' <span class="tag">se repite</span>':""}</td><td>${esc(typeof p.ex==="string"?p.ex:JSON.stringify(p.ex))}</td>${DIC.length?`<td>${dst[k].st==="ok"?`✓ ${esc(DIC[dst[k].i][0])}`:dst[k].st==="est"?`<span style="color:var(--warn)">≠ ${esc(DIC[dst[k].i][0])} (lista / objeto)</span>`:'<span style="color:var(--muted)">—</span>'}</td>`:""}</tr>`).join("")}</tbody></table>`:'<p class="msg" style="padding:12px">Todavía no hay datos. Pegá un JSON o usá el de ejemplo.</p>';
 }
-$("#js-in").addEventListener("input",()=>{clearTimeout(ST.jt);ST.jt=setTimeout(jsRead,350)});
-$("#js-file").addEventListener("change",async e=>{const f=e.target.files[0];if(!f)return;$("#js-in").value=await f.text();jsRead();e.target.value=""});
+$("#js-in").addEventListener("input",()=>{clearTimeout(ST.jt);ST.jt=setTimeout(()=>{jsRead();if(ST.json)window.SeTrabajo?.guardar("clienteJson","cliente.json",ST.json)},350)});
+$("#js-file").addEventListener("change",async e=>{const f=e.target.files[0];if(!f)return;$("#js-in").value=await f.text();jsRead();if(ST.json)window.SeTrabajo?.guardar("clienteJson",f.name,ST.json);e.target.value=""});
 $("#js-sample").addEventListener("click",()=>{$("#js-in").value=JS_SAMPLE;jsRead()});
 
 /* ── Diccionario General INS–Namirial (tools/build_dic.mjs lo regenera desde docs/diccionario_v10.xlsx) ── */
@@ -2105,6 +2105,7 @@ async function f2Excel(msgEl){
   if(!pend.length){w5.getCell("A2").value="Nada pendiente.";w5.getCell("A2").font=font({bold:true,color:{argb:C.green}})}
   w5.addConditionalFormatting({ref:`C2:C${Math.max(2,pend.length+1)}`,rules:[{type:"cellIs",operator:"equal",formulae:['"Resuelto"'],style:{font:{color:{argb:C.green},bold:true},fill:F(C.greenL)}}]});
   const buf=await wb.xlsx.writeBuffer();
+  window.SeTrabajo?.guardar("ficha",base+"_ficha.xlsx",new Uint8Array(buf));
   await rnSave(base+"_ficha.xlsx",new Uint8Array(buf));
   m.textContent=$("#rn-msg").textContent;
 }
