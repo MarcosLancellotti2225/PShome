@@ -2006,7 +2006,7 @@ $("#f2-json").addEventListener("click",e=>{
 let f2RT;window.addEventListener("resize",()=>{clearTimeout(f2RT);f2RT=setTimeout(()=>{if(ST.cur===2&&rn.pdf){ST.pdfDone=false;f2RenderPdf()}},250)});
 
 /* ── Ficha en Excel (con estilo) ── */
-async function f2Excel(msgEl){
+async function f2Excel(msgEl,opts){
   const m=msgEl||$("#f2-msg");
   if(!window.ExcelJS){m.textContent="No se pudo cargar el generador de Excel. Recargá la página.";return}
   fbNorm();
@@ -2106,6 +2106,7 @@ async function f2Excel(msgEl){
   w5.addConditionalFormatting({ref:`C2:C${Math.max(2,pend.length+1)}`,rules:[{type:"cellIs",operator:"equal",formulae:['"Resuelto"'],style:{font:{color:{argb:C.green},bold:true},fill:F(C.greenL)}}]});
   const buf=await wb.xlsx.writeBuffer();
   window.SeTrabajo?.guardar("ficha",base+"_ficha.xlsx",new Uint8Array(buf));
+  if(opts&&opts.sinBajar)return{name:base+"_ficha.xlsx",bytes:new Uint8Array(buf)};
   await rnSave(base+"_ficha.xlsx",new Uint8Array(buf));
   m.textContent=$("#rn-msg").textContent;
 }
@@ -2718,6 +2719,26 @@ document.querySelectorAll("#st3 .vsel button").forEach(b=>b.addEventListener("cl
 $("#tp-xlsx").addEventListener("click",()=>f2Excel($("#tp-msg")));
 $("#back2").addEventListener("click",()=>goStep(2));
 let tpRT;window.addEventListener("resize",()=>{clearTimeout(tpRT);tpRT=setTimeout(()=>{if(ST.cur===3&&rn.pdf)tpRender()},250)});
+
+/* ── Puente con «Crear formulario» de SE Tools (src/tools/ficha-formulario): la pantalla nueva
+   maneja los pasos y le pasa los archivos del trabajo. Sin esto la Ficha anda sola como antes. ── */
+window.SeFicha={
+  ejemplo:()=>({pdf:rnB64(RN_SAMPLE),pdfName:"ejemplo.pdf",json:JSON.parse(JS_SAMPLE)}),
+  pdfCargado:()=>rn.file,
+  cargarPdf:(bytes,name)=>rnLoad(bytes,name),
+  cargarJson:(obj)=>{$("#js-in").value=obj?JSON.stringify(obj,null,2):"";jsRead()},
+  paso:(k)=>goStep(k),
+  pasoActual:()=>ST.cur,
+  estado:()=>{const err=rnValidate(rn.rows);return{casilleros:rn.rows.length,aceptados:rn.rows.filter(r=>r.ok).length,errores:err,preguntas:ST.Q.filter(q=>!q.parentId).length,sinCasillero:ST.Q.filter(q=>!q.parentId&&!q.boxes.length&&!fbParts(q).length&&q.inPdf!==false).length,datosJson:ST.paths.length}},
+  async pdfRenombrado(){
+    if(!rn.bytes)throw new Error("Primero subí un PDF.");
+    const e=rnValidate(rn.rows);if(e)throw new Error(`Hay ${e} nombres con error (repetidos o con caracteres no válidos). Corregilos antes de seguir.`);
+    const map={};rn.rows.forEach(r=>map[r.old]=r.nuevo);const out=await rnRename(rn.bytes,map);
+    const name=rnBase()+"_renombrado.pdf",bytes=new Uint8Array(out.bytes);
+    window.SeTrabajo?.guardar("pdf",name,bytes);return{name,bytes};
+  },
+  ficha:()=>f2Excel($("#f2-msg"),{sinBajar:true}),
+};
 
 $("#js-in").value=JS_SAMPLE;
 rnLoad(rnB64(RN_SAMPLE),"prueba_original.pdf (ejemplo)").then(()=>{if(location.hash==="#matriz"){jsRead();goStep("m")}});

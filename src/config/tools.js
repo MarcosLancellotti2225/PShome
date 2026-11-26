@@ -55,10 +55,10 @@ export const TOOLS = [
     id: 'signaframe-studio',
     section: 'signaframe',
     name: 'Signaframe Studio',
-    description: 'Todo para armar un formulario de Signaframe: la ficha, la plantilla y su JSON, el PDF y el control de calidad con el motor real.',
+    description: 'Todo para armar un formulario de Signaframe: crearlo paso a paso, retocar el PDF y probarlo con el motor real.',
     icon: 'FlaskConical',
     load: () => import('../tools/signaframe-studio/index.jsx'),
-    tabs: ['ficha-formulario', 'matriz-interna', 'editor-pdf', 'self'],
+    tabs: ['ficha-formulario', 'editor-pdf', 'self'],
     banner: () => import('../tools/signaframe-studio/TrabajoBar.jsx'),
     selfTab: {
       id: 'probar',
@@ -72,19 +72,9 @@ export const TOOLS = [
     parent: 'signaframe-studio',
     tab: 'Crear formulario',
     name: 'Ficha de formulario',
-    description: 'Arma el formulario desde el PDF y el JSON del cliente, cruza la matriz del INS y baja la ficha.',
+    description: 'En 4 pasos: los archivos del cliente, los casilleros del PDF, las preguntas y el JSON del formulario para Signaframe.',
     icon: 'FileCog',
     load: () => import('../tools/ficha-formulario/index.jsx'),
-  },
-  {
-    id: 'matriz-interna',
-    section: 'signaframe',
-    parent: 'signaframe-studio',
-    tab: 'Plantilla y JSON',
-    name: 'Matriz interna',
-    description: 'Junta la ficha cerrada con el main de Signaframe: baja la matriz y el JSON del formulario.',
-    icon: 'Table2',
-    load: () => import('../tools/matriz-interna/index.jsx'),
   },
   {
     id: 'editor-pdf',
@@ -125,6 +115,7 @@ export const TOOLS = [
 // Herramientas que se unieron a otra: la URL vieja lleva a la nueva.
 export const MOVED = {
   'comparador-json': '/tools/signaframe-studio/probar',
+  'matriz-interna': '/tools/signaframe-studio/ficha-formulario',
 };
 
 // En el menú y el inicio: solo las herramientas sueltas y las cápsulas (no lo que vive adentro de una).

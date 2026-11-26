@@ -13,7 +13,7 @@ import { inflateRawSync } from "node:zlib";
 
 const [xlsxPath = "docs/diccionario_v10.xlsx", ...htmlArgs] = process.argv.slice(2);
 /* por defecto, las páginas que usan el diccionario */
-const htmlPaths = htmlArgs.length ? htmlArgs : ["index.html", "mapear.html", "interno.html"].filter(f => existsSync(f));
+const htmlPaths = htmlArgs.length ? htmlArgs : ["index.html", "mapear.html", "../../src/lib/signaframe-matriz/dic.js"].filter(f => existsSync(f));
 const SHEETS = ["Diccionario (Namirial)", "Diccionario General"];
 
 /* ── zip mínimo: directorio central + inflate ── */

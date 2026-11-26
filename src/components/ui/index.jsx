@@ -1,7 +1,7 @@
 // Componentes comunes de SE Tools (marca Namirial). Usalos en todas las herramientas
 // en vez de armar botones, cargas de archivo o tablas a mano.
 import { useId, useRef, useState } from 'react';
-import { Upload, CheckCircle2, AlertTriangle, XCircle, Info, X } from 'lucide-react';
+import { Upload, CheckCircle2, AlertTriangle, XCircle, Info, X, Check } from 'lucide-react';
 import { formatSize } from '../../lib/files';
 import './ui.css';
 
@@ -33,12 +33,13 @@ export function Panel({ title, hint, actions, children, className = '' }) {
 
 // Casillero para subir un archivo: clic o arrastrar y soltar.
 // onClear (opcional): muestra una cruz para quitar el archivo cargado.
-export function FileDrop({ label, description, accept, file, onFile, onClear, required }) {
+// onFiles (opcional): en vez de onFile, acepta varios archivos a la vez y los pasa como lista.
+export function FileDrop({ label, description, accept, file, onFile, onFiles, onClear, required }) {
   const id = useId();
   const inputRef = useRef(null);
   const [over, setOver] = useState(false);
 
-  const pick = (f) => onFile(f || null);
+  const pick = (list) => (onFiles ? (list?.length && onFiles([...list])) : onFile(list?.[0] || null));
 
   return (
     <label
@@ -46,7 +47,7 @@ export function FileDrop({ label, description, accept, file, onFile, onClear, re
       className={`ui-file ${file ? 'is-loaded' : ''} ${over ? 'is-over' : ''}`}
       onDragOver={(e) => { e.preventDefault(); setOver(true); }}
       onDragLeave={() => setOver(false)}
-      onDrop={(e) => { e.preventDefault(); setOver(false); pick(e.dataTransfer.files[0]); }}
+      onDrop={(e) => { e.preventDefault(); setOver(false); pick(e.dataTransfer.files); }}
     >
       <span className="ui-file-icon" aria-hidden="true">{file ? <CheckCircle2 size={20} /> : <Upload size={20} />}</span>
       <span className="ui-file-body">
@@ -71,8 +72,9 @@ export function FileDrop({ label, description, accept, file, onFile, onClear, re
         id={id}
         type="file"
         accept={accept}
+        multiple={!!onFiles}
         className="ui-visually-hidden"
-        onChange={(e) => { pick(e.target.files[0]); e.target.value = ''; }}
+        onChange={(e) => { pick(e.target.files); e.target.value = ''; }}
       />
     </label>
   );
@@ -170,5 +172,42 @@ export function ConfirmButton({ children, confirmLabel = '¿Seguro? Sí', onConf
       <Button {...props} variant="danger" onClick={() => { setArmed(false); onConfirm(); }}>{confirmLabel}</Button>
       <Button size={props.size} variant="ghost" onClick={() => setArmed(false)}>Cancelar</Button>
     </span>
+  );
+}
+
+// Pasos de un recorrido (ej. Crear formulario). steps: [{ id, label, done, disabled, hint }].
+// El paso actual se marca; los hechos llevan tilde. Se puede volver a cualquier paso que no esté deshabilitado.
+export function Steps({ steps, current, onChange }) {
+  return (
+    <ol className="ui-steps">
+      {steps.map((s, i) => {
+        const state = s.id === current ? 'is-current' : s.done ? 'is-done' : '';
+        return (
+          <li key={s.id} className={`ui-step ${state}`}>
+            <button
+              type="button"
+              disabled={s.disabled}
+              aria-current={s.id === current ? 'step' : undefined}
+              title={s.hint}
+              onClick={() => onChange(s.id)}
+            >
+              <span className="ui-step-num" aria-hidden="true">{s.done && s.id !== current ? <Check size={14} /> : i + 1}</span>
+              <span className="ui-step-label">{s.label}</span>
+            </button>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+// Barra fija abajo de la pantalla: a la izquierda «Volver», al medio lo que falta, a la derecha la acción principal.
+export function ActionBar({ left, children, right }) {
+  return (
+    <div className="ui-actionbar" role="region" aria-label="Acciones del paso">
+      <div className="ui-actionbar-side">{left}</div>
+      <div className="ui-actionbar-mid">{children}</div>
+      <div className="ui-actionbar-side is-right">{right}</div>
+    </div>
   );
 }

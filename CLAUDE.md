@@ -33,7 +33,7 @@ Una sola app React con todas las herramientas del equipo. Antes se llamaba «PS 
 
 ## Herramientas clásicas (montadas con el adaptador)
 
-Multi Send, Generador CSV, Email Templates, Ficha de formulario y Matriz interna corren con su código original:
+Multi Send, Generador CSV, Email Templates y los pasos «Casilleros» y «Preguntas» de Crear formulario (la Ficha) corren con su código original:
 - El original vive en `legacy-src/<id>/` (ver `legacy-src/README.md`).
 - `npm run legacy` lo convierte con `scripts/legacy/convert.mjs` en `src/tools/<id>/legacy/` (markup, CSS encapsulado bajo `.lg-<id>` con la paleta Namirial, y el JS dentro de `mount()`). **No edites `legacy/` a mano**: editá `legacy-src/` o la config `scripts/legacy/<id>.config.mjs` y regenerá.
 - `src/tools/_legacy/LegacyTool.jsx` la monta una vez por sesión y la mantiene viva al cambiar de pantalla.
@@ -51,7 +51,7 @@ Reglas:
 Reemplaza a `matriz_io.py build`: arma el form-def de Signaframe desde la matriz interna.
 - `buildFormDef(matrix, main)`: pasos/subsecciones/campos + main → form-def. El `sourceMeta` (y el id) de cada campo con «Casillero PDF» sale del main tal cual (regla de oro); si la matriz trae otro id, usa el del main y corrige las referencias. Deriva `order`, `childrenOrder`, `salidaJSON` y `prefillMode: "optional"`. Lo que el main tiene y la matriz no usa va oculto en «Campos del PDF sin usar». Firmas sin ubicar: posición provisoria y aviso.
 - `readMatrixXlsx` / `formDefFromMatrixXlsx`: lee el Excel de la matriz interna (hojas «Formulario Signaframe» y «Opciones»).
-- Las herramientas clásicas lo usan con `window.SeFormDef` (`src/tools/_legacy/formDef.js`), con el Revisor de Studio.
+- La matriz interna sale de `src/lib/signaframe-matriz` (`matrizInterna`: ficha + main + matriz del INS → Excel), copia tal cual de la vieja `interno.html` (comparada celda por celda). Su diccionario (`dic.js`) se regenera con `build_dic.mjs`, igual que los HTML de la Ficha.
 - `npm test` corre `test/signaframe-formdef.test.mjs`; con la ruta a un form-def real hace la ida y vuelta form-def → matriz → form-def y compara también con el motor de Signaframe (mismo JSON y mismo PDF).
 
 ## Editor PDF (`src/tools/editor-pdf`)
@@ -98,8 +98,10 @@ Une el Detector de campos y Convertir PDF de `FormConverterExcel`.
 
 ## Signaframe Studio y MCP
 
-- **Signaframe Studio es una cápsula** con: Crear formulario (Ficha), Plantilla y JSON (Matriz interna), Editor PDF y Probar (su pantalla propia, `src/tools/signaframe-studio`). El Comparador JSON se unió a Probar (`/tools/comparador-json` redirige, ver `MOVED` en `tools.js`).
-- **Trabajo** (`src/tools/signaframe-studio/trabajo.js`): los archivos de UN formulario (PDF, form-def, JSON del cliente, datos de prellenado, main, ficha, matriz), compartidos por todas las pestañas y guardados en IndexedDB (`se-tools-studio`). La barra de arriba (`TrabajoBar.jsx`, `banner` de la cápsula) los muestra y abre/guarda/empieza trabajos (.json, `tipo: se-tools/signaframe-trabajo`, compatible con el MCP). Las clásicas guardan con `window.SeTrabajo.guardar(tipo, nombre, datos)`: la Ficha el PDF renombrado, la ficha y el JSON del cliente; la Matriz interna la matriz, el main y el form-def.
+- **Signaframe Studio es una cápsula** con: Crear formulario, Editor PDF y Probar (su pantalla propia, `src/tools/signaframe-studio`). El Comparador JSON se unió a Probar y «Plantilla y JSON» (Matriz interna) es el paso 4 de Crear formulario (sus URL viejas redirigen, ver `MOVED` en `tools.js`).
+- **Crear formulario** (`src/tools/ficha-formulario`): 4 pasos con `Steps` y `ActionBar` (barra fija abajo). 1 Archivos (se sueltan juntos; `src/lib/signaframe-trabajo/detect.js` reconoce cada uno; botón «Probar con un ejemplo»). 2 Casilleros del PDF y 3 Preguntas: la Ficha clásica (`FichaLegacy.jsx`), manejada con `window.SeFicha` (cargar PDF/JSON, cambiar de paso, PDF renombrado y ficha sin descargar); sus botones de navegación están ocultos (config `ficha-formulario`) y la matriz del INS se le pasa al paso «Matriz del INS» por su input. 4 JSON del formulario (`PasoJson.jsx`): main → matriz interna + form-def. El paso en que quedaste se guarda en el trabajo (`ui.crearPaso`).
+- **Una pregunta, varios casilleros:** la Ficha guarda los casilleros de cada pregunta con su rol (fecha: día/mes/año; listas: una casilla por opción; filas repetidas) y la ficha los escribe como «casillero (rol)». La pantalla nueva de Preguntas tiene que mostrarlos juntos, con su rol.
+- **Trabajo** (`src/tools/signaframe-studio/trabajo.js`): los archivos de UN formulario (PDF, form-def, JSON del cliente, datos de prellenado, main, ficha, matriz), compartidos por todas las pestañas (también el PDF original y la matriz del INS) y guardados en IndexedDB (`se-tools-studio`). La barra de arriba (`TrabajoBar.jsx`, `banner` de la cápsula) los muestra y abre/guarda/empieza trabajos (.json, `tipo: se-tools/signaframe-trabajo`, compatible con el MCP). La Ficha clásica guarda con `window.SeTrabajo.guardar(tipo, nombre, datos)` el PDF renombrado, la ficha y el JSON del cliente.
 - **Probar** es el control de calidad, con el motor real (`signaframe-engine`) y `src/lib/signaframe-qa`:
   - Probar JSON: nuestro JSON (simulado, o uno subido) contra el del cliente, valor por valor (`compareJson`); abajo la estructura (`compareWithSample`) y el mapa del JSON.
   - Probar PDF: llena el PDF con lo que manda cada campo (`pdfValuesFor` + `fillFormPdf`) y marca lo que no entra, no pinta o no se usa.

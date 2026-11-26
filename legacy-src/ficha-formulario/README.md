@@ -2,7 +2,7 @@
 
 Herramienta para armar formularios a partir de un PDF y del JSON del cliente.
 
-**Abrir la herramienta:** desde PS Tools → Signaframe → Ficha de formulario (o Matriz interna).
+**Abrir la herramienta:** desde SE Tools → Signaframe Studio → Crear formulario (pasos «Casilleros del PDF» y «Preguntas»).
 
 Migrada desde el repo `SingaframeFormBuilder`. Vive en `public/apps/ficha-formulario/` del hub y se publica junto con él.
 
@@ -55,9 +55,9 @@ Cuando el INS manda su matriz (la ficha en Excel), el paso 2 la cruza con el PDF
 - **Revisar**: dudosos, casilleros del PDF sin dato, preguntas sin casillero, datos del JSON sin pregunta, rutas que no cierran, opciones que no cierran y preguntas que no van al PDF.
 - **Pasar al formulario**: arma el paso 3 con las secciones y preguntas de la matriz, con sus casilleros, opciones y rutas. Cada pregunta dice en «Notas» de qué hoja y fila de la matriz sale. Desde ahí se edita, se prueba y se baja la ficha (.xlsx) como siempre.
 
-## Matriz interna (`interno.html`, uso interno)
+## Matriz interna (paso 4 de Crear formulario)
 
-Página aparte, sin link desde el flujo del cliente. Junta la ficha cerrada (la que baja «Armar») con los campos que Signaframe necesita y baja un Excel con:
+Ya no es una página aparte: la lógica de la vieja `interno.html` está en `src/lib/signaframe-matriz` (copia tal cual) y se usa en el paso «JSON del formulario». Junta la ficha cerrada (la que baja «Armar») con los campos que Signaframe necesita y baja un Excel con:
 
 - **Formulario Signaframe**: una fila por paso, subsección y campo, agrupadas en niveles 0/1/2. Bloque azul = columnas de la ficha (solo lectura); bloque verde = columnas Signaframe (fuente del form-def). Listas desplegables en Tipo, Ancho y Sí/No. Al final, en rojo, las preguntas de la ficha que quedan fuera, con el motivo.
 - **Opciones**: una fila por opción de cada lista (incluye provincia, cantón y distrito de `docs/catalogo_cr.json`).
