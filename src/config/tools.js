@@ -31,7 +31,7 @@ export const SECTIONS = [
   { id: 'alta', name: 'Alta de clientes', description: 'Importaciones, usuarios y configuración inicial.' },
   { id: 'signaframe', name: 'Signaframe', description: 'Herramientas para armar y configurar formularios en Signaframe.' },
   { id: 'comunicacion', name: 'Comunicación', description: 'Emails y material para clientes.' },
-  { id: 'planificacion', name: 'Planificación y seguimiento', description: 'Planes de proyecto y feedback de producto.' },
+  { id: 'planificacion', name: 'Planificación y seguimiento', description: 'Planes de proyecto, cotizaciones y reportes de seguimiento.' },
 ];
 
 export const TOOLS = [
@@ -119,6 +119,14 @@ export const TOOLS = [
     description: 'Lee el ZIP de un formulario y lo cotiza según el contrato: nivel, precio y extras.',
     icon: 'ClipboardList',
     load: () => import('../tools/cotizador/index.jsx'),
+  },
+  {
+    id: 'reportes',
+    section: 'planificacion',
+    name: 'Reportes',
+    description: 'Cruza hojas de Excel o Salesforce y arma reportes: por ejemplo, los contactos de cada CSM por cuenta.',
+    icon: 'ChartColumn',
+    load: () => import('../tools/reportes/index.jsx'),
   },
 ];
 

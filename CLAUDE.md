@@ -92,9 +92,19 @@ Une el Detector de campos y Convertir PDF de `FormConverterExcel`.
 - `src/lib/json-mapper`, `src/lib/quoter`, `src/lib/pdf-detect` ← `FormConverterExcel/src/` (CommonJS → ES modules). `pdf-detect` lee también campos cuyo recuadro es un único hijo.
 - `src/lib/pdf-editor` ← `FormConverterExcel` (pdf-rewriter.js + funciones de fuente, datos de prueba y etiquetas de browser.js).
 - `src/tools/gantt` ← repo `GranttGenerator`.
+- `src/lib/report-builder` + `src/tools/reportes` ← repo `Presentations` (solo el Report Builder).
 - `legacy-src/multi-send` ← `bulksend`, `legacy-src/csv-generator` ← `toolsImport`, `legacy-src/email-templates` ← `HTMLgenerator`, `legacy-src/ficha-formulario` + `public/apps/ficha-formulario` ← `SingaframeFormBuilder`.
 - El resto de `FormConverterExcel` **no** se migra salvo pedido explícito.
 - `src/lib/signaframe-engine` ← front de Signaframe (commit `d270aa3`), convertido con `tsc`. `services/` y `lib/` van tal cual; ver su README antes de tocarlo.
+
+## Reportes (`src/tools/reportes`)
+
+Viene del «Report Builder» del repo `Presentations` (solo comparar hojas y armar reportes; los gráficos y el portal de tokens no se migraron).
+- Lógica en `src/lib/report-builder/`: `parse.js` (Excel/CSV/JSON/pegado; saltea las filas de filtros de los reportes de Salesforce), `ops.js` (rellenar vacíos, completar una columna con otra, cruzar hojas, filtrar filas, `summarize`, `accountDetail`), `export.js` (CSV, JSON, TSV y Excel con formato vía ExcelJS) y `report.js` (reporte HTML con la marca; el PDF sale de imprimirlo).
+- Caso principal: **contactos por cuenta de los CSM**. Con dos hojas cargadas aparece un asistente: rellena los vacíos de CSM/cuenta, cruza cuentas con actividades (opcional: solo si CSM = Owner, y un rango de fechas) y arma el resumen por CSM (cuentas, contactadas, sin contactar, %, MRR).
+- «Cruzar hojas» agrega las columnas `Contactos`, `Último contacto` y `Primer contacto` (antes `Contactos_Match`, etc.).
+- Todo en memoria (datos de clientes): nada se guarda en el navegador. Cada cambio se puede deshacer (Ctrl+Z).
+- `npm test` corre `test/report-builder.test.mjs` (datos sintéticos).
 
 ## Signaframe Studio y MCP
 

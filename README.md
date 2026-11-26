@@ -23,6 +23,7 @@ supabase/functions/      ← proxy de la API de Signaturit (Edge Function)
 |---|---|---|
 | Gantt Generator | Planificación y seguimiento | ✅ integrada (`src/tools/gantt`) |
 | Cotizador | Planificación y seguimiento | ✅ integrada (`src/tools/cotizador`) |
+| Reportes | Planificación y seguimiento | ✅ integrada desde Presentations (Report Builder): cruzar hojas y reporte de contactos por cuenta (`src/tools/reportes`) |
 | Editor PDF | Signaframe Studio | ✅ nueva: une Detector de campos + Convertir PDF (`src/tools/editor-pdf`) |
 | Ficha de formulario · Matriz interna | Signaframe Studio | ✅ integrada con su código original (`legacy-src/ficha-formulario`) |
 | Multi Send | Firma y envíos | ✅ integrada con su código original (`legacy-src/multi-send`) |
